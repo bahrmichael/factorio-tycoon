@@ -12,7 +12,7 @@ jobs:
     steps:
     - name: Checkout Code
       # For push events: When configuring actions/checkout, make sure to set fetch-depth to either 0 or 2, depending on your use case.
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
     
