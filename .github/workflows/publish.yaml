@@ -60,7 +60,7 @@ jobs:
 
     - name: Set up Python
       if: ${{ steps.changed-files.outputs.any_modified == 'true' }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: '3.x'
 
