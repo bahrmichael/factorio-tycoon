@@ -1,0 +1,46 @@
+---------------------------------------------------------------------------------------------------
+Version: 0.0.8
+Date: 23. 09. 2023
+  Bugfixes:
+    - Fixed another issue where the city would forget its state when you save and reload. Thanks to TCentraL!
+---------------------------------------------------------------------------------------------------
+Version: 0.0.7
+Date: 22. 09. 2023
+  Bugfixes:
+    - Fixed an issue where the city would forget its state when you save and reload. Thanks to TCentraL!
+  Features:
+    - Introduced the apple farm as the first primary production building.
+  Changes:
+    - Added new graphics for the water tower.
+---------------------------------------------------------------------------------------------------
+Version: 0.0.6
+Date: 22. 09. 2023
+  Features:
+    - Cities can now grow indefinitely. Grow it as far as you can, and let me know when it starts lagging on your machine.
+  Bugfixes:
+    - Fixed an issue where resources under the starting grid would not be removed properly.
+  Changes:
+    - Reduced the likelihood of large clumps of houses.
+    - Cities now grow in a circle instead of in a square.
+    - Updated the time between dialogues in the story to feel less rushed.
+  Locale:
+    - Added missing names and descriptions for houses and the town hall.
+---------------------------------------------------------------------------------------------------
+Version: 0.0.5
+Date: 21. 09. 2023
+  Bugfixes:
+    - Prevent players from deconstructing town hall, the town hall's storage tank, or houses.
+    - Added a changelog file.
+    - Prevent the city from building over the player or anything they've built. 
+---------------------------------------------------------------------------------------------------
+Version: 0.0.4
+Date: 21. 09. 2023
+  Bugfixes:
+    - Added a thumbnail.
+---------------------------------------------------------------------------------------------------
+Version: 0.0.3
+Date: 21. 09. 2023
+  Major Features:
+    - Initial pre-alpha release.
+    - Added a short story that guides you through the first steps. About 10-30 minutes of gameplay.
+    - Cities can grow when you supply stone and iron to the town hall.

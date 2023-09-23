@@ -1,0 +1,6 @@
+tycoon
+secret
+.idea
+*.zip
+.DS_STORE
+.vscode/settings.json
