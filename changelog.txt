@@ -3,8 +3,6 @@ Version: 0.0.8
 Date: 23. 09. 2023
   Bugfixes:
     - Fixed another issue where the city would forget its state when you save and reload. Thanks to TCentraL!
-  Changes:
-    - TEST
 ---------------------------------------------------------------------------------------------------
 Version: 0.0.7
 Date: 22. 09. 2023
