@@ -1,0 +1,73 @@
+name: Publish Version
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      # For push events: When configuring actions/checkout, make sure to set fetch-depth to either 0 or 2, depending on your use case.
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    
+    - name: Get changed files
+      id: changed-files
+      uses: tj-actions/changed-files@v39
+      with:
+        files: changelog.txt
+
+    - name: Get latest version from changelog
+      if: ${{ steps.changed-files.outputs.any_modified == 'true' }}
+      id: get-version
+      run: |
+        VERSION=$(awk '/Version:/ {print $2; exit}' changelog.txt)
+        echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+    - name: Set latest version in version file
+      if: ${{ steps.changed-files.outputs.any_modified == 'true' }}
+      run: |
+        jq '.version = "${{ steps.get-version.outputs.version }}"' info.json > info.json
+
+    - name: Make build folder
+      if: ${{ steps.changed-files.outputs.any_modified == 'true' }}
+      run: mkdir tycoon
+
+    - name: Copy files into build folder
+      if: ${{ steps.changed-files.outputs.any_modified == 'true' }}
+      run: |
+        cp -R graphics tycoon/
+        cp -R locale tycoon/
+        cp *.lua tycoon/
+        cp info.json tycoon/
+        cp thumbnail.png tycoon/
+        cp changelog.txt tycoon/
+
+    - name: Create a zip file
+      if: ${{ steps.changed-files.outputs.any_modified == 'true' }}
+      uses: montudor/action-zip@v1
+      with:
+        args: zip -r tycoon.zip tycoon
+
+    - name: Debug info file
+      if: ${{ steps.changed-files.outputs.any_modified == 'true' }}
+      run: cat info.json
+
+    - name: Set up Python
+      if: ${{ steps.changed-files.outputs.any_modified == 'true' }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+
+    # - name: Publish version
+    #   run: python upload.py
+    #   env:
+    #     MOD_UPLOAD_API_KEY: ${{ secrets.MOD_UPLOAD_API_KEY }}
+    #     MOD_UPLOAD_NAME: tycoon
+    #     MOD_UPLOAD_FILE: tycoon.zip
