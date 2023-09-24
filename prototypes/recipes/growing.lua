@@ -1,12 +1,12 @@
 data:extend{
     {
         type = "recipe-category",
-        name = "growing"
+        name = "tycoon-growing"
     },
     {
         type = "recipe",
         name = "tycoon-grow-apples-with-water",
-        category = "growing",
+        category = "tycoon-growing",
         energy_required = 60,
         enabled = true,
         ingredients = {

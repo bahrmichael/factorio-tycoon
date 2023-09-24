@@ -1,12 +1,13 @@
 ---------------------------------------------------------------------------------------------------
-Version: unreleased
-Date: 23. 09. 2023
+Version: 0.0.9
+Date: 25. 09. 2023
+  Changes:
+    - BREAKING CHANGE: Prefixed data stage records to not collide with other mods. This breaks savegames because they might not recognize previous items anymore.
+    - Apple farm now produces apples by default (and that recipe is fixed).
   Features:
     - Introduced T-Section street shapes.
-  Changes:
-    - Apple farm now produces apples by default (and that recipe is fixed).
-  Bugfixes:
-    - Prefixed data stage records to not collide with other mods.
+    - Introduced basic needs consumption and currency. When there are apples in the town hall and water in the water tower, then currency will appear in the town hall.
+    - Introduced university that can convert currency into science.
 ---------------------------------------------------------------------------------------------------
 Version: 0.0.8
 Date: 23. 09. 2023
