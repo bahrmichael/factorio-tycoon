@@ -90,13 +90,14 @@ local function isOptionValid(grid, y, x, localOption)
             local localSocket = getSocket(SEGMENTS.getObjectForKey(localOption).sockets, side.direction)
             local directionFromSide = getInverseDirection(side.direction)
 
-            if #side.cell == 1 then
-                if localOption == "intersection" or localOption == "linear.horizontal" or localOption == "linear.vertical" then
-                    if side.cell[1] == localOption then
-                        return false
-                    end
-                end
-            end
+            -- Commented this out, because I'm not sure why it's needed
+            -- if #side.cell == 1 then
+            --     if localOption == "intersection" or localOption == "linear.horizontal" or localOption == "linear.vertical" then
+            --         if side.cell[1] == localOption then
+            --             return false
+            --         end
+            --     end
+            -- end
 
             local hasValidOption = false
             for _, option in ipairs(side.cell) do
