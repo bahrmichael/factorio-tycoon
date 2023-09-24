@@ -32,7 +32,7 @@ jobs:
     - name: Set latest version in version file
       if: ${{ steps.changed-files.outputs.any_modified == 'true' && steps.get-version.outputs.version != 'unreleased' }}
       run: |
-        jq '.version = "${{ steps.get-version.outputs.version }}"' info.json > info.json
+        jq '.version = "${{ steps.get-version.outputs.version }}"' info-template.json > info.json
 
     - name: Make build folder
       if: ${{ steps.changed-files.outputs.any_modified == 'true' && steps.get-version.outputs.version != 'unreleased' }}
