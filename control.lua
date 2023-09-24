@@ -192,7 +192,7 @@ end
 
 local function initializeCity()
     tycoon_state.grid = {
-        {{"corner.bottomToLeft"}, { "water-tower"},      {"corner.rightToBottom"}},
+        {{"tSection.noRight"},    {"water-tower"},       {"tSection.noLeft"}},
         {{"linear.vertical"},     {"town-hall"},         {"linear.vertical"}},
         {{"intersection"},        {"linear.horizontal"}, {"intersection"}},
     }
