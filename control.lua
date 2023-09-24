@@ -99,7 +99,7 @@ local function isOptionValid(grid, y, x, localOption)
                     if localOption == skippable and side.cell[1] == skippable then
                         return false
                     end
-                end 
+                end
             end
 
             local hasValidOption = false
@@ -119,7 +119,7 @@ local function isOptionValid(grid, y, x, localOption)
     return true
 end
 
-local function reduceCell(grid, y, x) 
+local function reduceCell(grid, y, x)
     if grid[y] == nil or grid[y][x] == nil then
         return
     end
@@ -192,9 +192,9 @@ end
 
 local function initializeCity()
     tycoon_state.grid = {
-        {{"corner.bottomToLeft"},{ "water-tower"},      {"corner.rightToBottom"}},
-        {{"linear.vertical"},    {"town-hall"},          {"linear.vertical"}},
-        {{"intersection"},       {"linear.horizontal"},  {"intersection"}},
+        {{"corner.bottomToLeft"}, { "water-tower"},      {"corner.rightToBottom"}},
+        {{"linear.vertical"},     {"town-hall"},         {"linear.vertical"}},
+        {{"intersection"},        {"linear.horizontal"}, {"intersection"}},
     }
 
     local function clearCell(y, x)
@@ -344,7 +344,7 @@ local function countConnectedHouses(grid, y, x, count, visited)
         if cell == nil or #cell ~= 1 then
             return false
         end
-        return cell[1] == "empty"
+        return cell[1] == "house"
     end
 
     if isHouseNeighbour(leftCell) then
@@ -373,7 +373,7 @@ local function collapseCell(grid, y, x)
         local weightedValues = {}
         for _, value in ipairs(cell) do
             local weight = SEGMENTS.getWeightForKey(value)
-            if value == "empty" then
+            if value == "house" then
                 local connectedFields = countConnectedHouses(grid, y, x, 0, {})
                 weight = weight / connectedFields
                 if weight < 1 then
@@ -457,16 +457,8 @@ local function printCell(grid, y, x)
         if map ~= nil then
             printTiles(startCoordinates.y, startCoordinates.x, map, "concrete")
         end
-    elseif key == "empty" then
-        local map = {
-            "111111",
-            "111111",
-            "111111",
-            "111111",
-            "111111",
-            "111111"
-        }
-        printTiles(startCoordinates.y, startCoordinates.x, map, "refined-concrete")
+    elseif key == "house" then
+        printTiles(startCoordinates.y, startCoordinates.x, SEGMENTS.house.map, "refined-concrete")
         local houseNames = {}
         for i = 1, 14, 1 do
             table.insert(houseNames, "house-residential-" .. i)
@@ -499,7 +491,6 @@ script.on_nth_tick(60, function(event)
             for _, resource in ipairs(requiredResources) do
                 townHall.remove_item{name = resource.resource, count = resource.amount}
             end
-
 
             local nextCell = popRandomLowEntropyElementFromTable(tycoon_state.pendingCells)
             if nextCell == nil then

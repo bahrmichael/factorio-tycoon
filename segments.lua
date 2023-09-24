@@ -22,7 +22,14 @@ SEGMENTS.empty = {
 
 SEGMENTS.house = {
     weight = 40,
-    map = nil,
+    map = {
+        "111111",
+        "111111",
+        "111111",
+        "111111",
+        "111111",
+        "111111"
+    },
     sockets = {
         top = socketTypes.empty,
         bottom = socketTypes.empty,
@@ -210,7 +217,8 @@ SEGMENTS.allPossibilities = {
     "tSection.noBottom",
     "tSection.noLeft",
     "tSection.noTop",
-    "tSection.noRight"
+    "tSection.noRight",
+    "house"
 }
 
 function SEGMENTS.getObjectForKey(key)
@@ -240,6 +248,8 @@ function SEGMENTS.getObjectForKey(key)
         return SEGMENTS.empty
     elseif key == "empty" then
         return SEGMENTS.empty
+    elseif key == "house" then
+        return SEGMENTS.house
     else
         return nil
     end
@@ -268,7 +278,7 @@ function SEGMENTS.getMapForKey(key)
         return SEGMENTS.street.tSection.noTop.map
     elseif key == "tSection.noRight" then
         return SEGMENTS.street.tSection.noRight.map
-    elseif key == "town-hall" or key == "house" then
+    elseif key == "town-hall" then
         return {
             "111111",
             "111111",
@@ -279,6 +289,8 @@ function SEGMENTS.getMapForKey(key)
         }
     elseif key == "empty" then
         return SEGMENTS.empty.map
+    elseif key == "house" then
+        return SEGMENTS.house.map
     else
         return nil
     end
@@ -307,10 +319,12 @@ function SEGMENTS.getWeightForKey(key)
         return SEGMENTS.street.tSection.noTop.map
     elseif key == "tSection.noRight" then
         return SEGMENTS.street.tSection.noRight.map
+    elseif key == "house" then
+        return SEGMENTS.house.weight
     elseif key == "empty" then
         return SEGMENTS.empty.weight
     else
-        return 20
+        return 1
     end
 end
 
