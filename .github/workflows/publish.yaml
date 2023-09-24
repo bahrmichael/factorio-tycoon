@@ -30,16 +30,16 @@ jobs:
         echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
     - name: Set latest version in version file
-      if: ${{ steps.changed-files.outputs.any_modified == 'true' }}
+      if: ${{ steps.changed-files.outputs.any_modified == 'true' && steps.get-version.outputs.version != 'unreleased' }}
       run: |
         jq '.version = "${{ steps.get-version.outputs.version }}"' info.json > info.json
 
     - name: Make build folder
-      if: ${{ steps.changed-files.outputs.any_modified == 'true' }}
+      if: ${{ steps.changed-files.outputs.any_modified == 'true' && steps.get-version.outputs.version != 'unreleased' }}
       run: mkdir tycoon
 
     - name: Copy files into build folder
-      if: ${{ steps.changed-files.outputs.any_modified == 'true' }}
+      if: ${{ steps.changed-files.outputs.any_modified == 'true' && steps.get-version.outputs.version != 'unreleased' }}
       run: |
         cp -R graphics tycoon/
         cp -R locale tycoon/
@@ -49,24 +49,25 @@ jobs:
         cp changelog.txt tycoon/
 
     - name: Create a zip file
-      if: ${{ steps.changed-files.outputs.any_modified == 'true' }}
+      if: ${{ steps.changed-files.outputs.any_modified == 'true' && steps.get-version.outputs.version != 'unreleased' }}
       uses: montudor/action-zip@v1
       with:
         args: zip -r tycoon.zip tycoon
 
     - name: Debug info file
-      if: ${{ steps.changed-files.outputs.any_modified == 'true' }}
+      if: ${{ steps.changed-files.outputs.any_modified == 'true' && steps.get-version.outputs.version != 'unreleased' }}
       run: cat info.json
 
     - name: Set up Python
-      if: ${{ steps.changed-files.outputs.any_modified == 'true' }}
+      if: ${{ steps.changed-files.outputs.any_modified == 'true' && steps.get-version.outputs.version != 'unreleased' }}
       uses: actions/setup-python@v4
       with:
         python-version: '3.x'
 
-    # - name: Publish version
-    #   run: python upload.py
-    #   env:
-    #     MOD_UPLOAD_API_KEY: ${{ secrets.MOD_UPLOAD_API_KEY }}
-    #     MOD_UPLOAD_NAME: tycoon
-    #     MOD_UPLOAD_FILE: tycoon.zip
+    - name: Publish version
+      if: ${{ steps.changed-files.outputs.any_modified == 'true' && steps.get-version.outputs.version != 'unreleased' }}
+      run: python upload.py
+      env:
+        MOD_UPLOAD_API_KEY: ${{ secrets.MOD_UPLOAD_API_KEY }}
+        MOD_UPLOAD_NAME: tycoon
+        MOD_UPLOAD_FILE: tycoon.zip

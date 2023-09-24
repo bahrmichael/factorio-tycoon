@@ -1,4 +1,13 @@
 ---------------------------------------------------------------------------------------------------
+Version: unreleased
+Date: 23. 09. 2023
+  Features:
+    - Introduced T-Section street shapes.
+  Changes:
+    - Apple farm now produces apples by default (and that recipe is fixed).
+  Bugfixes:
+    - Prefixed data stage records to not collide with other mods.
+---------------------------------------------------------------------------------------------------
 Version: 0.0.8
 Date: 23. 09. 2023
   Bugfixes:
