@@ -1,20 +1,6 @@
-data:extend{
-    {
-        type = "recipe-category",
-        name = "growing"
-      },
-    {
-        type = "recipe",
-        name = "tycoon-grow-apples-with-water",
-        category = "growing",
-        energy_required = 60,
-        enabled = true,
-        ingredients = {
-        { type = "fluid", name = "water", amount = 200 },
-        },
-        result = "apple",
-        result_count = 40,
-    },
-}
-
-require("item")
+require("__tycoon__/prototypes/items/apple")
+require("__tycoon__/prototypes/recipes/growing")
+require("__tycoon__/prototypes/entities/apple-farm")
+require("__tycoon__/prototypes/entities/houses")
+require("__tycoon__/prototypes/entities/town-hall")
+require("__tycoon__/prototypes/entities/water-tank")

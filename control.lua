@@ -207,7 +207,7 @@ local function initializeCity()
         }
         local removables = game.surfaces[1].find_entities_filtered({area=area})
         for _, entity in pairs(removables) do
-            if entity.valid and entity.name ~= "character" and entity.name ~= "town-hall" and entity.name ~= "water-tower" and entity.name ~= "pipe" then
+            if entity.valid and entity.name ~= "character" and entity.name ~= "tycoon-town-hall" and entity.name ~= "tycoon-water-tower" and entity.name ~= "pipe" then
                 entity.destroy()
             end
         end
@@ -228,14 +228,14 @@ local function initializeCity()
                 }
                 if cell[1] == "town-hall" then
                     local townHall = game.surfaces[1].create_entity{
-                        name = "town-hall",
+                        name = "tycoon-town-hall",
                         position = {x = startCoordinates.x - 1 + SEGMENTS.segmentSize / 2, y = startCoordinates.y - 1 + SEGMENTS.segmentSize / 2},
                         force = "player"
                     }
                     global.tycoon_town_hall = townHall
                 elseif cell[1] == "water-tower" then
                     local waterTower = game.surfaces[1].create_entity{
-                        name = "water-tower",
+                        name = "tycoon-water-tower",
                         position = {x = startCoordinates.x + SEGMENTS.segmentSize / 2, y = startCoordinates.y - 1 + SEGMENTS.segmentSize / 2},
                         force = "player"
                     }
@@ -409,7 +409,7 @@ end
 local function getRandomHouseName()
     local houseNames = {}
     for i = 1, 14, 1 do
-        table.insert(houseNames, "house-residential-" .. i)
+        table.insert(houseNames, "tycoon-house-residential-" .. i)
     end
     return houseNames[math.random(1, #houseNames)]
 end
@@ -516,7 +516,7 @@ script.on_load(function()
     tycoon_state = global.tycoon_state -- This is what's loading the previous saved city / grid
 end)
 
-script.on_init(function() 
+script.on_init(function()
     global.tycoon_state = initializeCity()
     TYCOON_STORY[1]()
     -- global.tycoon_city_building = true

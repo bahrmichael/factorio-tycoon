@@ -187,7 +187,7 @@ local story_table =
     },
     {
         condition = function() 
-            return global.tycoon_town_hall.get_item_count("apple") > 0
+            return global.tycoon_town_hall.get_item_count("tycoon-apple") > 0
         end,
         action = function()
             set_goal("")
