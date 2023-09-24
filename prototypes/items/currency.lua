@@ -1,11 +1,11 @@
 data:extend{
     {
       type = "item",
-      name = "tycoon-apple",
-      icon = "__tycoon__/graphics/icons/apple.png",
+      name = "tycoon-currency",
+      icon = "__tycoon__/graphics/icons/currency.png",
       icon_size = 64,
       subgroup = "raw-resource",
-      order = "a[tycoon-apple]",
+      order = "a[tycoon-currency]",
       stack_size = 200
     }
   }

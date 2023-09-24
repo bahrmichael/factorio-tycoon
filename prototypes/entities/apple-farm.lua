@@ -33,7 +33,7 @@ data:extend{
                 }
             },
         },
-        crafting_categories = { "growing" },
+        crafting_categories = { "tycoon-growing" },
         crafting_speed = 10,
         return_ingredients_on_change = true,
         energy_usage = "144.8KW",

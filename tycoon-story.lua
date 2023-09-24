@@ -18,6 +18,8 @@ local story_table =
         character.insert{name = "firearm-magazine", count = 1}
         character.insert{name = "electronic-circuit", count = 90}
         character.insert{name = "copper-cable", count = 38}
+        character.insert{name = "solar-panel", count = 10}
+        character.insert{name = "small-electric-pole", count = 50}
         set_info()
       end
     },

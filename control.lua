@@ -466,7 +466,6 @@ local function printCell(grid, y, x)
             printTiles(startCoordinates.y, startCoordinates.x, map, "concrete")
         end
         if key == "house" then
-
             game.surfaces[1].create_entity{
                 name = getRandomHouseName(),
                 position = {x = startCoordinates.x - 0.5 + SEGMENTS.segmentSize / 2, y = startCoordinates.y - 0.5  + SEGMENTS.segmentSize / 2},
@@ -477,8 +476,7 @@ local function printCell(grid, y, x)
     return true
 end
 
-script.on_nth_tick(60, function(event)
-
+local function cityGrowth()
     if global.tycoon_city_building == true and getGridSize() > 1 then
         local townHall = global.tycoon_town_hall
 
@@ -508,7 +506,58 @@ script.on_nth_tick(60, function(event)
             global.tycoon_state = tycoon_state
         end
     end
-  
+end
+
+local function cityBasicConsumption()
+
+    if global.tycoon_town_hall ~= nil and global.tycoon_town_hall.valid then
+        local consumption = {
+            {
+                from = global.tycoon_town_hall,
+                amount = 1,
+                resource = "tycoon-apple",
+                type = "item"
+            },
+            {
+                from = global.tycoon_water_tower,
+                amount = 10,
+                resource = "water",
+                type = "fluid"
+            }
+        }
+
+        local countNeedsMet = 0
+
+        for _, c in ipairs(consumption) do
+            if c.from ~= nil and c.from.valid then
+                if c.type == "fluid" then
+                    local availableAmount = c.from.get_fluid_count(c.resource)
+                    if availableAmount > c.amount then
+                        c.from.remove_fluid({name=c.resource, amount=c.amount})
+                        countNeedsMet = countNeedsMet + 1
+                    end
+                elseif c.type == "item" then
+                    local availableAmount = c.from.get_item_count("tycoon-apple")
+                    if availableAmount > c.amount then
+                        c.from.remove_item({name=c.resource, amount=c.amount})
+                        countNeedsMet = countNeedsMet + 1
+                    end
+                end
+            end
+        end
+    
+        if #consumption == countNeedsMet then
+            local currencyAmount = 1
+            global.tycoon_town_hall.insert{name = "tycoon-currency", count = currencyAmount}
+        else
+            game.print("Basic needs are not met. To produce currency, there has to be at least 1 apple in the town hall and 10 water in the water tower.")
+        end
+    end
+end
+
+script.on_nth_tick(60, function(event)
+    cityBasicConsumption()
+    cityGrowth()
 end)
 
 script.on_load(function()
@@ -519,6 +568,12 @@ end)
 script.on_init(function()
     global.tycoon_state = initializeCity()
     TYCOON_STORY[1]()
+
+    -- game.surfaces[1].create_entity{
+    --     name = "tycoon-university",
+    --     position = {x = 10, y = 10},
+    --     force = "player"
+    -- }
     -- global.tycoon_city_building = true
     -- global.tycoon_city_consumption = {
     --     {
