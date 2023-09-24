@@ -7,7 +7,7 @@ Date: 25. 09. 2023
   Features:
     - Introduced T-Section street shapes.
     - Introduced basic needs consumption and currency. When there are apples in the town hall and water in the water tower, then currency will appear in the town hall.
-    - Introduced university that can convert currency into science.
+    - Introduced university that can convert currency into science. 
 ---------------------------------------------------------------------------------------------------
 Version: 0.0.8
 Date: 23. 09. 2023
