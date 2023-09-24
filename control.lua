@@ -82,6 +82,8 @@ local function isOptionValid(grid, y, x, localOption)
         }
     }
 
+    local skipNeighbours = {"intersection"}
+
     for _, side in ipairs(sides) do
         -- If a side's cell is nil, then it means that this cell is
         -- not part of the grid yet and doesn't affect the collapse.
@@ -90,14 +92,15 @@ local function isOptionValid(grid, y, x, localOption)
             local localSocket = getSocket(SEGMENTS.getObjectForKey(localOption).sockets, side.direction)
             local directionFromSide = getInverseDirection(side.direction)
 
-            -- Commented this out, because I'm not sure why it's needed
-            -- if #side.cell == 1 then
-            --     if localOption == "intersection" or localOption == "linear.horizontal" or localOption == "linear.vertical" then
-            --         if side.cell[1] == localOption then
-            --             return false
-            --         end
-            --     end
-            -- end
+            -- For certain cells it makes little sense to have them next to each other.
+            -- E.g. an intersection next to an intersection looks a bit odd.
+            if #side.cell == 1 then
+                for _, skippable in ipairs(skipNeighbours) do
+                    if localOption == skippable and side.cell[1] == skippable then
+                        return false
+                    end
+                end 
+            end
 
             local hasValidOption = false
             for _, option in ipairs(side.cell) do
