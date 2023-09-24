@@ -221,17 +221,18 @@ local function initializeCity()
                 if map ~= nil then
                     clearCell(y, x)
                     printTiles((y + getOffset()) * SEGMENTS.segmentSize, (x + getOffset()) * SEGMENTS.segmentSize, map, "concrete")
+                    local startCoordinates = {
+                        y = (y + getOffset()) * SEGMENTS.segmentSize,
+                        x = (x + getOffset()) * SEGMENTS.segmentSize,
+                    }
                     if cell[1] == "town-hall" then
-                        local startCoordinates = {
-                            y = (y + getOffset()) * SEGMENTS.segmentSize,
-                            x = (x + getOffset()) * SEGMENTS.segmentSize,
-                        }
                         local townHall = game.surfaces[1].create_entity{
                             name = "town-hall",
                             position = {x = startCoordinates.x - 1 + SEGMENTS.segmentSize / 2, y = startCoordinates.y - 1  + SEGMENTS.segmentSize / 2},
                             force = "player"
                         }
                         global.tycoon_town_hall = townHall
+                    elseif cell[1] == "water-tower" then
                         local waterTower = game.surfaces[1].create_entity{
                             name = "water-tower",
                             position = {x = startCoordinates.x + SEGMENTS.segmentSize / 2, y = startCoordinates.y - 1 * SEGMENTS.segmentSize + SEGMENTS.segmentSize / 2},
