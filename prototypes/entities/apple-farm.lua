@@ -1,0 +1,46 @@
+data:extend{
+    {
+        type = "assembling-machine",
+        name = "tycoon-apple-farm",
+        icon = "__tycoon__/graphics/entity/apple-farm/apple-farm.png",
+        icon_size = 64,
+        max_health = 200,
+        fixed_recipe = "tycoon-grow-apples-with-water",
+        fluid_boxes = {
+            {
+                production_type = "input",
+                base_area = 10,
+                height = 2,
+                base_level = -1,
+                pipe_connections = {
+                { type = "input", position = { 7, 0 } },
+                },
+            },
+            off_when_no_fluid_recipe = false,
+        },
+        collision_box = { { -6.9, -5.4}, {6.9, 6.9} },
+        selection_box = { { -6.9, -5.4}, {6.9, 6.9} },
+        window_bounding_box = { { -0.125, 0.6875 }, { 0.1875, 1.1875 } },
+        animation = {
+            layers = {
+                {
+                filename = "__tycoon__/graphics/entity/apple-farm/apple-farm.png",
+                priority = "high",
+                width = 500,
+                height = 500,
+                shift = {0, 0},
+                scale = 1
+                }
+            },
+        },
+        crafting_categories = { "growing" },
+        crafting_speed = 10,
+        return_ingredients_on_change = true,
+        energy_usage = "144.8KW",
+        energy_source = {
+            type = "electric",
+            usage_priority = "secondary-input",
+            emissions_per_minute = -5,
+        },
+    }
+}

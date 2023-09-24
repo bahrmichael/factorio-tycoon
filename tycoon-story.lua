@@ -71,7 +71,7 @@ local story_table =
     }, 
     {
         condition = function() 
-            return global.town_hall.get_item_count("stone") >= 10
+            return global.tycoon_town_hall.get_item_count("stone") >= 10
         end,
         action = function()
             set_goal("")
@@ -81,7 +81,7 @@ local story_table =
     },
     {
         condition = function() 
-            return global.town_hall.get_item_count("stone") == 0
+            return global.tycoon_town_hall.get_item_count("stone") == 0
         end,
         action =
         function()
@@ -109,7 +109,7 @@ local story_table =
     },
     {
         condition = function() 
-            return global.town_hall.get_item_count("stone") >= 20 and global.town_hall.get_item_count("iron-plate") >= 20
+            return global.tycoon_town_hall.get_item_count("stone") >= 20 and global.tycoon_town_hall.get_item_count("iron-plate") >= 20
         end,
         action = function()
             set_goal("")
@@ -127,7 +127,7 @@ local story_table =
     },
     {
         condition = function() 
-            return (global.water_tower.get_fluid_contents().water or 0) > 50
+            return (global.tycoon_water_tower.get_fluid_contents().water or 0) > 50
         end,
         action = function()
             set_goal("")
@@ -187,7 +187,7 @@ local story_table =
     },
     {
         condition = function() 
-            return global.town_hall.get_item_count("apple") > 0
+            return global.tycoon_town_hall.get_item_count("tycoon-apple") > 0
         end,
         action = function()
             set_goal("")
@@ -203,7 +203,7 @@ local story_table =
     },
     {
         condition = function() 
-            return global.town_hall.get_item_count("stone") == -1
+            return global.tycoon_town_hall.get_item_count("stone") == -1
         end,
         action =
         function()
