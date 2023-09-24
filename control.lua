@@ -406,6 +406,14 @@ local function removeColldingEntities(area)
     end
 end
 
+local function getRandomHouseName()
+    local houseNames = {}
+    for i = 1, 14, 1 do
+        table.insert(houseNames, "house-residential-" .. i)
+    end
+    return houseNames[math.random(1, #houseNames)]
+end
+
 local function printCell(grid, y, x)
 
     local startCoordinates = {
@@ -457,17 +465,14 @@ local function printCell(grid, y, x)
         if map ~= nil then
             printTiles(startCoordinates.y, startCoordinates.x, map, "concrete")
         end
-    elseif key == "house" then
-        printTiles(startCoordinates.y, startCoordinates.x, SEGMENTS.house.map, "refined-concrete")
-        local houseNames = {}
-        for i = 1, 14, 1 do
-            table.insert(houseNames, "house-residential-" .. i)
-          end
-        game.surfaces[1].create_entity{
-            name = houseNames[math.random(1, #houseNames)],
-            position = {x = startCoordinates.x - 0.5 + SEGMENTS.segmentSize / 2, y = startCoordinates.y - 0.5  + SEGMENTS.segmentSize / 2},
-            force = "player"
-        }
+        if key == "house" then
+
+            game.surfaces[1].create_entity{
+                name = getRandomHouseName(),
+                position = {x = startCoordinates.x - 0.5 + SEGMENTS.segmentSize / 2, y = startCoordinates.y - 0.5  + SEGMENTS.segmentSize / 2},
+                force = "player"
+            }
+        end
     end
     return true
 end

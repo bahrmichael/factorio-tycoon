@@ -310,15 +310,15 @@ function SEGMENTS.getWeightForKey(key)
     elseif key == "corner.rightToBottom" then
         return SEGMENTS.street.corner.rightToBottom.weight
     elseif key == "corner.bottomToLeft" then
-        return SEGMENTS.street.corner.bottomToLeft.map
+        return SEGMENTS.street.corner.bottomToLeft.weight
     elseif key == "tSection.noBottom" then
-        return SEGMENTS.street.tSection.noBottom.map
+        return SEGMENTS.street.tSection.noBottom.weight
     elseif key == "tSection.noLeft" then
-        return SEGMENTS.street.tSection.noLeft.map
+        return SEGMENTS.street.tSection.noLeft.weight
     elseif key == "tSection.noTop" then
-        return SEGMENTS.street.tSection.noTop.map
+        return SEGMENTS.street.tSection.noTop.weight
     elseif key == "tSection.noRight" then
-        return SEGMENTS.street.tSection.noRight.map
+        return SEGMENTS.street.tSection.noRight.weight
     elseif key == "house" then
         return SEGMENTS.house.weight
     elseif key == "empty" then
