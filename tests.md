@@ -1,2 +1,0 @@
-- Test that the game initializes correctly
-- Test that the game can be saved and reloaded after a bit of progress
