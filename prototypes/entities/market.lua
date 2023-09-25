@@ -21,7 +21,7 @@ data:extend{
                     width = 180,
                     height = 180,
                     scale = 1.1,
-                    shift = {0.5, 0}
+                    shift = {0, 0}
                 },
             }
         },
