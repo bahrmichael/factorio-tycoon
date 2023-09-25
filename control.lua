@@ -6,11 +6,11 @@ local function getGridSize(grid)
 end
 
 local function getOffsetX(city)
-    return -1 * (getGridSize(city.grid) - 1) / 2 + city.centerX
+    return -1 * (getGridSize(city.grid) - 1) / 2 + (city.centerX or 0)
 end
 
 local function getOffsetY(city)
-    return -1 * (getGridSize(city.grid) - 1) / 2 + city.centerY
+    return -1 * (getGridSize(city.grid) - 1) / 2 + (city.centerY or 0)
 end
 
 local function printTiles(startY, startX, map, tileName)
@@ -183,10 +183,65 @@ local function expand_grid_and_circle(city)
     local old_radius = old_size / 2
     local new_radius = old_radius + 1
 
-    global.tycoon_city_size_tiles = new_radius * SEGMENTS.segmentSize
-
     -- Update the new circle in the existing grid
     fill_circle(city, new_radius)
+end
+
+
+local function hasCliffsOrWater(area)
+    local tiles = game.surfaces[1].find_tiles_filtered{
+        area = area
+    }
+    for _, tile in pairs(tiles) do
+        if tile.name == "water" or tile.name == "cliff" then
+            return true
+        end
+    end
+    return false
+end
+
+local function isAreaFree(area)
+    -- Water / Cliffs
+    if hasCliffsOrWater(area) then
+        return false
+    end
+
+    -- Too many trees / Other entities
+    local entitiesForTrees = game.surfaces[1].find_entities_filtered({area=area})
+    local treeCount = 0
+    local nonTreeCount = 0
+    for _, entity in pairs(entitiesForTrees) do
+        if entity.valid then
+            if string.find(entity.name, "tree-", 1, true) then
+                treeCount = treeCount + 1
+            else
+                nonTreeCount = nonTreeCount + 1
+            end
+        end
+    end
+    if nonTreeCount > 0 or treeCount > 5 then
+        return false
+    end
+
+    return true
+end
+
+local function find_free_position(start_x, start_y, test_area, grid)
+
+    -- This is just something that can keep track of an expanding circle. We're passing the top level grid through
+    -- so that another function can determine its size.
+    local localGrid = {}
+
+    while true do
+        local pendingCells = {}
+        expand_grid_and_circle({grid = localGrid, pending_cells = pendingCells })
+
+        for _, cell in ipairs(pendingCells) do
+            if test_area(start_x + cell.x, start_y + cell.y, grid) then
+                return {x=cell.x, y=cell.y}
+            end
+        end
+    end
 end
 
 local function initializeCity(city)
@@ -195,6 +250,22 @@ local function initializeCity(city)
         {{"linear.vertical"}, {"town-hall"},         {"linear.vertical"}},
         {{"intersection"},    {"linear.horizontal"}, {"intersection"}},
     }
+
+    local function isCityAreaFree(centerX, centerY, grid)
+        local xStart = (centerX * SEGMENTS.segmentSize) + getOffsetX({grid=grid})
+        local yStart = (centerY * SEGMENTS.segmentSize) + getOffsetY({grid=grid})
+        local area = {
+            {xStart, yStart},
+            {xStart + (SEGMENTS.segmentSize * getGridSize(grid)), yStart + (SEGMENTS.segmentSize * getGridSize(grid))}
+        }
+
+        local isFree = not hasCliffsOrWater(area)
+        return isFree
+    end
+
+    local start = find_free_position(city.centerX, city.centerY, isCityAreaFree, city.grid)
+    city.centerX = start.x
+    city.centerY = start.y
 
     local function clearCell(y, x)
         local xStart = (x * SEGMENTS.segmentSize) + getOffsetX(city)
@@ -239,6 +310,7 @@ local function initializeCity(city)
 
     -- Add an other ring and start collapsing cells
     expand_grid_and_circle(city)
+
     for y = 1, getGridSize(city.grid) do
         for x = 1, getGridSize(city.grid) do
             reduceCell(city.grid, y, x)
@@ -425,39 +497,11 @@ local function printCell(y, x, city)
         {startCoordinates.x + SEGMENTS.segmentSize, startCoordinates.y + SEGMENTS.segmentSize}
     }
 
-    local hasWaterOrCliffs = false
-    local tiles = game.surfaces[1].find_tiles_filtered{
-        area = area
-    }
-    for _, tile in pairs(tiles) do
-        if tile.name == "water" or tile.name == "cliff" then
-            hasWaterOrCliffs = true
-            break
-        end
-    end
-     
-    if hasWaterOrCliffs then
-        return false
-    end
-    
-    local entitiesForTrees = game.surfaces[1].find_entities_filtered({area=area})
-    local treeCount = 0
-    for _, entity in pairs(entitiesForTrees) do
-        if entity.valid and string.find(entity.name, "tree-", 1, true) then
-            treeCount = treeCount + 1
-        end
-    end
-    if treeCount > 5 then
-        return false
+    if not isAreaFree(area) then
+        return
     end
     
     removeColldingEntities(area)
-    
-    local entities = game.surfaces[1].find_entities_filtered({area=area})
-    -- Don't attempt to build over entities (which includes the character and anything they built)
-    if #entities > 0 then
-        return
-    end
 
     local key = grid[y][x][1]
     if key ~= "empty" then
@@ -483,7 +527,6 @@ local function printCell(y, x, city)
             end
         end
     end
-    return true
 end
 
 local function cityGrowth(city)
@@ -591,10 +634,22 @@ script.on_nth_tick(60, function(event)
         if basicNeedsMet then
             cityGrowth(city)
         end
+        -- We need to initialize the tag here, because tags can only be placed on charted chunks.
+        -- And the game needs a moment to start and chart the initial chunks, even if it can already place entities.
+        if city.tag == nil then
+            local tag = game.forces.player.add_chart_tag(game.surfaces[1],
+                {
+                    position = {x = city.special_buildings.town_hall.position.x, y = city.special_buildings.town_hall.position.y}, 
+                    text = city.name .. " Town Center"
+                }
+            )
+            city.tag = tag
+        end
     end
 end)
 
 script.on_init(function()
+
     global.tycoon_cities = {{
         grid = {},
         pending_cells = {},
@@ -621,8 +676,10 @@ script.on_init(function()
         constructionNeeds = {
             strone = 1
         },
-        centerX = 1,
-        centerY = 1,
+        centerX = 8,
+        centerY = -3,
+        hasTag = false,
+        name = "Your First City"
     }}
     initializeCity(global.tycoon_cities[1])
     TYCOON_STORY[1]()

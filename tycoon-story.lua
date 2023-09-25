@@ -182,16 +182,17 @@ local story_table =
                     end
                 end
             end
-            clearArea({
-                {0 - 5, global.tycoon_city_size_tiles + 15},
-                {0 + 5, global.tycoon_city_size_tiles + 25},
-            })
-           local appleFarm = game.surfaces[1].create_entity{
-                name = "tycoon-apple-farm",
-                position = {x = 0, y = global.tycoon_city_size_tiles + 20},
-                force = "player"
-            }
-            global.tycoon_apple_farm = appleFarm
+            -- commented it out because I dropped the field tycoon_city_size_tiles
+        --     clearArea({
+        --         {0 - 5, global.tycoon_city_size_tiles + 15},
+        --         {0 + 5, global.tycoon_city_size_tiles + 25},
+        --     })
+        --    local appleFarm = game.surfaces[1].create_entity{
+        --         name = "tycoon-apple-farm",
+        --         position = {x = 0, y = global.tycoon_city_size_tiles + 20},
+        --         force = "player"
+        --     }
+            -- global.tycoon_apple_farm = appleFarm
         end
     },
     {
