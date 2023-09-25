@@ -1,13 +1,8 @@
 SEGMENTS = require("segments")
 TYCOON_STORY = require("tycoon-story")
 
-local tycoon_state = {
-    grid = nil,
-    pendingCells = {},
-}
-
 local function getGridSize()
-    return #tycoon_state.grid
+    return #global.tycoon_city.grid
 end
 
 local function getOffset()
@@ -158,7 +153,7 @@ local function fill_circle(grid, radius)
                 local d = math.sqrt(dx * dx + dy * dy)
                 if d <= radius then
                     grid[y][x] = table.shallow_copy_tycoon(SEGMENTS.allPossibilities)
-                    table.insert(tycoon_state.pendingCells, {y = y, x = x})
+                    table.insert(global.tycoon_city.pending_cells, {y = y, x = x})
                 end
             end
         end
@@ -190,11 +185,11 @@ local function expand_grid_and_circle(grid)
     fill_circle(grid, new_radius)
 end
 
-local function initializeCity()
-    tycoon_state.grid = {
-        {{"tSection.noRight"},    {"water-tower"},       {"tSection.noLeft"}},
-        {{"linear.vertical"},     {"town-hall"},         {"linear.vertical"}},
-        {{"intersection"},        {"linear.horizontal"}, {"intersection"}},
+local function initializeCity(city)
+    city.grid = {
+        {{"intersection"},    {"linear.horizontal"}, {"intersection"}},
+        {{"linear.vertical"}, {"town-hall"},         {"linear.vertical"}},
+        {{"intersection"},    {"linear.horizontal"}, {"intersection"}},
     }
 
     local function clearCell(y, x)
@@ -207,7 +202,7 @@ local function initializeCity()
         }
         local removables = game.surfaces[1].find_entities_filtered({area=area})
         for _, entity in pairs(removables) do
-            if entity.valid and entity.name ~= "character" and entity.name ~= "tycoon-town-hall" and entity.name ~= "tycoon-water-tower" and entity.name ~= "pipe" then
+            if entity.valid and entity.name ~= "character" and entity.name ~= "tycoon-town-hall" then
                 entity.destroy()
             end
         end
@@ -215,7 +210,7 @@ local function initializeCity()
 
     for y = 1, getGridSize() do
         for x = 1, getGridSize() do
-            local cell = tycoon_state.grid[y][x]
+            local cell = city.grid[y][x]
             if cell ~= nil then
                 local map = SEGMENTS.getMapForKey(cell[1])
                 clearCell(y, x)
@@ -232,35 +227,23 @@ local function initializeCity()
                         position = {x = startCoordinates.x - 1 + SEGMENTS.segmentSize / 2, y = startCoordinates.y - 1 + SEGMENTS.segmentSize / 2},
                         force = "player"
                     }
-                    global.tycoon_town_hall = townHall
-                elseif cell[1] == "water-tower" then
-                    local waterTower = game.surfaces[1].create_entity{
-                        name = "tycoon-water-tower",
-                        position = {x = startCoordinates.x + SEGMENTS.segmentSize / 2, y = startCoordinates.y - 1 + SEGMENTS.segmentSize / 2},
-                        force = "player"
-                    }
-                    game.surfaces[1].create_entity{
-                        name = "pipe",
-                        position = {x = waterTower.position.x + 2, y = waterTower.position.y},
-                        force = "player"
-                    }
-                    global.tycoon_water_tower = waterTower
+                    global.tycoon_city.special_buildings.town_hall = townHall
                 end
             end
         end
     end
 
     -- Add an other ring and start collapsing cells
-    expand_grid_and_circle(tycoon_state.grid)
+    expand_grid_and_circle(city.grid)
     for y = 1, getGridSize() do
         for x = 1, getGridSize() do
-            reduceCell(tycoon_state.grid, y, x)
+            reduceCell(city.grid, y, x)
         end
     end
 end
 
 local function popRandomLowEntropyElementFromTable(t)
-    assert(tycoon_state.grid ~= nil, "Grid must not be nil. Has it been initialized?")
+    assert(global.tycoon_city.grid ~= nil, "Grid must not be nil. Has it been initialized?")
     assert(t ~= nil, "Table must not be nil. Has it been initialized?")
     if #t == 0 then
         return nil
@@ -296,7 +279,7 @@ local function popRandomLowEntropyElementFromTable(t)
             }
         }
         for _, neighbour in ipairs(neighbours) do
-            local neighbourRow = tycoon_state.grid[neighbour.y]
+            local neighbourRow = global.tycoon_city.grid[neighbour.y]
             if neighbourRow ~= nil then
                 local neighbourCell = neighbourRow[neighbour.y]
                 if neighbourCell ~= nil and #neighbourCell == 1 and neighbourCell[1] ~= "empty" then
@@ -414,6 +397,17 @@ local function getRandomHouseName()
     return houseNames[math.random(1, #houseNames)]
 end
 
+local function getPriorityBuilding()
+    local priorityBuildings = global.tycoon_city.priority_buildings
+    if priorityBuildings == nil or #priorityBuildings == 0 then
+        return nil
+    end
+    table.sort(global.tycoon_city.priority_buildings, function (a, b)
+        return (b.priority or 0) > (a.priority or 0)
+    end)
+    return table.remove(global.tycoon_city.priority_buildings, 1)
+end
+
 local function printCell(grid, y, x)
 
     local startCoordinates = {
@@ -466,11 +460,21 @@ local function printCell(grid, y, x)
             printTiles(startCoordinates.y, startCoordinates.x, map, "concrete")
         end
         if key == "house" then
-            game.surfaces[1].create_entity{
-                name = getRandomHouseName(),
-                position = {x = startCoordinates.x - 0.5 + SEGMENTS.segmentSize / 2, y = startCoordinates.y - 0.5  + SEGMENTS.segmentSize / 2},
-                force = "player"
-            }
+            local priorityBuilding = getPriorityBuilding()
+            if priorityBuilding ~= nil then
+                local building = game.surfaces[1].create_entity{
+                    name = priorityBuilding.name,
+                    position = {x = startCoordinates.x - 0.5 + SEGMENTS.segmentSize / 2, y = startCoordinates.y - 0.5  + SEGMENTS.segmentSize / 2},
+                    force = "player"
+                }
+                table.insert(global.tycoon_city.special_buildings.others, { name = priorityBuilding.name, entity = building })
+            else
+                game.surfaces[1].create_entity{
+                    name = getRandomHouseName(),
+                    position = {x = startCoordinates.x - 0.5 + SEGMENTS.segmentSize / 2, y = startCoordinates.y - 0.5  + SEGMENTS.segmentSize / 2},
+                    force = "player"
+                }
+            end
         end
     end
     return true
@@ -478,7 +482,7 @@ end
 
 local function cityGrowth()
     if global.tycoon_city_building == true and getGridSize() > 1 then
-        local townHall = global.tycoon_town_hall
+        local townHall = global.tycoon_city.special_buildings.town_hall
 
         if townHall ~= nil and townHall.valid then
             local requiredResources = global.tycoon_city_consumption
@@ -495,61 +499,87 @@ local function cityGrowth()
                 townHall.remove_item{name = resource.resource, count = resource.amount}
             end
 
-            local nextCell = popRandomLowEntropyElementFromTable(tycoon_state.pendingCells)
+            local nextCell = popRandomLowEntropyElementFromTable(global.tycoon_city.pending_cells)
             if nextCell == nil then
-                expand_grid_and_circle(tycoon_state.grid)
+                expand_grid_and_circle(global.tycoon_city.grid)
             else
-                reduceCell(tycoon_state.grid, nextCell.y, nextCell.x)
-                collapseCell(tycoon_state.grid, nextCell.y, nextCell.x)
-                printCell(tycoon_state.grid, nextCell.y, nextCell.x)
+                reduceCell(global.tycoon_city.grid, nextCell.y, nextCell.x)
+                collapseCell(global.tycoon_city.grid, nextCell.y, nextCell.x)
+                printCell(global.tycoon_city.grid, nextCell.y, nextCell.x)
             end
-            global.tycoon_state = tycoon_state
         end
     end
 end
 
+local function findSpecialBuildings(name)
+    local result = {}
+    for _, building in ipairs(global.tycoon_city.special_buildings.others) do
+        if building.name == name then
+            table.insert(result, building.entity)
+        end
+    end
+    return result
+end
+
+local basicConsumption = {
+    market = {
+        {
+            amount = 1,
+            resource = "tycoon-apple",
+        },
+    },
+    waterTower = {
+        amount = 10,
+        resource = "water",
+    }
+}
+
 local function cityBasicConsumption()
 
-    if global.tycoon_town_hall ~= nil and global.tycoon_town_hall.valid then
-        local consumption = {
-            {
-                from = global.tycoon_town_hall,
-                amount = 1,
-                resource = "tycoon-apple",
-                type = "item"
-            },
-            {
-                from = global.tycoon_water_tower,
-                amount = 10,
-                resource = "water",
-                type = "fluid"
-            }
-        }
+    local markets = findSpecialBuildings("tycoon-market")
+    local waterTowers = findSpecialBuildings("tycoon-water-tower")
 
-        local countNeedsMet = 0
+    local countNeedsMet = 0
 
-        for _, c in ipairs(consumption) do
-            if c.from ~= nil and c.from.valid then
-                if c.type == "fluid" then
-                    local availableAmount = c.from.get_fluid_count(c.resource)
-                    if availableAmount > c.amount then
-                        c.from.remove_fluid({name=c.resource, amount=c.amount})
-                        countNeedsMet = countNeedsMet + 1
-                    end
-                elseif c.type == "item" then
-                    local availableAmount = c.from.get_item_count("tycoon-apple")
-                    if availableAmount > c.amount then
-                        c.from.remove_item({name=c.resource, amount=c.amount})
-                        countNeedsMet = countNeedsMet + 1
-                    end
+    if #markets >= 1 then
+        for _, consumption in ipairs(basicConsumption.market) do
+            local marketsWithSupply = {}
+            for _, market in ipairs(markets) do
+                local marketItemCount = market.get_item_count(consumption.resource)
+                if marketItemCount >= consumption.amount then
+                    table.insert(marketsWithSupply, market)
                 end
             end
+            if #marketsWithSupply > 0 then
+                local randomMarket = marketsWithSupply[math.random(#marketsWithSupply)]
+                randomMarket.remove_item({name = consumption.resource, amount = consumption.amount})
+                countNeedsMet = countNeedsMet + 1
+            end
         end
-    
-        if #consumption == countNeedsMet then
-            local currencyAmount = 1
-            global.tycoon_town_hall.insert{name = "tycoon-currency", count = currencyAmount}
+    end
+    if #waterTowers >= 1 then
+        for _, consumption in ipairs(basicConsumption.waterTower) do
+            local waterTowersWithSupply = {}
+            for _, waterTower in ipairs(waterTowers) do
+                local towerFluidCount = waterTower.get_fluid_count(consumption.resource)
+                if towerFluidCount >= consumption.amount then
+                    table.insert(waterTowersWithSupply, waterTower)
+                end
+            end
+            if #waterTowersWithSupply > 0 then
+                local randomWaterTower = waterTowersWithSupply[math.random(#waterTowersWithSupply)]
+                randomWaterTower.remove_fluid({name = consumption.resource, amount = consumption.amount})
+                countNeedsMet = countNeedsMet + 1
+            end
         end
+    end
+
+    if (#basicConsumption.market + #basicConsumption.waterTower) == countNeedsMet then
+        local treasuries = findSpecialBuildings("tycoon-treasury")
+        -- todo: filter out treasuries that are full
+        local randomTreasury = treasuries[math.random(#treasuries)]
+        local currencyAmount = 1
+        randomTreasury.insert{name = "tycoon-currency", count = currencyAmount}
     end
 end
 
@@ -558,18 +588,27 @@ script.on_nth_tick(60, function(event)
     cityGrowth()
 end)
 
-script.on_load(function()
-    -- We're assuming that the city was initialized during the on_init hook, and that the player didn't break this
-    tycoon_state = global.tycoon_state -- This is what's loading the previous saved city / grid
-end)
+-- script.on_load(function()
+--     -- We're assuming that the city was initialized during the on_init hook, and that the player didn't break this
+--     tycoon_state = global.tycoon_state -- This is what's loading the previous saved city / grid
+-- end)
 
 script.on_init(function()
-    global.tycoon_state = initializeCity()
+    global.tycoon_city = {
+        grid = nil,
+        pending_cells = {},
+        priority_buildings = {},
+        special_buildings = {
+            town_hall = nil,
+            others = {},
+        }
+    }
+    initializeCity(global.tycoon_city)
     TYCOON_STORY[1]()
 
     -- game.surfaces[1].create_entity{
-    --     name = "tycoon-university",
-    --     position = {x = 10, y = 10},
+    --     name = "tycoon-treasury",
+    --     position = {x = 5, y = 5},
     --     force = "player"
     -- }
     -- global.tycoon_city_building = true
