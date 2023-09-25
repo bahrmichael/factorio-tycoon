@@ -550,9 +550,11 @@ local function cityBasicConsumption()
                     table.insert(marketsWithSupply, market)
                 end
             end
-            local randomMarket = marketsWithSupply[math.random(#marketsWithSupply)]
-            randomMarket.remove_item({name = consumption.resource, amount = consumption.amount})
-            countNeedsMet = countNeedsMet + 1
+            if #marketsWithSupply > 0 then
+                local randomMarket = marketsWithSupply[math.random(#marketsWithSupply)]
+                randomMarket.remove_item({name = consumption.resource, amount = consumption.amount})
+                countNeedsMet = countNeedsMet + 1
+            end
         end
     end
     if #waterTowers >= 1 then
@@ -564,9 +566,11 @@ local function cityBasicConsumption()
                     table.insert(waterTowersWithSupply, waterTower)
                 end
             end
-            local randomWaterTower = waterTowersWithSupply[math.random(#waterTowersWithSupply)]
-            randomWaterTower.remove_fluid({name = consumption.resource, amount = consumption.amount})
-            countNeedsMet = countNeedsMet + 1
+            if #waterTowersWithSupply > 0 then
+                local randomWaterTower = waterTowersWithSupply[math.random(#waterTowersWithSupply)]
+                randomWaterTower.remove_fluid({name = consumption.resource, amount = consumption.amount})
+                countNeedsMet = countNeedsMet + 1
+            end
         end
     end
 
