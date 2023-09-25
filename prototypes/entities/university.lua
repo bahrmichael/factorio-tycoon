@@ -16,7 +16,7 @@ data:extend{
                     priority = "high",
                     width = 800,
                     height = 800,
-                    shift = {0, 0},
+                    shift = {0, -1},
                     scale = 1
                 }
             },
