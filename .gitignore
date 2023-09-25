@@ -4,3 +4,4 @@ secret
 *.zip
 .DS_STORE
 .vscode/settings.json
+info.json
