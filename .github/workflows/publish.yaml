@@ -46,7 +46,7 @@ jobs:
         cp *.lua tycoon/
         cp info.json tycoon/
         cp thumbnail.png tycoon/
-        cp prototypes tycoon/
+        cp -R prototypes tycoon/
         cp changelog.txt tycoon/
 
     - name: Create a zip file
