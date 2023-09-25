@@ -549,8 +549,6 @@ local function cityBasicConsumption()
         if #consumption == countNeedsMet then
             local currencyAmount = 1
             global.tycoon_town_hall.insert{name = "tycoon-currency", count = currencyAmount}
-        else
-            game.print("Basic needs are not met. To produce currency, there has to be at least 1 apple in the town hall and 10 water in the water tower.")
         end
     end
 end
