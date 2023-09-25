@@ -173,26 +173,7 @@ local story_table =
         action =
         function()
            think("blue", "captain", "story-13")
-           -- todo: instead of clearing the area, try to find a spot where we can place it freely
-           local function clearArea(area)
-                local removables = game.surfaces[1].find_entities_filtered({area=area})
-                for _, entity in pairs(removables) do
-                    if entity.valid and entity.name ~= "character" and entity.name ~= "town-hall" and entity.name ~= "tycoon-water-tower" then
-                        entity.destroy()
-                    end
-                end
-            end
-            -- commented it out because I dropped the field tycoon_city_size_tiles
-        --     clearArea({
-        --         {0 - 5, global.tycoon_city_size_tiles + 15},
-        --         {0 + 5, global.tycoon_city_size_tiles + 25},
-        --     })
-        --    local appleFarm = game.surfaces[1].create_entity{
-        --         name = "tycoon-apple-farm",
-        --         position = {x = 0, y = global.tycoon_city_size_tiles + 20},
-        --         force = "player"
-        --     }
-            -- global.tycoon_apple_farm = appleFarm
+           global.tycoon_new_primary_industries = {{name = "tycoon-apple-farm", startCoordinates = { x = 0, y = 60}}}
         end
     },
     {
@@ -205,7 +186,7 @@ local story_table =
     },
     {
         condition = function() 
-            return not global.tycoon_apple_farm.get_output_inventory().is_empty()
+            return game.surfaces[1].count_entities_filtered{name="tycoon-university"} > 0 and not game.surfaces[1].find_entities_filtered{name="tycoon-apple-farm"}[1].get_output_inventory().is_empty()
         end,
         action = function()
             think("blue", "captain", "story-15")

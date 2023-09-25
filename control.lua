@@ -190,58 +190,35 @@ end
 
 local function hasCliffsOrWater(area)
     local tiles = game.surfaces[1].find_tiles_filtered{
-        area = area
+        area = area,
+        name = {"water", "deepwater", "cliff"},
+        limit = 1
     }
-    for _, tile in pairs(tiles) do
-        if tile.name == "water" or tile.name == "cliff" then
-            return true
-        end
-    end
-    return false
+    return #tiles > 0
 end
 
-local function isAreaFree(area)
+local function isAreaFree(area, maxTreeCount)
     -- Water / Cliffs
     if hasCliffsOrWater(area) then
         return false
     end
 
     -- Too many trees / Other entities
-    local entitiesForTrees = game.surfaces[1].find_entities_filtered({area=area})
-    local treeCount = 0
-    local nonTreeCount = 0
-    for _, entity in pairs(entitiesForTrees) do
-        if entity.valid then
-            if string.find(entity.name, "tree-", 1, true) then
-                treeCount = treeCount + 1
-            else
-                nonTreeCount = nonTreeCount + 1
-            end
-        end
-    end
-    if nonTreeCount > 0 or treeCount > 5 then
+    local entities = game.surfaces[1].find_entities_filtered({
+        area=area,
+        type="tree",
+        invert=true,
+        limit = 1,
+    })
+    if #entities > 0 then
         return false
     end
-
-    return true
-end
-
-local function find_free_position(start_x, start_y, test_area, grid)
-
-    -- This is just something that can keep track of an expanding circle. We're passing the top level grid through
-    -- so that another function can determine its size.
-    local localGrid = {}
-
-    while true do
-        local pendingCells = {}
-        expand_grid_and_circle({grid = localGrid, pending_cells = pendingCells })
-
-        for _, cell in ipairs(pendingCells) do
-            if test_area(start_x + cell.x, start_y + cell.y, grid) then
-                return {x=cell.x, y=cell.y}
-            end
-        end
-    end
+    local trees = game.surfaces[1].find_entities_filtered({
+        area=area,
+        type="tree",
+        limit = maxTreeCount,
+    })
+    return #trees < maxTreeCount
 end
 
 local function initializeCity(city)
@@ -251,33 +228,23 @@ local function initializeCity(city)
         {{"intersection"},    {"linear.horizontal"}, {"intersection"}},
     }
 
-    local function isCityAreaFree(centerX, centerY, grid)
-        local xStart = (centerX * SEGMENTS.segmentSize) + getOffsetX({grid=grid})
-        local yStart = (centerY * SEGMENTS.segmentSize) + getOffsetY({grid=grid})
-        local area = {
-            {xStart, yStart},
-            {xStart + (SEGMENTS.segmentSize * getGridSize(grid)), yStart + (SEGMENTS.segmentSize * getGridSize(grid))}
-        }
-
-        local isFree = not hasCliffsOrWater(area)
-        return isFree
-    end
-
-    local start = find_free_position(city.centerX, city.centerY, isCityAreaFree, city.grid)
-    city.centerX = start.x
-    city.centerY = start.y
+    local position = game.surfaces[1].find_non_colliding_position("tycoon-town-center-virtual", {0, 0}, 200, 5, true)
+    city.centerX = position.x
+    city.centerY = position.y
 
     local function clearCell(y, x)
-        local xStart = (x * SEGMENTS.segmentSize) + getOffsetX(city)
-        local yStart = (y * SEGMENTS.segmentSize) + getOffsetY(city)
         local area = {
             -- Add 1 tile of border around it, so that it looks a bit nicer
-            {xStart - 1, yStart -1 },
-            {xStart + SEGMENTS.segmentSize + 1, yStart + SEGMENTS.segmentSize + 1}
+            {x - 1, y - 1},
+            {x + SEGMENTS.segmentSize + 1, y + SEGMENTS.segmentSize + 1}
         }
-        local removables = game.surfaces[1].find_entities_filtered({area=area})
-        for _, entity in pairs(removables) do
-            if entity.valid and entity.name ~= "character" and entity.name ~= "tycoon-town-hall" then
+        local removables = game.surfaces[1].find_entities_filtered({
+            area=area,
+            name={"character", "tycoon-town-hall"},
+            invert=true
+        })
+        for _, entity in ipairs(removables) do
+            if entity.valid then
                 entity.destroy()
             end
         end
@@ -288,14 +255,14 @@ local function initializeCity(city)
             local cell = city.grid[y][x]
             if cell ~= nil then
                 local map = SEGMENTS.getMapForKey(cell[1])
-                clearCell(y, x)
-                if map ~= nil then
-                    printTiles((y + getOffsetY(city)) * SEGMENTS.segmentSize, (x + getOffsetX(city)) * SEGMENTS.segmentSize, map, "concrete")
-                end
                 local startCoordinates = {
                     y = (y + getOffsetY(city)) * SEGMENTS.segmentSize,
                     x = (x + getOffsetX(city)) * SEGMENTS.segmentSize,
                 }
+                clearCell(startCoordinates.y, startCoordinates.x)
+                if map ~= nil then
+                    printTiles(startCoordinates.y, startCoordinates.x, map, "concrete")
+                end
                 if cell[1] == "town-hall" then
                     local townHall = game.surfaces[1].create_entity{
                         name = "tycoon-town-hall",
@@ -497,7 +464,7 @@ local function printCell(y, x, city)
         {startCoordinates.x + SEGMENTS.segmentSize, startCoordinates.y + SEGMENTS.segmentSize}
     }
 
-    if not isAreaFree(area) then
+    if not isAreaFree(area, 10) then
         return
     end
     
@@ -628,6 +595,10 @@ local function cityBasicConsumption(city)
     return (#city.basicNeeds.market + #city.basicNeeds.waterTower) == countNeedsMet
 end
 
+local function translateEntityName(name)
+    return "Apple Farm"
+end
+
 script.on_nth_tick(60, function(event)
     for _, city in ipairs(global.tycoon_cities) do
         local basicNeedsMet = cityBasicConsumption(city)
@@ -636,7 +607,7 @@ script.on_nth_tick(60, function(event)
         end
         -- We need to initialize the tag here, because tags can only be placed on charted chunks.
         -- And the game needs a moment to start and chart the initial chunks, even if it can already place entities.
-        if city.tag == nil then
+        if city.tag == nil and city.special_buildings.town_hall ~= nil then
             local tag = game.forces.player.add_chart_tag(game.surfaces[1],
                 {
                     position = {x = city.special_buildings.town_hall.position.x, y = city.special_buildings.town_hall.position.y}, 
@@ -644,6 +615,37 @@ script.on_nth_tick(60, function(event)
                 }
             )
             city.tag = tag
+        end
+    end
+
+    if global.tycoon_new_primary_industries ~= nil and #global.tycoon_new_primary_industries > 0 then
+        for i, primaryIndustry in ipairs(global.tycoon_new_primary_industries) do
+            local x, y
+            if primaryIndustry.startCoordinates == nil then
+                local chunk = game.surfaces[1].get_random_chunk()
+                x = chunk.x * 32
+                y = chunk.y * 32
+            else
+                x = primaryIndustry.startCoordinates.x
+                y = primaryIndustry.startCoordinates.y
+            end
+            local position = game.surfaces[1].find_non_colliding_position(primaryIndustry.name, {x, y}, 200, 5, true)
+            if position ~= nil then
+                local tag = game.forces.player.add_chart_tag(game.surfaces[1],
+                    {
+                        position = {x = position.x, y = position.y},
+                        text = translateEntityName(primaryIndustry.name)
+                    }
+                )
+                if tag ~= nil then
+                    game.surfaces[1].create_entity{
+                        name = primaryIndustry.name,
+                        position = {x = position.x, y = position.y},
+                        force = "player"
+                    }
+                    table.remove(global.tycoon_new_primary_industries, i)
+                end
+            end
         end
     end
 end)
