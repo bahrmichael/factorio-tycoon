@@ -4,6 +4,7 @@ Date: 25. 09. 2023
   Features:
     - Extended the story to teach you about markets, treasuries, currency and universities.
     - There are now tags on the map for city centers and primary industries.
+    - New primary industries are automatically spawned as you explore the map.
   Bugfixes:
     - The town center and primary industries do not spawn over water anymore.
   Optimisations:
