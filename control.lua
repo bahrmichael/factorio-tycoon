@@ -599,7 +599,44 @@ local function translateEntityName(name)
     return "Apple Farm"
 end
 
+local function placePrimaryIndustryAtPosition(position, entityName)
+    if position ~= nil then
+        local tag = game.forces.player.add_chart_tag(game.surfaces[1],
+            {
+                position = {x = position.x, y = position.y},
+                text = translateEntityName(entityName)
+            }
+        )
+        if tag ~= nil then
+            return game.surfaces[1].create_entity{
+                name = entityName,
+                position = {x = position.x, y = position.y},
+                force = "player"
+            }
+        end
+    end
+    return nil
+end
+
+
+local function randomPrimaryIndustry()
+    local industries = {"tycoon-apple-farm"}
+    return industries[math.random(#industries)]
+end
+
+script.on_event(defines.events.on_chunk_charted, function (chunk)
+    if math.abs(chunk.position.x) < 5 or math.abs(chunk.position.y) < 5 then
+        return
+    end
+    if math.random() < 0.025 then
+        local industryName = randomPrimaryIndustry()
+        local position = game.surfaces[1].find_non_colliding_position_in_box(industryName, chunk.area, 2, true)
+        placePrimaryIndustryAtPosition(position, industryName)
+    end
+end)
+
 script.on_nth_tick(60, function(event)
+
     for _, city in ipairs(global.tycoon_cities) do
         local basicNeedsMet = cityBasicConsumption(city)
         if basicNeedsMet then
@@ -630,21 +667,9 @@ script.on_nth_tick(60, function(event)
                 y = primaryIndustry.startCoordinates.y
             end
             local position = game.surfaces[1].find_non_colliding_position(primaryIndustry.name, {x, y}, 200, 5, true)
-            if position ~= nil then
-                local tag = game.forces.player.add_chart_tag(game.surfaces[1],
-                    {
-                        position = {x = position.x, y = position.y},
-                        text = translateEntityName(primaryIndustry.name)
-                    }
-                )
-                if tag ~= nil then
-                    game.surfaces[1].create_entity{
-                        name = primaryIndustry.name,
-                        position = {x = position.x, y = position.y},
-                        force = "player"
-                    }
-                    table.remove(global.tycoon_new_primary_industries, i)
-                end
+            local entity = placePrimaryIndustryAtPosition(position, primaryIndustry.name)
+            if entity ~= nil then
+                table.remove(global.tycoon_new_primary_industries, i)
             end
         end
     end
@@ -684,6 +709,7 @@ script.on_init(function()
         name = "Your First City"
     }}
     initializeCity(global.tycoon_cities[1])
+
     TYCOON_STORY[1]()
 
     -- local x, y = 1,1

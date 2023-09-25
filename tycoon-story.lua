@@ -186,7 +186,14 @@ local story_table =
     },
     {
         condition = function() 
-            return game.surfaces[1].count_entities_filtered{name="tycoon-university"} > 0 and not game.surfaces[1].find_entities_filtered{name="tycoon-apple-farm"}[1].get_output_inventory().is_empty()
+            local appleFarms = game.surfaces[1].find_entities_filtered{name="tycoon-apple-farm"}
+            for _, appleFarm in ipairs(appleFarms) do
+                local hasOutput = not appleFarm.get_output_inventory().is_empty()
+                if hasOutput then
+                    return true
+                end
+            end
+            return false
         end,
         action = function()
             think("blue", "captain", "story-15")
