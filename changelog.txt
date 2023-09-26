@@ -1,10 +1,17 @@
 ---------------------------------------------------------------------------------------------------
 Version: unreleased
-Date: 25. 09. 2023
+Date: 26. 09. 2023
+  Major Features:
+    - Citizen scaling has arrived! As a town grows, the number of citizens increases.
+      You can view a city's statistics by accessing the town hall.
+      Consumption now scales with citizen count, and happens once per minute.
+      Construction will halt if basic needs are not met.
   Features:
     - Extended the story to teach you about markets, treasuries, currency and universities.
     - There are now tags on the map for city centers and primary industries.
     - New primary industries are automatically spawned as you explore the map.
+    - Citizens consume more resources, and accordingly pay more.
+    - You can now deconstruct houses to make way for your infrastructure. The city will not try to build new houses there.
   Bugfixes:
     - The town center and primary industries do not spawn over water anymore.
   Optimisations:

@@ -20,10 +20,11 @@ local story_table =
 	{  
       action = function()
         global.tycoon_city_building = false
-        global.tycoon_cities[1].basicNeeds = {
-            market = {},
-            waterTower = {}
-        }
+        global.tycoon_disable_basic_needs_consumption = true
+        -- global.tycoon_cities[1].basicNeeds = {
+        --     market = {},
+        --     waterTower = {}
+        -- }
 
         local character = game.players[1]
         character.insert{name = "inserter", count = 5}
@@ -156,8 +157,7 @@ local story_table =
         end,
         action = function()
             set_goal("")
-            global.tycoon_water_consumption = 1
-            global.tycoon_enable_water_consumption = 1
+            global.tycoon_disable_basic_needs_consumption = false
             think("green", "crew-member", "story-11")
         end
     },
@@ -206,18 +206,18 @@ local story_table =
             return market ~= nil and market.get_item_count("tycoon-apple") > 0
         end,
         action = function()
-            global.tycoon_cities[1].basicNeeds = {
-                market = {
-                    {
-                        amount = 1,
-                        resource = "tycoon-apple",
-                    },
-                },
-                waterTower = {
-                    amount = 10,
-                    resource = "water",
-                }
-            }
+            -- global.tycoon_cities[1].basicNeeds = {
+            --     market = {
+            --         {
+            --             amount = 1,
+            --             resource = "tycoon-apple",
+            --         },
+            --     },
+            --     waterTower = {
+            --         amount = 10,
+            --         resource = "water",
+            --     }
+            -- }
 
             set_goal("")
             think("green", "crew-member", "story-16")
