@@ -51,6 +51,8 @@ local story_table =
             townHall.insert{name="electric-furnace", count=2}
             townHall.insert{name="electric-mining-drill", count=2}
             townHall.insert{name="transport-belt", count=100}
+            townHall.insert{name="car", count=1}
+            townHall.insert{name="wood", count=30}
             think("green", "crew-member", "story-4")
         end
     },
@@ -59,7 +61,7 @@ local story_table =
         action =
         function()
            think("blue", "captain", "story-5")
-           set_goal({"goal-craft-water-tower"})
+           set_goal({"goal-craft-item", {"item-name.tycoon-water-tower"}})
         end
     },
     {
@@ -80,7 +82,7 @@ local story_table =
                 position={0,0},
                 radius=100
             }
-            return #waterTowers > 0 and (waterTowers[1].get_fluid_contents().water or 0) > 50
+            return #waterTowers > 0 and (waterTowers[1].get_fluid_contents().water or 0) > 1
         end,
         action = function()
             set_goal("")
@@ -117,7 +119,7 @@ local story_table =
         action =
         function()
            think("blue", "captain", "story-10")
-           set_goal({"goal-supply-apples", 50})
+           set_goal({"goal-supply-apples", 10})
         end
     },
     {
@@ -127,7 +129,7 @@ local story_table =
                 position={0,0},
                 radius=100
             }
-            return #markets > 0 and markets[1].get_item_count("tycoon-apple") >= 50
+            return #markets > 0 and markets[1].get_item_count("tycoon-apple") >= 10
         end,
         action = function()
             set_goal("")
@@ -139,7 +141,7 @@ local story_table =
         action =
         function()
            think("blue", "captain", "story-12")
-           set_goal({"goal-craft-hardware-store"})
+           set_goal({"goal-craft-item", {"item-name.tycoon-hardware-store"}})
         end
     },
     {

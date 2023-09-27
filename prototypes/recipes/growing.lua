@@ -20,7 +20,7 @@ data:extend{
         name = "tycoon-grow-wheat-with-water",
         category = "tycoon-growing",
         energy_required = 60,
-        enabled = true,
+        enabled = false,
         ingredients = {
             { type = "fluid", name = "water", amount = 200 },
         },

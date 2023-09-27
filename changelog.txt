@@ -1,9 +1,11 @@
 ---------------------------------------------------------------------------------------------------
-Version: unreleased
+Version: 0.0.14
 Date: 27. 09. 2023
+  Major Features:
+    - At 250 and 500 citizens you now unlock milk and meat supply chains. Citizens will develop new basic needs.
   Features:
-    - Added the buildings wheat farm and stable.
-    - Added the items wheat, grain, cow, and milk bottle, as well as their recipes.
+    - Added the buildings wheat farm, stable and butchery.
+    - Added the items wheat, grain, cow, milk bottle, and meat as well as their recipes.
 ---------------------------------------------------------------------------------------------------
 Version: 0.0.13
 Date: 27. 09. 2023

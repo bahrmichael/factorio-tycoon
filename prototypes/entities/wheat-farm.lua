@@ -13,7 +13,7 @@ data:extend{
                 height = 2,
                 base_level = -1,
                 pipe_connections = {
-                    { type = "input", position = { 7, 0 } },
+                    { type = "input", position = { 7.2, 0.5 } },
                 },
             },
             off_when_no_fluid_recipe = false,
@@ -30,14 +30,15 @@ data:extend{
                     width = 500,
                     height = 500,
                     shift = {0, 0},
-                    scale = 0.9
+                    scale = 0.95
                 }
             },
         },
         crafting_categories = { "tycoon-growing" },
         crafting_speed = 10,
         return_ingredients_on_change = true,
-        energy_usage = "144.8KW",
+        -- 60KW is one solar panel, makes sense to go with "solar energy" as the crops grow
+        energy_usage = "60KW",
         energy_source = {
             type = "electric",
             usage_priority = "secondary-input",

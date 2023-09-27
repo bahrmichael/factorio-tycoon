@@ -8,7 +8,7 @@ data:extend{
         name = "tycoon-cows-to-meat",
         category = "tycoon-butchery",
         energy_required = 60,
-        enabled = true,
+        enabled = false,
         ingredients = {
             { type = "item", name = "tycoon-cow", amount = 1 },
         },

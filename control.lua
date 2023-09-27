@@ -487,6 +487,41 @@ local function updateNeeds(city)
     end
 end
 
+local function updateUnlocks(city)
+    local citizenCount = city.stats.citizen_count
+    for i, v in ipairs(city.unlockables) do
+        if citizenCount >= v.threshold then
+            if v.type == "basicNeed" and v.basicNeedCategory == "market" then
+                game.print({"", {"tycoon-city-has-reached-population", v.threshold}})
+                for _, item in ipairs(v.items) do
+                    table.insert(city.basicNeeds.market, item)
+                    game.print({"", {"tycoon-city-additional-basic-need", item.amount, {"item-name." .. item.resource}}})
+                end
+                if v.supplyChain == "wheat-cow-milk" then
+                    game.forces[1].recipes['tycoon-building-stable'].enabled = true
+                    game.forces[1].recipes['tycoon-wheat-to-grain'].enabled = true
+                    game.forces[1].recipes['tycoon-grow-cows-with-grain'].enabled = true
+                    game.forces[1].recipes['tycoon-milk-cows'].enabled = true
+                    game.print({"", {"tycoon-new-building", {"entity-name.tycoon-stable"}}})
+
+                    table.insert(global.tycoon_primary_industries, "tycoon-wheat-farm")
+                    game.print({"", {"tycoon-exploration-discovers-primary-industries"}})
+                    
+                elseif v.supplyChain == "meat" then
+                    game.forces[1].recipes['tycoon-butchery'].enabled = true
+                    game.forces[1].recipes['tycoon-cows-to-meat'].enabled = true
+                    game.print({"", {"tycoon-new-building", {"entity-name.tycoon-butchery"}}})
+                end
+            else
+                game.print("Unhandled unlock: " .. v.type .. "#" .. v.basicNeedCategory)
+            end
+            updateNeeds(city)
+            table.remove(city.unlockables, i)
+            return
+        end
+    end
+end
+
 local function printCell(y, x, city)
 
     local grid = city.grid
@@ -533,6 +568,7 @@ local function printCell(y, x, city)
                 }
                 city.stats.citizen_count = city.stats.citizen_count + 4
                 updateNeeds(city)
+                updateUnlocks(city)
                 script.register_on_entity_destroyed(house)
                 global.tycoon_city_buildings[house.unit_number] = {
                     cityId = city.id,
@@ -686,6 +722,8 @@ end
 local function getItemForPrimaryProduction(name)
     if name == "tycoon-apple-farm" then
         return "tycoon-apple"
+    elseif name == "tycoon-wheat-farm" then
+        return "tycoon-wheat"
     else
         return "Unknown"
     end
@@ -714,7 +752,7 @@ local function placePrimaryIndustryAtPosition(position, entityName)
 end
 
 local function randomPrimaryIndustry()
-    local industries = {"tycoon-apple-farm"}
+    local industries = global.tycoon_primary_industries
     return industries[math.random(#industries)]
 end
 
@@ -744,7 +782,7 @@ script.on_event(defines.events.on_entity_destroyed, function(event)
 end)
 
 script.on_event(defines.events.on_chunk_charted, function (chunk)
-    if math.abs(chunk.position.x) < 5 or math.abs(chunk.position.y) < 5 then
+    if math.abs(chunk.position.x) < 5 and math.abs(chunk.position.y) < 5 then
         return
     end
     if math.random() < 0.25 then
@@ -909,10 +947,38 @@ script.on_init(function()
             citizen_count = 5,
             basic_needs = {}
         },
-        constructionProbability = 1.0
+        constructionProbability = 1.0,
+        unlockables = {
+            {
+                threshold = 250,
+                type = "basicNeed",
+                basicNeedCategory = "market",
+                items = {
+                    {
+                        amount = 1,
+                        resource = "tycoon-milk-bottle",
+                    },
+                },
+                supplyChain = "wheat-cow-milk"
+            },
+            {
+                threshold = 500,
+                type = "basicNeed",
+                basicNeedCategory = "market",
+                items = {
+                    {
+                        amount = 1,
+                        resource = "tycoon-meat",
+                    },
+                },
+                supplyChain = "meat"
+            }
+        }
     }}
     initializeCity(global.tycoon_cities[1])
     updateNeeds(global.tycoon_cities[1])
+
+    global.tycoon_primary_industries = {"tycoon-apple-farm", "tycoon-wheat-farm"}
 
     TYCOON_STORY[1]()
 
@@ -923,11 +989,12 @@ script.on_init(function()
     -- }
     -- printTiles(startCoordinates.x, startCoordinates.y, SEGMENTS.house.map, "concrete")
     -- game.surfaces[1].create_entity{
-    --     name = "tycoon-university",
-    --     position = {x = 0, y = 60},
+    --     name = "tycoon-stable",
+    --     position = {x = 0, y = 20},
     --     force = "player"
     -- }
 
         -- /c game. player. insert{ name="stone", count=1000 }
         -- /c game. player. insert{ name="tycoon-water-tower", count=1 }
+        -- /c game. player. insert{ name="tycoon-cow", count=100 }
 end)

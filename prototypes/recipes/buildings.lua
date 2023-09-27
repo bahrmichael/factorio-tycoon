@@ -52,7 +52,7 @@ data:extend{
         type = "recipe",
         name = "tycoon-building-stable",
         category = "crafting",
-        enabled = true,
+        enabled = false,
         ingredients = {
             { type = "item", name = "stone", amount = 20 },
             { type = "item", name = "iron-plate", amount = 5 },
@@ -64,7 +64,7 @@ data:extend{
         type = "recipe",
         name = "tycoon-butchery",
         category = "crafting",
-        enabled = true,
+        enabled = false,
         ingredients = {
             { type = "item", name = "stone", amount = 50 },
             { type = "item", name = "iron-plate", amount = 30 },
