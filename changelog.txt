@@ -1,4 +1,10 @@
 ---------------------------------------------------------------------------------------------------
+Version: unreleased
+Date: 27. 09. 2023
+  Features:
+    - Added the buildings wheat farm and stable.
+    - Added the items wheat, grain, cow, and milk bottle, as well as their recipes.
+---------------------------------------------------------------------------------------------------
 Version: 0.0.13
 Date: 27. 09. 2023
   Major Features:
