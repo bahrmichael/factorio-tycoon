@@ -60,4 +60,16 @@ data:extend{
         result = "tycoon-stable",
         result_count = 1,
     },
+    {
+        type = "recipe",
+        name = "tycoon-butchery",
+        category = "crafting",
+        enabled = true,
+        ingredients = {
+            { type = "item", name = "stone", amount = 50 },
+            { type = "item", name = "iron-plate", amount = 30 },
+        },
+        result = "tycoon-butchery",
+        result_count = 1,
+    },
 }
