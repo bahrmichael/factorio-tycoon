@@ -5,40 +5,11 @@ local function think(color, title, thought)
     game.players[1].print({"","[img=entity/character][color=" .. color .. "]",{title .. "-title"},": [/color]",{"think-"..thought}})
 end
 
-local function findSpecialBuilding(name)
-    for _, building in ipairs(global.tycoon_cities[1].special_buildings.others) do
-        if building.name == name then
-            return building.entity
-        end
-    end
-    return nil
-end
-
 local story_table =
 {
   {
-	{  
+	{
       action = function()
-        global.tycoon_city_building = false
-        global.tycoon_cities[1].basicNeeds = {
-            market = {},
-            waterTower = {}
-        }
-
-        local character = game.players[1]
-        character.insert{name = "inserter", count = 5}
-        character.insert{name = "iron-gear-wheel", count = 47}
-        character.insert{name = "pistol", count = 1}
-        character.insert{name = "firearm-magazine", count = 1}
-        character.insert{name = "electronic-circuit", count = 90}
-        character.insert{name = "copper-cable", count = 38}
-        character.insert{name = "solar-panel", count = 10}
-        character.insert{name = "small-electric-pole", count = 50}
-
-        character.insert{name = "stone", count = 500}
-        character.insert{name = "iron-plate", count = 1000}
-        character.insert{name = "pipe", count = 1000}
-
         set_info()
       end
     },
@@ -67,7 +38,20 @@ local story_table =
         condition = story_elapsed_check(6),
         action =
         function()
-           think("green", "crew-member", "story-4")
+            local townHall = global.tycoon_cities[1].special_buildings.town_hall
+            assert(townHall ~= nil, "Town hall should have been created.")
+            townHall.insert{name="pipe", count=50}
+            townHall.insert{name="pipe-to-ground", count=30}
+            townHall.insert{name="iron-plate", count=200}
+            townHall.insert{name="stone", count=200}
+            townHall.insert{name="inserter", count=10}
+            townHall.insert{name="offshore-pump", count=2}
+            townHall.insert{name="solar-panel", count=10}
+            townHall.insert{name="medium-electric-pole", count=50}
+            townHall.insert{name="electric-furnace", count=2}
+            townHall.insert{name="electric-mining-drill", count=2}
+            townHall.insert{name="transport-belt", count=100}
+            think("green", "crew-member", "story-4")
         end
     },
     {
@@ -75,113 +59,41 @@ local story_table =
         action =
         function()
            think("blue", "captain", "story-5")
+           set_goal({"goal-craft-water-tower"})
         end
     },
     {
-        condition = story_elapsed_check(1),
+        condition =
+        function()
+            return game.players[1].get_item_count("tycoon-water-tower") > 0
+        end,
         action =
         function()
-            global.tycoon_city_consumption = {
-                {
-                    resource = "stone",
-                    amount = 1
-                }
-            }
-          set_goal({"deliver-initial-stone", 10})
+            think("blue", "captain", "story-6")
+            set_goal({"goal-place-water-tower"})
         end
-    }, 
+    },
     {
         condition = function() 
-            return global.tycoon_cities[1].special_buildings.town_hall ~= nil and global.tycoon_cities[1].special_buildings.town_hall.get_item_count("stone") >= 10
+            local waterTowers = game.surfaces[1].find_entities_filtered{
+                name="tycoon-water-tower",
+                position={0,0},
+                radius=100
+            }
+            return #waterTowers > 0 and (waterTowers[1].get_fluid_contents().water or 0) > 50
         end,
         action = function()
             set_goal("")
-            table.insert(global.tycoon_cities[1].priority_buildings, {name = "tycoon-water-tower", priority = 10})
-            global.tycoon_city_building = true
-            think("green", "crew-member", "story-6")
+            think("green", "crew-member", "story-7")
+            global.tycoon_new_primary_industries = {{name = "tycoon-apple-farm", startCoordinates = { x = 0, y = 60}}}
         end
     },
     {
-        condition = function() 
-            return global.tycoon_cities[1].special_buildings.town_hall.get_item_count("stone") == 0
-        end,
-        action =
-        function()
-            global.tycoon_city_building = false
-           think("green", "crew-member", "story-7")
-        end
-    },
-    {
-        condition = story_elapsed_check(3),
+        condition = story_elapsed_check(4),
         action =
         function()
            think("blue", "captain", "story-8")
-           global.tycoon_city_consumption = {
-                {
-                    resource = "stone",
-                    amount = 1
-                },
-                {
-                    resource = "iron-plate",
-                    amount = 1
-                }
-            }
-           set_goal({"deliver-initial-iron-and-stone", 20, 20})
-        end
-    },
-    {
-        condition = function() 
-            return global.tycoon_cities[1].special_buildings.town_hall.get_item_count("stone") >= 20 and global.tycoon_cities[1].special_buildings.town_hall.get_item_count("iron-plate") >= 20
-        end,
-        action = function()
-            set_goal("")
-            think("green", "crew-member", "story-9")
-            global.tycoon_city_building = true
-            table.insert(global.tycoon_cities[1].priority_buildings, {name = "tycoon-market", priority = 10})
-            table.insert(global.tycoon_cities[1].priority_buildings, {name = "tycoon-treasury", priority = 5})
-        end
-    },
-    {
-        condition = story_elapsed_check(4),
-        action =
-        function()
-           think("blue", "captain", "story-10")
-           set_goal({"supply-water"})
-        end
-    },
-    {
-        condition = function() 
-            local waterTower = findSpecialBuilding("tycoon-water-tower")
-            return waterTower ~= nil and (waterTower.get_fluid_contents().water or 0) > 50
-        end,
-        action = function()
-            set_goal("")
-            global.tycoon_water_consumption = 1
-            global.tycoon_enable_water_consumption = 1
-            think("green", "crew-member", "story-11")
-        end
-    },
-    {
-        condition = story_elapsed_check(5),
-        action =
-        function()
-           think("green", "crew-member", "story-12")
-        end
-    },
-    {
-        condition = story_elapsed_check(2),
-        action =
-        function()
-           think("blue", "captain", "story-13")
-           global.tycoon_new_primary_industries = {{name = "tycoon-apple-farm", startCoordinates = { x = 0, y = 60}}}
-        end
-    },
-    {
-        condition = story_elapsed_check(4),
-        action =
-        function()
-           think("blue", "captain", "story-14")
-           set_goal({"supply-apple-farm"})
+           set_goal({"goal-supply-apple-farm"})
         end
     },
     {
@@ -196,53 +108,103 @@ local story_table =
             return false
         end,
         action = function()
-            think("blue", "captain", "story-15")
-            set_goal({"supply-city-with-apples"})
+            think("blue", "captain", "story-9")
+            set_goal("")
+        end
+    },
+    {
+        condition = story_elapsed_check(4),
+        action =
+        function()
+           think("blue", "captain", "story-10")
+           set_goal({"goal-supply-apples", 50})
         end
     },
     {
         condition = function() 
-            local market = findSpecialBuilding("tycoon-market")
-            return market ~= nil and market.get_item_count("tycoon-apple") > 0
+            local markets = game.surfaces[1].find_entities_filtered{
+                name="tycoon-market",
+                position={0,0},
+                radius=100
+            }
+            return #markets > 0 and markets[1].get_item_count("tycoon-apple") >= 50
         end,
         action = function()
-            global.tycoon_cities[1].basicNeeds = {
-                market = {
-                    {
-                        amount = 1,
-                        resource = "tycoon-apple",
-                    },
-                },
-                waterTower = {
-                    amount = 10,
-                    resource = "water",
-                }
-            }
-
             set_goal("")
-            think("green", "crew-member", "story-16")
+            think("green", "crew-member", "story-11")
+        end
+    },
+    {
+        condition = story_elapsed_check(8),
+        action =
+        function()
+           think("blue", "captain", "story-12")
+           set_goal({"goal-craft-hardware-store"})
+        end
+    },
+    {
+        condition =
+        function()
+            return game.players[1].get_item_count("tycoon-hardware-store") > 0
+        end,
+        action =
+        function()
+            set_goal({"goal-place-hardware-store"})
+        end
+    },
+    {
+        condition =
+        function()
+            return game.surfaces[1].count_entities_filtered{
+                name="tycoon-hardware-store",
+                position={0,0},
+                radius=100
+            } > 0
+        end,
+        action =
+        function()
+            think("blue", "captain", "story-13")
+            set_goal({"goal-supply-city-with-hardware", 20, 20})
+            table.insert(global.tycoon_cities[1].priority_buildings, {name = "tycoon-treasury", priority = 10})
+        end
+    },
+    {
+        condition =
+        function()
+            local hardwareStores = game.surfaces[1].find_entities_filtered{
+                name="tycoon-hardware-store",
+                position={0,0},
+                radius=100
+            }
+            return #hardwareStores > 0 and hardwareStores[1].get_item_count("iron-plate") >= 20 and hardwareStores[1].get_item_count("stone") >= 20
+        end,
+        action =
+        function()
+            think("green", "crew-member", "story-14")
+            set_goal("")
+        end
+    },
+    {
+        condition =
+        function()
+            local treasuries = game.surfaces[1].find_entities_filtered{
+                name="tycoon-treasury",
+                position={0,0},
+                radius=1000
+            }
+            return #treasuries > 0
+        end,
+        action =
+        function()
+           think("green", "crew-member", "story-15")
         end
     },
     {
         condition = story_elapsed_check(4),
         action =
         function()
-           think("blue", "captain", "story-17")
-        end
-    },
-    {
-        condition = story_elapsed_check(3),
-        action =
-        function()
-           think("green", "crew-member", "story-18")
-        end
-    },
-    {
-        condition = story_elapsed_check(4),
-        action =
-        function()
-           think("blue", "captain", "story-19")
-           set_goal({"build-university"})
+           think("blue", "captain", "story-16")
+           set_goal({"goal-build-university"})
         end
     },
     {
@@ -251,18 +213,18 @@ local story_table =
         end,
         action =
         function()
-           think("blue", "captain", "story-20")
-           set_goal({"fund-research"})
+           think("blue", "captain", "story-17")
+           set_goal({"goal-fund-research"})
         end
     },
     {
         condition = function ()
-            local university = game.surfaces[1].find_entities_filtered{name="tycoon-university"}[1]
-            return not university.get_output_inventory().is_empty()
+            local universities = game.surfaces[1].find_entities_filtered{name="tycoon-university"}
+            return #universities > 0 and (not universities[1].get_output_inventory().is_empty())
         end,
         action =
         function()
-           think("blue", "captain", "story-21")
+           think("blue", "captain", "story-18")
            set_goal("")
         end
     },
@@ -291,12 +253,6 @@ story_init_helpers(story_table)
 
 local init = function()
   global.story = story_init()
-
---   game.map_settings.enemy_expansion.enabled = false
---   game.forces.enemy.evolution_factor = 0
---   game.map_settings.enemy_evolution.enabled = false
-  --game.disable_tips_and_tricks()
-  -- game.players[1].force.disable_all_prototypes()
 end
 
 local story_events =

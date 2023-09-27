@@ -5,17 +5,23 @@ data:extend{
       icon = "__tycoon__/graphics/entity/water-tower/water-tower.png",
       icon_size = 64,
       max_health = 200,
+      minable = {
+        mining_time = 1,
+        result = "tycoon-water-tower"
+      },
       fluid_box = {
         production_type = "input",
-        base_area = 10,
+        base_area = 100,
         height = 2,
         base_level = -1,
         pipe_connections = {
-          { position = { 2, 0 }, type = "input" },
+          { position = { 2.2, -0.5 }, type = "input" },
         },
       },
-      collision_box = { { -1.9, -1.9}, {1.9, 1.9} },
-      selection_box = { { -1.9, -1.9}, {1.9, 1.9} },
+      flow_length_in_ticks = 360,
+      rotatable = false,
+      collision_box = { {-1.9, -1.9}, {1.9, 1.9} },
+      selection_box = { {-2, -2}, {2, 2} },
       window_bounding_box = { { -0.125, 0.6875 }, { 0.1875, 1.1875 } },
       pictures = {
         picture = {
@@ -71,6 +77,5 @@ data:extend{
           },
         },
       },
-      flow_length_in_ticks = 360,
     }
   }

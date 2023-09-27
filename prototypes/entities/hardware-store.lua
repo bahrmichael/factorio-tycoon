@@ -1,14 +1,14 @@
 data:extend{
     {
         type = "container",
-        name = "tycoon-market",
-        icon = "__tycoon__/graphics/entity/market/market.png",
+        name = "tycoon-hardware-store",
+        icon = "__tycoon__/graphics/entity/hardware-store/hardware-store.png",
         icon_size = 64,
         max_health = 200,
         inventory_size = 50,
         minable = {
             mining_time = 1,
-            result = "tycoon-market"
+            result = "tycoon-hardware-store"
         },
         rotatable = false,
         corpse = "small-remnants",
@@ -21,12 +21,12 @@ data:extend{
         picture = {
             layers = {
                 {
-                    filename = "__tycoon__/graphics/entity/market/market.png",
+                    filename = "__tycoon__/graphics/entity/hardware-store/hardware-store.png",
                     priority = "high",
-                    width = 180,
-                    height = 180,
-                    scale = 1.1,
-                    shift = {-0.1, -1}
+                    width = 200,
+                    height = 200,
+                    scale = 0.8,
+                    shift = {0, 0}
                 },
             }
         },
