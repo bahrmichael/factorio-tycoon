@@ -48,4 +48,28 @@ data:extend{
         result = "tycoon-hardware-store",
         result_count = 1,
     },
+    {
+        type = "recipe",
+        name = "tycoon-building-stable",
+        category = "crafting",
+        enabled = false,
+        ingredients = {
+            { type = "item", name = "stone", amount = 20 },
+            { type = "item", name = "iron-plate", amount = 5 },
+        },
+        result = "tycoon-stable",
+        result_count = 1,
+    },
+    {
+        type = "recipe",
+        name = "tycoon-butchery",
+        category = "crafting",
+        enabled = false,
+        ingredients = {
+            { type = "item", name = "stone", amount = 50 },
+            { type = "item", name = "iron-plate", amount = 30 },
+        },
+        result = "tycoon-butchery",
+        result_count = 1,
+    },
 }
