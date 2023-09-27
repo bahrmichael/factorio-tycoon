@@ -1,19 +1,24 @@
 ---------------------------------------------------------------------------------------------------
-Version: unreleased
-Date: 26. 09. 2023
+Version: 0.0.13
+Date: 27. 09. 2023
   Major Features:
     - Citizen scaling has arrived! As a town grows, the number of citizens increases.
       You can view a city's statistics by accessing the town hall.
       Consumption now scales with citizen count, and happens once per minute.
       Construction will halt if basic needs are not met.
   Features:
-    - Extended the story to teach you about markets, treasuries, currency and universities.
+    - Reword the story to teach you about the new concepts.
     - There are now tags on the map for city centers and primary industries.
     - New primary industries are automatically spawned as you explore the map.
     - Citizens consume more resources, and accordingly pay more.
     - You can now deconstruct houses to make way for your infrastructure. The city will not try to build new houses there.
+    - Introduced the new building hardware store which takes over the job to provide construction materials.
+  Changes:
+    - Water tower and market are not spawned by the city itself anymore, but can be crafted by the player.
   Bugfixes:
     - The town center and primary industries do not spawn over water anymore.
+    - Fixed pipe connections of the water tower.
+    - Fixed selection and collision boxes of the town hall.
   Optimisations:
     - Replace custom code with Factorio built-in functions for finding locations for entities.
 ---------------------------------------------------------------------------------------------------
