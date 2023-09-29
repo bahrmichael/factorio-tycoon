@@ -961,7 +961,7 @@ script.on_init(function()
         constructionProbability = 1.0,
         unlockables = {
             {
-                threshold = 250,
+                threshold = 100,
                 type = "basicNeed",
                 basicNeedCategory = "market",
                 items = {
@@ -973,7 +973,7 @@ script.on_init(function()
                 supplyChain = "wheat-cow-milk"
             },
             {
-                threshold = 500,
+                threshold = 200,
                 type = "basicNeed",
                 basicNeedCategory = "market",
                 items = {
