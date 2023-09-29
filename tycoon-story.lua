@@ -271,7 +271,8 @@ local story_table =
         condition = story_elapsed_check(4),
         action =
         function()
-            game.show_message_dialog{text = {"tycoon-story-new-demand-check-town-hall"}}
+            -- todo: introduce gui element on town hall to show if it has enough construction material
+            game.show_message_dialog{text = {"tycoon-story-keep-supplying-construction-material"}}
         end
     },
     {
@@ -285,6 +286,13 @@ local story_table =
         end
     },
     {
+        condition = story_elapsed_check(4),
+        action =
+        function()
+            game.show_message_dialog{text = {"tycoon-story-new-demand-check-town-hall"}}
+        end
+    },
+    {
         condition = function()
             local markets = game.surfaces[1].find_entities_filtered{
                 name="tycoon-market",
@@ -292,7 +300,7 @@ local story_table =
                 radius=100
             }
             for _, market in ipairs(markets) do
-                if not market.get_item_count("tycoon-milk-bottle") > 0 then
+                if market.get_item_count("tycoon-milk-bottle") > 0 then
                     return true
                 end
             end
@@ -328,7 +336,7 @@ local story_table =
                 radius=100
             }
             for _, market in ipairs(markets) do
-                if not market.get_item_count("tycoon-meat") > 0 then
+                if market.get_item_count("tycoon-meat") > 0 then
                     return true
                 end
             end
