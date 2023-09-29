@@ -57,6 +57,13 @@ local story_table =
         end
     },
     {
+        condition = story_elapsed_check(2),
+        action =
+        function()
+            game.show_message_dialog{text = {"tycoon-story-starter-items-in-town-hall"}}
+        end
+    },
+    {
         condition = story_elapsed_check(4),
         action =
         function()
@@ -82,7 +89,12 @@ local story_table =
                 position={0,0},
                 radius=100
             }
-            return #waterTowers > 0 and (waterTowers[1].get_fluid_contents().water or 0) > 1
+            for _, waterTower in ipairs(waterTowers) do
+                if (waterTower.get_fluid_contents().water or 0) > 0 then
+                    return true
+                end
+            end
+            return false
         end,
         action = function()
             set_goal("")
@@ -96,6 +108,7 @@ local story_table =
         function()
            think("blue", "captain", "story-8")
            set_goal({"goal-supply-apple-farm"})
+           game.show_message_dialog{text = {"tycoon-story-finding-primary-industries"}}
         end
     },
     {
@@ -129,7 +142,12 @@ local story_table =
                 position={0,0},
                 radius=100
             }
-            return #markets > 0 and markets[1].get_item_count("tycoon-apple") >= 10
+            for _, market in ipairs(markets) do
+                if market.get_item_count("tycoon-apple") >= 10 then
+                    return true
+                end
+            end
+            return false
         end,
         action = function()
             set_goal("")
@@ -178,7 +196,12 @@ local story_table =
                 position={0,0},
                 radius=100
             }
-            return #hardwareStores > 0 and hardwareStores[1].get_item_count("iron-plate") >= 20 and hardwareStores[1].get_item_count("stone") >= 20
+            for _, hardwareStore in ipairs(hardwareStores) do
+                if hardwareStore.get_item_count("iron-plate") >= 20 and hardwareStore.get_item_count("stone") >= 20 then
+                    return true
+                end
+            end
+            return false
         end,
         action =
         function()
@@ -222,12 +245,106 @@ local story_table =
     {
         condition = function ()
             local universities = game.surfaces[1].find_entities_filtered{name="tycoon-university"}
-            return #universities > 0 and (not universities[1].get_output_inventory().is_empty())
+
+            for _, university in ipairs(universities) do
+                if not university.get_output_inventory().is_empty() then
+                    return true
+                end
+            end
+            return false
         end,
         action =
         function()
            think("blue", "captain", "story-18")
            set_goal("")
+        end
+    },
+    {
+        condition = story_elapsed_check(10),
+        action =
+        function()
+           think("blue", "captain", "story-19")
+           set_goal({"", {"goal-grow-city", 100}})
+        end
+    },
+    {
+        condition = story_elapsed_check(4),
+        action =
+        function()
+            -- todo: introduce gui element on town hall to show if it has enough construction material
+            game.show_message_dialog{text = {"tycoon-story-keep-supplying-construction-material"}}
+        end
+    },
+    {
+        condition = function ()
+            return global.tycoon_cities[1].stats.citizen_count >= 100
+        end,
+        action =
+        function()
+           think("blue", "captain", "story-20")
+           set_goal({"goal-supply-milk"})
+        end
+    },
+    {
+        condition = story_elapsed_check(4),
+        action =
+        function()
+            game.show_message_dialog{text = {"tycoon-story-new-demand-check-town-hall"}}
+        end
+    },
+    {
+        condition = function()
+            local markets = game.surfaces[1].find_entities_filtered{
+                name="tycoon-market",
+                position={0,0},
+                radius=100
+            }
+            for _, market in ipairs(markets) do
+                if market.get_item_count("tycoon-milk-bottle") > 0 then
+                    return true
+                end
+            end
+            return false
+        end,
+        action = function()
+            think("green", "crew-member", "story-21")
+            set_goal({"", {"goal-grow-city", 200}})
+        end
+    },
+    {
+        condition = function ()
+            return global.tycoon_cities[1].stats.citizen_count >= 200
+        end,
+        action =
+        function()
+           think("blue", "captain", "story-22")
+           set_goal({"goal-supply-meat"})
+        end
+    },
+    {
+        condition = story_elapsed_check(4),
+        action =
+        function()
+            game.show_message_dialog{text = {"tycoon-story-new-demand-check-town-hall"}}
+        end
+    },
+    {
+        condition = function()
+            local markets = game.surfaces[1].find_entities_filtered{
+                name="tycoon-market",
+                position={0,0},
+                radius=100
+            }
+            for _, market in ipairs(markets) do
+                if market.get_item_count("tycoon-meat") > 0 then
+                    return true
+                end
+            end
+            return false
+        end,
+        action = function()
+            set_goal("")
+            think("green", "crew-member", "story-23")
         end
     },
     {

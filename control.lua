@@ -455,7 +455,11 @@ local function getPriorityBuilding(city)
     return table.remove(city.priority_buildings, 1)
 end
 
-local TICKS_PER_DAY = 25000
+local DAY_TO_MINUTE_FACTOR = 600 / 25000
+
+local function getRequiredAmount(amountPerDay, citizenCount)
+    return math.ceil(amountPerDay * DAY_TO_MINUTE_FACTOR * citizenCount)
+end
 
 local function setBasicNeedsProvided(city, resource, amount)
     if city.stats.basic_needs[resource] == nil then
@@ -464,7 +468,7 @@ local function setBasicNeedsProvided(city, resource, amount)
             required = 0,
         }
     end
-    city.stats.basic_needs[resource].provided = amount
+    city.stats.basic_needs[resource].provided = math.floor(amount)
 end
 
 local function setBasicNeedsRequired(city, resource, amount)
@@ -474,16 +478,16 @@ local function setBasicNeedsRequired(city, resource, amount)
             required = 0,
         }
     end
-    city.stats.basic_needs[resource].required = amount
+    city.stats.basic_needs[resource].required = math.floor(amount)
 end
 
 local function updateNeeds(city)
     local citizenCount = city.stats.citizen_count
     for _, need in ipairs(city.basicNeeds.market) do
-        setBasicNeedsRequired(city, need.resource, need.amount * citizenCount)
+        setBasicNeedsRequired(city, need.resource, getRequiredAmount(need.amount, citizenCount))
     end
     for _, need in ipairs({city.basicNeeds.waterTower}) do
-        setBasicNeedsRequired(city, need.resource, need.amount * citizenCount)
+        setBasicNeedsRequired(city, need.resource, getRequiredAmount(need.amount, citizenCount))
     end
 end
 
@@ -515,11 +519,17 @@ local function updateUnlocks(city)
             else
                 game.print("Unhandled unlock: " .. v.type .. "#" .. v.basicNeedCategory)
             end
-            updateNeeds(city)
             table.remove(city.unlockables, i)
             return
         end
     end
+end
+
+local function growCitizenCount(city, count)
+    city.stats.citizen_count = city.stats.citizen_count + count
+    updateUnlocks(city)
+    -- update needs must run because updateUnlocksmay unlock new demands
+    updateNeeds(city)
 end
 
 local function printCell(y, x, city)
@@ -566,9 +576,7 @@ local function printCell(y, x, city)
                     position = {x = startCoordinates.x - 0.5 + SEGMENTS.segmentSize / 2, y = startCoordinates.y - 0.5  + SEGMENTS.segmentSize / 2},
                     force = "player"
                 }
-                city.stats.citizen_count = city.stats.citizen_count + 4
-                updateNeeds(city)
-                updateUnlocks(city)
+                growCitizenCount(city, 4)
                 script.register_on_entity_destroyed(house)
                 global.tycoon_city_buildings[house.unit_number] = {
                     cityId = city.id,
@@ -579,14 +587,40 @@ local function printCell(y, x, city)
     end
 end
 
+local function invalidateSpecialBuildingsList(city, name)
+    assert(city.special_buildings ~= nil, "The special buildings should never be nil. There has been one error though, so I added this assetion.")
+    -- Support for savegames <= 0.0.14
+    if city.special_buildings.other == nil then
+        city.special_buildings.other = {}
+    end
+
+    if city.special_buildings.other[name] ~= nil then
+        city.special_buildings.other[name] = nil
+    end 
+end
+
+local function listSpecialCityBuildings(city, name)
+    -- Support for savegames <= 0.0.14
+    if city.special_buildings.other == nil then
+        city.special_buildings.other = {}
+    end
+
+    if city.special_buildings.other[name] ~= nil then
+        return city.special_buildings.other[name]
+    end
+    local entities = game.surfaces[1].find_entities_filtered{
+        name=name,
+        position=city.special_buildings.town_hall.position,
+        radius=1000
+    }
+    city.special_buildings.other[name] = entities
+    return entities
+end
+
 local function cityGrowth(city)
     if getGridSize(city.grid) > 1 then
 
-        local hardwareStores = game.surfaces[1].find_entities_filtered{
-            name="tycoon-hardware-store",
-            position=city.special_buildings.town_hall.position,
-            radius=1000
-        }
+        local hardwareStores = listSpecialCityBuildings(city, "tycoon-hardware-store")
 
         local hardwareConsumption = {
             {
@@ -635,85 +669,122 @@ local function cityGrowth(city)
     end
 end
 
-local function cityBasicConsumption(city, amountModifier)
+local function updateProvidedAmounts(city)
+    local markets = listSpecialCityBuildings(city, "tycoon-market")
+    local waterTowers = listSpecialCityBuildings(city, "tycoon-water-tower")
 
-    local markets = game.surfaces[1].find_entities_filtered{
-        name="tycoon-market",
-        position=city.special_buildings.town_hall.position,
-        radius=1000
-    }
-    local waterTowers = game.surfaces[1].find_entities_filtered{
-        name="tycoon-water-tower",
-        position=city.special_buildings.town_hall.position,
-        radius=1000
-    }
-    local treasuries = game.surfaces[1].find_entities_filtered{
-        name="tycoon-treasury",
-        position=city.special_buildings.town_hall.position,
-        radius=1000
-    }
+    if #markets >= 1 then
+        for _, consumption in ipairs(city.basicNeeds.market) do
+            local totalAvailable = 0
+            for _, market in ipairs(markets) do
+                local availableCount = market.get_item_count(consumption.resource)
+                totalAvailable = totalAvailable + availableCount
+            end
+            setBasicNeedsProvided(city, consumption.resource, totalAvailable)
+        end
+    else
+        for _, consumption in ipairs(city.basicNeeds.market) do
+            setBasicNeedsProvided(city, consumption.resource, 0)
+        end
+    end
+
+    if #waterTowers >= 1 then
+        for _, consumption in ipairs({city.basicNeeds.waterTower}) do
+            local totalAvailable = 0
+            local waterTowersWithSupply = {}
+            for _, waterTower in ipairs(waterTowers) do
+                local availableCount = waterTower.get_fluid_count(consumption.resource)
+                totalAvailable = totalAvailable + availableCount
+            end
+            setBasicNeedsProvided(city, consumption.resource, totalAvailable)
+        end
+    else
+        for _, consumption in ipairs({city.basicNeeds.waterTower}) do
+            setBasicNeedsProvided(city, consumption.resource, 0)
+        end
+    end
+end
+
+local function cityBasicConsumption(city)
+
+    local markets = listSpecialCityBuildings(city, "tycoon-market")
+    local waterTowers = listSpecialCityBuildings(city, "tycoon-water-tower")
+    local treasuries = listSpecialCityBuildings(city, "tycoon-treasury")
 
     local countNeedsMet = 0
 
     if #markets >= 1 then
         for _, consumption in ipairs(city.basicNeeds.market) do
-            local requiredAmount = math.ceil(consumption.amount * city.stats.citizen_count * amountModifier)
+            local requiredAmount = getRequiredAmount(consumption.amount, city.stats.citizen_count)
             local marketsWithSupply = {}
             for _, market in ipairs(markets) do
-                local marketItemCount = market.get_item_count(consumption.resource)
-                if marketItemCount >= requiredAmount then
+                local availableCount = market.get_item_count(consumption.resource)
+                if availableCount > 0 then
                     table.insert(marketsWithSupply, market)
                 end
             end
-            if #marketsWithSupply > 0 then
-                local randomMarket = marketsWithSupply[math.random(#marketsWithSupply)]
-                local itemsRemoved = randomMarket.remove_item({name = consumption.resource, count = requiredAmount})
-                setBasicNeedsProvided(city, consumption.resource, math.ceil(itemsRemoved / amountModifier))
+            local consumedAmount = 0
+            for _, market in ipairs(marketsWithSupply) do
+                local availableCount = market.get_item_count(consumption.resource)
+                local removed = market.remove_item({name = consumption.resource, count = math.min(requiredAmount, availableCount)})
+                consumedAmount = consumedAmount + removed
+                requiredAmount = requiredAmount - consumedAmount
+                if requiredAmount <= 0 then
+                    break
+                end
+            end
+            if consumedAmount >= requiredAmount then
                 countNeedsMet = countNeedsMet + 1
+            end
 
-                -- Let citizens pay for each item that they buy
-                if #treasuries > 0 then
-                    local randomTreasury = treasuries[math.random(#treasuries)]
-                    local currencyPerUnit = 1
-                    local reward = math.ceil(currencyPerUnit * requiredAmount)
-                    if reward > 0 then
-                        randomTreasury.insert{name = "tycoon-currency", count = reward}
-                    end
+            if #treasuries > 0 then
+                local randomTreasury = treasuries[math.random(#treasuries)]
+                local currencyPerUnit = 1
+                local reward = math.ceil(currencyPerUnit * consumedAmount)
+                if reward > 0 then
+                    randomTreasury.insert{name = "tycoon-currency", count = reward}
                 end
             end
         end
-    else
-        setBasicNeedsProvided(city, "tycoon-apple", 0)
     end
     if #waterTowers >= 1 then
         for _, consumption in ipairs({city.basicNeeds.waterTower}) do
+            local requiredAmount = getRequiredAmount(consumption.amount, city.stats.citizen_count)
             local waterTowersWithSupply = {}
-            local requiredAmount = math.ceil(consumption.amount * city.stats.citizen_count * amountModifier)
             for _, waterTower in ipairs(waterTowers) do
-                local towerFluidCount = waterTower.get_fluid_count(consumption.resource)
-                if towerFluidCount >= requiredAmount then
+                local availableCount = waterTower.get_fluid_count(consumption.resource)
+                if availableCount > 0 then
                     table.insert(waterTowersWithSupply, waterTower)
                 end
             end
-            if #waterTowersWithSupply > 0 then
-                local randomWaterTower = waterTowersWithSupply[math.random(#waterTowersWithSupply)]
-                local fluidRemoved = randomWaterTower.remove_fluid({name = consumption.resource, amount = requiredAmount})
-                setBasicNeedsProvided(city, consumption.resource, math.ceil(fluidRemoved / amountModifier))
+            local consumedAmount = 0
+            for _, waterTower in ipairs(waterTowersWithSupply) do
+                local availableCount = waterTower.get_fluid_count(consumption.resource)
+                local removed = waterTower.remove_fluid({name = consumption.resource, amount = math.min(requiredAmount, availableCount)})
+                consumedAmount = consumedAmount + removed
+                requiredAmount = requiredAmount - consumedAmount
+                if requiredAmount <= 0 then
+                    break
+                end
+            end
+            if consumedAmount >= requiredAmount then
                 countNeedsMet = countNeedsMet + 1
+            end
 
-                -- Let citizens pay for each piece of water
-                if #treasuries > 0 then
-                    local randomTreasury = treasuries[math.random(#treasuries)]
-                    local currencyPerUnit = 0.1
-                    local reward = math.ceil(currencyPerUnit * requiredAmount)
-                    if reward > 0 then
-                        randomTreasury.insert{name = "tycoon-currency", count = reward}
-                    end
+            -- Let citizens pay for each piece of water
+            if #treasuries > 0 then
+                local randomTreasury = treasuries[math.random(#treasuries)]
+                local currencyPerUnit = 0.1
+                local reward = math.ceil(currencyPerUnit * requiredAmount)
+                if reward > 0 then
+                    randomTreasury.insert{name = "tycoon-currency", count = reward}
                 end
             end
         end
     else
-        setBasicNeedsProvided(city, "water", 0)
+        for _, consumption in ipairs({city.basicNeeds.waterTower}) do
+            setBasicNeedsProvided(city, consumption.resource, 0)
+        end
     end
     local needsCount = (#city.basicNeeds.market + #{city.basicNeeds.waterTower})
     return needsCount == countNeedsMet
@@ -776,6 +847,70 @@ local function findCityById(cityId)
     return nil
 end
 
+local CITY_SUPPLY_BUILDINGS = {"tycoon-market", "tycoon-hardware-store"}
+
+script.on_event(defines.events.on_built_entity, function(event)
+    local entity = event.created_entity
+
+    local isCitySupplyBuilding = false
+    for _, supplyBuildingName in ipairs(CITY_SUPPLY_BUILDINGS) do
+        if entity.name == supplyBuildingName then
+            isCitySupplyBuilding = true
+            break
+        end
+    end
+    if not isCitySupplyBuilding then
+        return
+    end
+    
+    local nearbyTownHall = game.surfaces[1].find_entities_filtered{position=entity.position, radius=1000, name="tycoon-town-hall", limit=1}
+    if #nearbyTownHall == 0 then
+        game.players[1].print("You just built a city supply building outside of any town hall's range. Please build it within 1000 tiles of a city.")
+        return
+    end
+
+    local cityMapping = global.tycoon_city_buildings[nearbyTownHall[1].unit_number]
+    assert(cityMapping ~= nil, "When building an entity we found a town hall, but it has no city mapping.")
+    local cityId = cityMapping.cityId
+    local city = findCityById(cityId)
+    assert(city ~= nil, "When building an entity we found a cityId, but there is no city for it.")
+
+    invalidateSpecialBuildingsList(city, entity.name)
+end)
+
+-- todo: also add robots and other workers
+script.on_event(defines.events.on_player_mined_entity, function(event)
+    local entity = event.entity
+
+    local isCitySupplyBuilding = false
+    for _, supplyBuildingName in ipairs(CITY_SUPPLY_BUILDINGS) do
+        if entity.name == supplyBuildingName then
+            isCitySupplyBuilding = true
+            break
+        end
+    end
+    if not isCitySupplyBuilding then
+        return
+    end
+    
+    local nearbyTownHall = game.surfaces[1].find_entities_filtered{position=entity.position, radius=1000, name="tycoon-town-hall", limit=1}
+    if #nearbyTownHall == 0 then
+        -- If there's no town hall in range then it probably was destroyed
+        -- todo: how should we handle that situation? Is the whole city gone?
+        -- probably in the "destroyed" event, because the player can't mine the town hall
+        return
+    end
+
+    local cityMapping = global.tycoon_city_buildings[nearbyTownHall[1].unit_number]
+    assert(cityMapping ~= nil, "When mining an entity an entity we found a town hall, but it has no city mapping.")
+    local cityId = cityMapping.cityId
+    local city = findCityById(cityId)
+    assert(city ~= nil, "When mining an entity we found a cityId, but there is no city for it.")
+
+    invalidateSpecialBuildingsList(city, entity.name)
+end)
+
+-- This event does not trigger when the player (or another entity mines a building)
 script.on_event(defines.events.on_entity_destroyed, function(event)
     local unit_number = event.unit_number
     if unit_number ~= nil then
@@ -815,12 +950,45 @@ local function findCityByTownHallUnitNumber(townHallUnitNumber)
     return nil
 end
 
+local function areBasicNeedsMet(city)
+    updateNeeds(city)
+    updateProvidedAmounts(city)
+
+    for _, consumption in ipairs(city.basicNeeds.market) do
+        if city.stats.basic_needs[consumption.resource] == nil then
+            return false
+        end
+        if city.stats.basic_needs[consumption.resource].provided == nil or city.stats.basic_needs[consumption.resource].required == nil then
+            return false
+        end
+        if city.stats.basic_needs[consumption.resource].provided < city.stats.basic_needs[consumption.resource].required then
+            return false
+        end
+    end
+
+    for _, consumption in ipairs({city.basicNeeds.waterTower}) do
+        if city.stats.basic_needs[consumption.resource] == nil then
+            return false
+        end
+        if city.stats.basic_needs[consumption.resource].provided == nil or city.stats.basic_needs[consumption.resource].required == nil then
+            return false
+        end
+        if city.stats.basic_needs[consumption.resource].provided < city.stats.basic_needs[consumption.resource].required then
+            return false
+        end
+    end
+
+    return true
+end
+
 script.on_event(defines.events.on_gui_opened, function (gui)
     if gui.entity ~= nil and gui.entity.name == "tycoon-town-hall" then
         local player = game.players[gui.player_index]
         local unit_number = gui.entity.unit_number
         local city = findCityByTownHallUnitNumber(unit_number)
         assert(city ~= nil, "Could not find the city for town hall unit number ".. unit_number)
+
+        updateNeeds(city)
 
         local cityGui = player.gui.relative["city_overview_" .. unit_number]
         if cityGui == nil then
@@ -835,16 +1003,7 @@ script.on_event(defines.events.on_gui_opened, function (gui)
             basicNeeds.add{type = "label", caption = {"", {"tycoon-gui-consumption-cycle"}}}
         end
 
-        if cityGui.city_stats.basic_needs_met == nil then
-            cityGui.city_stats.add{type = "label", caption = {"", {"tycoon-gui-basic-needs-met"}, ": ", "[color=red]", {"tycoon-no"}, "[/color]"}, name = "basic_needs_met"}
-        end
-
         cityGui.city_stats.citizen_count.caption = {"", {"tycoon-gui-citizens"}, ": ",  city.stats.citizen_count}
-        if city.basicNeedsMet then
-            cityGui.city_stats.basic_needs_met.caption = {"", {"tycoon-gui-basic-needs-met"}, ": ", "[color=green]", {"tycoon-yes"}, "[/color]"}
-        else
-            cityGui.city_stats.basic_needs_met.caption = {"", {"tycoon-gui-basic-needs-met"}, ": ", "[color=red]", {"tycoon-no"}, "[/color]"}
-        end
 
         local basicNeedsGui = cityGui.basic_needs
         for key, value in pairs(city.stats.basic_needs) do
@@ -874,15 +1033,14 @@ end)
 
 script.on_nth_tick(600, function()
     for _, city in ipairs(global.tycoon_cities) do
-        local basicNeedsMet = cityBasicConsumption(city, 600 / TICKS_PER_DAY)
-        city.basicNeedsMet = basicNeedsMet
+        cityBasicConsumption(city)
     end
 end)
 
 script.on_nth_tick(60, function(event)
 
     for _, city in ipairs(global.tycoon_cities) do
-        if city.basicNeedsMet and city.constructionProbability > math.random() then
+        if areBasicNeedsMet(city) and city.constructionProbability > math.random() then
             cityGrowth(city)
         end
 
@@ -930,6 +1088,7 @@ script.on_init(function()
         priority_buildings = {},
         special_buildings = {
             town_hall = nil,
+            other = {}
         },
         basicNeeds = {
             market = {
@@ -961,7 +1120,7 @@ script.on_init(function()
         constructionProbability = 1.0,
         unlockables = {
             {
-                threshold = 250,
+                threshold = 100,
                 type = "basicNeed",
                 basicNeedCategory = "market",
                 items = {
@@ -973,7 +1132,7 @@ script.on_init(function()
                 supplyChain = "wheat-cow-milk"
             },
             {
-                threshold = 500,
+                threshold = 200,
                 type = "basicNeed",
                 basicNeedCategory = "market",
                 items = {

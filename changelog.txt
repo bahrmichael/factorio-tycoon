@@ -1,8 +1,15 @@
 ---------------------------------------------------------------------------------------------------
 Version: unreleased
 Date: 27. 09. 2023
+  Features:
+    - Extended the story to guide you through the milk and meat supply chains.
   Changes:
     - When adding a tag on the map for primary productions, the tag now includes the industry's English name for better visibility.
+    - Reduce citizen thresholds for new supply chains from 250 to 100, and from 500 to 200.
+    - Simplified the town hall's gui. Basic needs are now really calculated every time you reopen the view.
+      Only for savegames from previous versions: The text "Basic needs met: yes/no" is deprecated and won't update anymore. You can safely ignore it.
+  Bugfixes:
+    - Fixed an issue where the story might not progress if you have multiple Tycoon buildings of them same type and only supply one.
 ---------------------------------------------------------------------------------------------------
 Version: 0.0.14
 Date: 27. 09. 2023
