@@ -729,6 +729,16 @@ local function getItemForPrimaryProduction(name)
     end
 end
 
+local function localizePrimaryProductionName(name)
+    if name == "tycoon-apple-farm" then
+        return "Apple Farm"
+    elseif name == "tycoon-wheat-farm" then
+        return "Wheat Farm"
+    else
+        return "Primary Production"
+    end
+end
+
 local function placePrimaryIndustryAtPosition(position, entityName)
     if position ~= nil then
         local tag = game.forces.player.add_chart_tag(game.surfaces[1],
@@ -736,8 +746,9 @@ local function placePrimaryIndustryAtPosition(position, entityName)
                 position = {x = position.x, y = position.y},
                 icon = {
                     type = "item",
-                    name = getItemForPrimaryProduction(entityName)
-                }
+                    name = getItemForPrimaryProduction(entityName),
+                },
+                text = localizePrimaryProductionName(entityName),
             }
         )
         if tag ~= nil then

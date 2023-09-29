@@ -1,4 +1,9 @@
 ---------------------------------------------------------------------------------------------------
+Version: unreleased
+Date: 27. 09. 2023
+  Changes:
+    - When adding a tag on the map for primary productions, the tag now includes the industry's English name for better visibility.
+---------------------------------------------------------------------------------------------------
 Version: 0.0.14
 Date: 27. 09. 2023
   Major Features:
