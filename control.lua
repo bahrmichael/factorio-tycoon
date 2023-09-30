@@ -605,7 +605,7 @@ local function listSpecialCityBuildings(city, name)
         city.special_buildings.other = {}
     end
 
-    if city.special_buildings.other[name] ~= nil then
+    if city.special_buildings.other[name] ~= nil and #city.special_buildings.other[name] > 0 then
         return city.special_buildings.other[name]
     end
     local entities = game.surfaces[1].find_entities_filtered{
