@@ -617,54 +617,99 @@ local function listSpecialCityBuildings(city, name)
     return entities
 end
 
+local function areItemsAvailable(items, entities)
+    for _, item in ipairs(items) do
+        for _, entity in ipairs(entities) do
+            local availableCount = entity.get_item_count(item.resource)
+            item.available = item.available + availableCount
+        end
+    end
+
+    local areAllSupplied = true
+    for _, item in ipairs(items) do
+        if item.amount > item.available then
+            areAllSupplied = false
+            break
+        end
+    end
+
+    return areAllSupplied
+end
+
+local function consumeItems(items, entities, city)
+
+    for _, item in ipairs(items) do
+        local entitiesWithSupply = {}
+        for _, entity in ipairs(entities) do
+            local availableCount = entity.get_item_count(item.resource)
+            if availableCount > 0 then
+                table.insert(entitiesWithSupply, entity)
+            end
+        end
+        
+        local requiredAmount = getRequiredAmount(item.amount, city.stats.citizen_count)
+        local consumedAmount = 0
+        for _, entity in ipairs(entitiesWithSupply) do
+            local availableCount = entity.get_item_count(item.resource)
+            local removed = entity.remove_item({name = item.resource, count = math.min(requiredAmount, availableCount)})
+            consumedAmount = consumedAmount + removed
+            requiredAmount = requiredAmount - consumedAmount
+            if requiredAmount <= 0 then
+                break
+            end
+        end
+
+        local treasuries = listSpecialCityBuildings(city, "tycoon-treasury")
+        if #treasuries > 0 then
+            local randomTreasury = treasuries[math.random(#treasuries)]
+            local currencyPerUnit = 1
+            local reward = math.ceil(currencyPerUnit * consumedAmount)
+            if reward > 0 then
+                randomTreasury.insert{name = "tycoon-currency", count = reward}
+            end
+        end
+    end
+end
+
 local function cityGrowth(city)
     if getGridSize(city.grid) > 1 then
 
         local hardwareStores = listSpecialCityBuildings(city, "tycoon-hardware-store")
+        if #hardwareStores == 0 then
+            return
+        end
 
         local hardwareConsumption = {
             {
                 resource = "iron-plate",
                 amount = 1,
+                available = 0,
             },
             {
                 resource = "stone",
                 amount = 1,
+                available = 0,
             }
         }
-        local storeWithSupply = nil
 
-        if #hardwareStores >= 1 then
-            for _, store in ipairs(hardwareStores) do
-                local countNeedsMetInStore = 0
-                for _, consumption in ipairs(hardwareConsumption) do
-                    if store.get_item_count(consumption.resource) >= consumption.amount then
-                        countNeedsMetInStore = countNeedsMetInStore + 1
-                    end
-                end
-                if countNeedsMetInStore == #hardwareConsumption then
-                    storeWithSupply = store
-                    break
-                end
-            end
+        -- With construction material we do a preemptive check if enough resources are available.
+        -- It doesn't make much sense that there would be partial consumption, as is with basic needs.
+        -- A house doesn't get built partially, and then is torn down again.
+        if not areItemsAvailable(hardwareConsumption, hardwareStores) then
+            return
         end
-
-        if storeWithSupply ~= nil and storeWithSupply.valid then
-
-            local nextCell = popRandomLowEntropyElementFromTable(city.pending_cells, city.grid)
-            if nextCell == nil then
-                expand_grid_and_circle(city)
-            else
-                reduceCell(city.grid, nextCell.y, nextCell.x)
-                collapseCell(city.grid, nextCell.y, nextCell.x)
-
-                -- todo: this may consume resources even if the house/street is not printed.
-                -- move the consumption further in, or return a print result from printCell
-                for _, consumption in ipairs(hardwareConsumption) do
-                    storeWithSupply.remove_item{name = consumption.resource, count = consumption.amount}
-                end
-                printCell(nextCell.y, nextCell.x, city)
-            end
+        
+        local nextCell = popRandomLowEntropyElementFromTable(city.pending_cells, city.grid)
+        if nextCell == nil then
+            expand_grid_and_circle(city)
+        else
+            reduceCell(city.grid, nextCell.y, nextCell.x)
+            collapseCell(city.grid, nextCell.y, nextCell.x)
+            
+            -- todo: this may consume resources even if the house/street is not printed.
+            -- move the consumption further in, or return a print result from printCell
+            consumeItems(hardwareConsumption, hardwareStores, city)
+            printCell(nextCell.y, nextCell.x, city)
         end
     end
 end
@@ -780,10 +825,6 @@ local function cityBasicConsumption(city)
                     randomTreasury.insert{name = "tycoon-currency", count = reward}
                 end
             end
-        end
-    else
-        for _, consumption in ipairs({city.basicNeeds.waterTower}) do
-            setBasicNeedsProvided(city, consumption.resource, 0)
         end
     end
     local needsCount = (#city.basicNeeds.market + #{city.basicNeeds.waterTower})
@@ -1004,6 +1045,11 @@ script.on_event(defines.events.on_gui_opened, function (gui)
         end
 
         cityGui.city_stats.citizen_count.caption = {"", {"tycoon-gui-citizens"}, ": ",  city.stats.citizen_count}
+
+        if cityGui.city_stats.basic_needs_met ~= nil then
+            -- Remove surplus UI from 0.0.14 and before
+            cityGui.city_stats.basic_needs_met.destroy()
+        end
 
         local basicNeedsGui = cityGui.basic_needs
         for key, value in pairs(city.stats.basic_needs) do
