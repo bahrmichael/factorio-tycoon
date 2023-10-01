@@ -5,6 +5,24 @@ local function think(color, title, thought)
     game.players[1].print({"","[img=entity/character][color=" .. color .. "]",{title .. "-title"},": [/color]",{"think-"..thought}})
 end
 
+local function listSpecialCityBuildings(city, name)
+    -- Support for savegames <= 0.0.14
+    if city.special_buildings.other == nil then
+        city.special_buildings.other = {}
+    end
+
+    if city.special_buildings.other[name] ~= nil then
+        return city.special_buildings.other[name]
+    end
+    local entities = game.surfaces[1].find_entities_filtered{
+        name=name,
+        position=city.special_buildings.town_hall.position,
+        radius=1000
+    }
+    city.special_buildings.other[name] = entities
+    return entities
+end
+
 local story_table =
 {
   {
@@ -84,11 +102,7 @@ local story_table =
     },
     {
         condition = function() 
-            local waterTowers = game.surfaces[1].find_entities_filtered{
-                name="tycoon-water-tower",
-                position={0,0},
-                radius=100
-            }
+            local waterTowers = listSpecialCityBuildings(global.tycoon_cities[1], "tycoon-water-tower")
             for _, waterTower in ipairs(waterTowers) do
                 if (waterTower.get_fluid_contents().water or 0) > 0 then
                     return true
@@ -137,11 +151,7 @@ local story_table =
     },
     {
         condition = function() 
-            local markets = game.surfaces[1].find_entities_filtered{
-                name="tycoon-market",
-                position={0,0},
-                radius=100
-            }
+            local markets = listSpecialCityBuildings(global.tycoon_cities[1], "tycoon-market")
             for _, market in ipairs(markets) do
                 if market.get_item_count("tycoon-apple") >= 10 then
                     return true
@@ -175,11 +185,8 @@ local story_table =
     {
         condition =
         function()
-            return game.surfaces[1].count_entities_filtered{
-                name="tycoon-hardware-store",
-                position={0,0},
-                radius=100
-            } > 0
+            local hardwareStores = listSpecialCityBuildings(global.tycoon_cities[1], "tycoon-hardware-store")
+            return #hardwareStores > 0
         end,
         action =
         function()
@@ -191,11 +198,7 @@ local story_table =
     {
         condition =
         function()
-            local hardwareStores = game.surfaces[1].find_entities_filtered{
-                name="tycoon-hardware-store",
-                position={0,0},
-                radius=100
-            }
+            local hardwareStores = listSpecialCityBuildings(global.tycoon_cities[1], "tycoon-hardware-store")
             for _, hardwareStore in ipairs(hardwareStores) do
                 if hardwareStore.get_item_count("iron-plate") >= 20 and hardwareStore.get_item_count("stone") >= 20 then
                     return true
@@ -212,11 +215,7 @@ local story_table =
     {
         condition =
         function()
-            local treasuries = game.surfaces[1].find_entities_filtered{
-                name="tycoon-treasury",
-                position={0,0},
-                radius=1000
-            }
+            local treasuries = listSpecialCityBuildings(global.tycoon_cities[1], "tycoon-treasury")
             return #treasuries > 0
         end,
         action =
@@ -294,11 +293,7 @@ local story_table =
     },
     {
         condition = function()
-            local markets = game.surfaces[1].find_entities_filtered{
-                name="tycoon-market",
-                position={0,0},
-                radius=100
-            }
+            local markets = listSpecialCityBuildings(global.tycoon_cities[1], "tycoon-market")
             for _, market in ipairs(markets) do
                 if market.get_item_count("tycoon-milk-bottle") > 0 then
                     return true
@@ -330,11 +325,7 @@ local story_table =
     },
     {
         condition = function()
-            local markets = game.surfaces[1].find_entities_filtered{
-                name="tycoon-market",
-                position={0,0},
-                radius=100
-            }
+            local markets = listSpecialCityBuildings(global.tycoon_cities[1], "tycoon-market")
             for _, market in ipairs(markets) do
                 if market.get_item_count("tycoon-meat") > 0 then
                     return true
