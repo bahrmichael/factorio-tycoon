@@ -605,16 +605,25 @@ local function listSpecialCityBuildings(city, name)
         city.special_buildings.other = {}
     end
 
+    local entities = {}
     if city.special_buildings.other[name] ~= nil and #city.special_buildings.other[name] > 0 then
-        return city.special_buildings.other[name]
+        entities = city.special_buildings.other[name]
+    else
+        entities = game.surfaces[1].find_entities_filtered{
+            name=name,
+            position=city.special_buildings.town_hall.position,
+            radius=1000
+        }
+        city.special_buildings.other[name] = entities
     end
-    local entities = game.surfaces[1].find_entities_filtered{
-        name=name,
-        position=city.special_buildings.town_hall.position,
-        radius=1000
-    }
-    city.special_buildings.other[name] = entities
-    return entities
+
+    local result = {}
+    for _, entity in ipairs(entities) do
+        if entity ~= nil and entity.valid then
+            table.insert(result, entity)
+        end
+    end
+    return result
 end
 
 local function areItemsAvailable(items, entities)
@@ -1041,7 +1050,9 @@ script.on_event(defines.events.on_gui_opened, function (gui)
             stats.add{type = "label", caption = "Citizens: " .. city.stats.citizen_count, name = "citizen_count"}
 
             local basicNeeds = cityGui.add{type = "frame", direction = "vertical", caption = {"", {"tycoon-gui-basic-needs"}}, name = "basic_needs"}
-            basicNeeds.add{type = "label", caption = {"", {"tycoon-gui-consumption-cycle"}}}
+            basicNeeds.add{type = "label", caption = {"", {"tycoon-gui-consumption-cycle-1"}}}
+            basicNeeds.add{type = "label", caption = {"", {"tycoon-gui-consumption-cycle-2"}}}
+            basicNeeds.add{type = "label", caption = {"", {"tycoon-gui-consumption-cycle-3"}}}
         end
 
         cityGui.city_stats.citizen_count.caption = {"", {"tycoon-gui-citizens"}, ": ",  city.stats.citizen_count}
@@ -1079,27 +1090,31 @@ end)
 
 script.on_nth_tick(600, function()
     for _, city in ipairs(global.tycoon_cities) do
-        cityBasicConsumption(city)
+        if city.special_buildings.town_hall ~= nil and city.special_buildings.town_hall.valid then
+            cityBasicConsumption(city)
+        end
     end
 end)
 
 script.on_nth_tick(60, function(event)
 
     for _, city in ipairs(global.tycoon_cities) do
-        if areBasicNeedsMet(city) and city.constructionProbability > math.random() then
-            cityGrowth(city)
-        end
+        if city.special_buildings.town_hall ~= nil and city.special_buildings.town_hall.valid then
+            if areBasicNeedsMet(city) and city.constructionProbability > math.random() then
+                cityGrowth(city)
+            end
 
-        -- We need to initialize the tag here, because tags can only be placed on charted chunks.
-        -- And the game needs a moment to start and chart the initial chunks, even if it can already place entities.
-        if city.tag == nil and city.special_buildings.town_hall ~= nil then
-            local tag = game.forces.player.add_chart_tag(game.surfaces[1],
-                {
-                    position = {x = city.special_buildings.town_hall.position.x, y = city.special_buildings.town_hall.position.y}, 
-                    text = city.name .. " Town Center"
-                }
-            )
-            city.tag = tag
+            -- We need to initialize the tag here, because tags can only be placed on charted chunks.
+            -- And the game needs a moment to start and chart the initial chunks, even if it can already place entities.
+            if city.tag == nil and city.special_buildings.town_hall ~= nil then
+                local tag = game.forces.player.add_chart_tag(game.surfaces[1],
+                    {
+                        position = {x = city.special_buildings.town_hall.position.x, y = city.special_buildings.town_hall.position.y}, 
+                        text = city.name .. " Town Center"
+                    }
+                )
+                city.tag = tag
+            end
         end
     end
 
