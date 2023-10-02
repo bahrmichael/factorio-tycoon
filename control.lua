@@ -1,16 +1,17 @@
 SEGMENTS = require("segments")
-TYCOON_STORY = require("tycoon-story")
+CITY = require("city")
+-- TYCOON_STORY = require("tycoon-story")
 
 local function getGridSize(grid)
     return #grid
 end
 
 local function getOffsetX(city)
-    return -1 * (getGridSize(city.grid) - 1) / 2 + (city.centerX or 0)
+    return -1 * (getGridSize(city.grid) - 1) / 2 + (city.center.x or 0)
 end
 
 local function getOffsetY(city)
-    return -1 * (getGridSize(city.grid) - 1) / 2 + (city.centerY or 0)
+    return -1 * (getGridSize(city.grid) - 1) / 2 + (city.center.y or 0)
 end
 
 local function printTiles(startY, startX, map, tileName)
@@ -165,7 +166,7 @@ local function fill_circle(city, radius)
 end
 
  -- In-place expansion of the grid and the circle by 1 unit on all sides
-local function expand_grid_and_circle(city)
+local function expand_grid(city)
     local old_size = getGridSize(city.grid)
     local new_size = old_size + 2  -- Expand by 1 on each side
 
@@ -180,11 +181,11 @@ local function expand_grid_and_circle(city)
         city.grid[y][new_size] = nil
     end
 
-    local old_radius = old_size / 2
-    local new_radius = old_radius + 1
+    -- local old_radius = old_size / 2
+    -- local new_radius = old_radius + 1
 
     -- Update the new circle in the existing grid
-    fill_circle(city, new_radius)
+    -- fill_circle(city, new_radius)
 end
 
 
@@ -206,7 +207,7 @@ local function isAreaFree(area, maxTreeCount)
     -- Too many trees / Other entities
     local entities = game.surfaces[1].find_entities_filtered({
         area=area,
-        type="tree",
+        type={"tree", "rock", "corpse"},
         invert=true,
         limit = 1,
     })
@@ -229,8 +230,8 @@ local function initializeCity(city)
     }
 
     local position = game.surfaces[1].find_non_colliding_position("tycoon-town-center-virtual", {0, 0}, 200, 5, true)
-    city.centerX = position.x
-    city.centerY = position.y
+    city.center.x = position.x
+    city.center.y = position.y
 
     local function clearCell(y, x)
         local area = {
@@ -279,14 +280,68 @@ local function initializeCity(city)
         end
     end
 
-    -- Add an other ring and start collapsing cells
-    expand_grid_and_circle(city)
+    -- todo: add the remaining options
+    city.roadEnds = {
+        {
+            coordinates = {
+                x = 1,
+                y = 1,
+            },
+            direction = "west"
+        },
+        {
+            coordinates = {
+                x = 1,
+                y = 1,
+            },
+            direction = "north"
+        },
 
-    for y = 1, getGridSize(city.grid) do
-        for x = 1, getGridSize(city.grid) do
-            reduceCell(city.grid, y, x)
-        end
-    end
+        {
+            coordinates = {
+                x = 3,
+                y = 1,
+            },
+            direction = "east"
+        },
+        {
+            coordinates = {
+                x = 3,
+                y = 1,
+            },
+            direction = "north"
+        },
+
+        {
+            coordinates = {
+                x = 3,
+                y = 3,
+            },
+            direction = "east"
+        },
+        {
+            coordinates = {
+                x = 3,
+                y = 3,
+            },
+            direction = "south"
+        },
+
+        {
+            coordinates = {
+                x = 1,
+                y = 3,
+            },
+            direction = "west"
+        },
+        {
+            coordinates = {
+                x = 1,
+                y = 3,
+            },
+            direction = "south"
+        },
+    }
 end
 
 local function popRandomLowEntropyElementFromTable(t, city_grid)
@@ -701,7 +756,7 @@ local function cityGrowth(city)
         
         local nextCell = popRandomLowEntropyElementFromTable(city.pending_cells, city.grid)
         if nextCell == nil then
-            expand_grid_and_circle(city)
+            expand_grid(city)
         else
             reduceCell(city.grid, nextCell.y, nextCell.x)
             collapseCell(city.grid, nextCell.y, nextCell.x)
@@ -1083,9 +1138,49 @@ script.on_nth_tick(600, function()
     end
 end)
 
+script.on_nth_tick(5, function(event)
+    for _, city in ipairs(global.tycoon_cities) do
+        CITY.growAtRandomRoadEnd(city)
+
+        local houseOptions = {}
+        for y = 1, getGridSize(city.grid), 1 do
+            for x = 1, getGridSize(city.grid), 1 do
+                local cell = city.grid[y][x]
+                if cell ~= nil and cell.type == "house" and not cell.built then
+                    table.insert(houseOptions, {
+                        x = x,
+                        y = y
+                    })
+                end
+            end
+        end
+        if #houseOptions > 0 and math.random() > 0.5 then
+            local position = houseOptions[math.random(#houseOptions)]
+            local cell = city.grid[position.y][position.x]
+            cell.built = true
+
+            local startCoordinates = {
+                y = (position.y + getOffsetY(city)) * SEGMENTS.segmentSize,
+                x = (position.x + getOffsetX(city)) * SEGMENTS.segmentSize,
+            }
+            if isAreaFree({
+                {startCoordinates.x, startCoordinates.y},
+                {startCoordinates.x + SEGMENTS.segmentSize, startCoordinates.y + SEGMENTS.segmentSize},
+            }, 10) then
+                game.surfaces[1].create_entity{
+                    name = getRandomHouseName(),
+                    position = {x = startCoordinates.x - 0.5 + SEGMENTS.segmentSize / 2, y = startCoordinates.y - 0.5  + SEGMENTS.segmentSize / 2},
+                    force = "player"
+                }
+            end
+        end
+    end
+end)
+
 script.on_nth_tick(60, function(event)
 
     for _, city in ipairs(global.tycoon_cities) do
+
         if areBasicNeedsMet(city) and city.constructionProbability > math.random() then
             cityGrowth(city)
         end
@@ -1155,8 +1250,10 @@ script.on_init(function()
         constructionNeeds = {
             strone = 1
         },
-        centerX = 8,
-        centerY = -3,
+        center = {
+            x = 8,
+            y = -3,
+        },
         hasTag = false,
         name = "Your First City",
         stats = {
@@ -1196,7 +1293,7 @@ script.on_init(function()
 
     global.tycoon_primary_industries = {"tycoon-apple-farm", "tycoon-wheat-farm"}
 
-    TYCOON_STORY[1]()
+    -- TYCOON_STORY[1]()
 
     -- local x, y = 1,1
     -- local startCoordinates = {
