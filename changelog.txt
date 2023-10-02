@@ -1,4 +1,10 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.0.16
+Date: 02. 10. 2023
+  Bugfixes:
+    - Fixed an issue where removing the town would crash the game. It's not supposed to be removed. If that happens, the town just stops evolving for now.
+    - Fixed an issue where removing the water tower (and other buildings) could crash the game during the story.
+---------------------------------------------------------------------------------------------------
 Version: 0.0.15
 Date: 30. 09. 2023
   Major Features:
