@@ -11,16 +11,25 @@ local function listSpecialCityBuildings(city, name)
         city.special_buildings.other = {}
     end
 
-    if city.special_buildings.other[name] ~= nil then
-        return city.special_buildings.other[name]
+    local entities = {}
+    if city.special_buildings.other[name] ~= nil and #city.special_buildings.other[name] > 0 then
+        entities = city.special_buildings.other[name]
+    else
+        entities = game.surfaces[1].find_entities_filtered{
+            name=name,
+            position=city.special_buildings.town_hall.position,
+            radius=1000
+        }
+        city.special_buildings.other[name] = entities
     end
-    local entities = game.surfaces[1].find_entities_filtered{
-        name=name,
-        position=city.special_buildings.town_hall.position,
-        radius=1000
-    }
-    city.special_buildings.other[name] = entities
-    return entities
+
+    local result = {}
+    for _, entity in ipairs(entities) do
+        if entity ~= nil and entity.valid then
+            table.insert(result, entity)
+        end
+    end
+    return result
 end
 
 local story_table =
