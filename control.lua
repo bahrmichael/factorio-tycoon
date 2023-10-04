@@ -538,12 +538,8 @@ local function removeColldingEntities(area)
     end
 end
 
-local function getRandomHouseName()
-    local houseNames = {}
-    for i = 1, 14, 1 do
-        table.insert(houseNames, "tycoon-house-residential-" .. i)
-    end
-    return houseNames[math.random(1, #houseNames)]
+local function getRandomHouseName(houseType)
+    return "tycoon-house-" .. houseType .. "-" .. math.random(1, 8)
 end
 
 local function getPriorityBuilding(city)
@@ -612,7 +608,6 @@ local function updateUnlocks(city)
 
                     table.insert(global.tycoon_primary_industries, "tycoon-wheat-farm")
                     game.print({"", {"tycoon-exploration-discovers-primary-industries"}})
-                    
                 elseif v.supplyChain == "meat" then
                     game.forces[1].recipes['tycoon-butchery'].enabled = true
                     game.forces[1].recipes['tycoon-cows-to-meat'].enabled = true
@@ -674,7 +669,7 @@ local function printCell(y, x, city)
                 -- todo: how should we handle the town hall being destroyed?
             else
                 local house = game.surfaces[1].create_entity{
-                    name = getRandomHouseName(),
+                    name = getRandomHouseName("residential"),
                     position = {x = startCoordinates.x - 0.5 + SEGMENTS.segmentSize / 2, y = startCoordinates.y - 0.5  + SEGMENTS.segmentSize / 2},
                     force = "player"
                 }
@@ -1198,30 +1193,57 @@ script.on_nth_tick(600, function()
     end
 end)
 
-local cityComplete = false
+local GAME_SPEED = 10
 
-script.on_nth_tick(10, function(event)
+script.on_nth_tick(GAME_SPEED, function(event)
+    if event.tick < 200 then
+        return
+    end
     for _, city in ipairs(global.tycoon_cities) do
-        if not cityComplete and #city.grid < 100 then
-            if #(city.houseOptions or {}) < #city.grid then
+        if #(city.houseOptions or {}) < #city.grid then
+            local coordinates = CITY.growAtRandomRoadEnd(city)
+            CITY.updateHouseOptions(city, coordinates)
+        end
+        -- The second part limits the number of residential houses, so the city has to grow into skyscrapers at some point
+        local residentialCount = ((city.houseCounts or {})["residential"] or 0)
+        local highriseCount = ((city.houseCounts or {})["highrise"] or 0)
+        if #(city.excavationPits or {}) < math.floor(#city.grid / 2) and residentialCount < (#city.grid * 10) then
+            local hasBuiltExcavationPit = CITY.addExcavationPit(city)
+            if not hasBuiltExcavationPit then
                 local coordinates = CITY.growAtRandomRoadEnd(city)
                 CITY.updateHouseOptions(city, coordinates)
             end
-            local hasBuiltHouse = CITY.addHouse(city)
-            if not hasBuiltHouse then
-                local coordinates = CITY.growAtRandomRoadEnd(city)
-                CITY.updateHouseOptions(city, coordinates)
+        -- This condition is her so that the number of highrise buildings is lower than the outer area buildings
+        -- todo: needs finetuning
+        end
+            
+        if residentialCount > 20 and highriseCount < residentialCount / 20 then
+            CITY.upgradeHouse(city)
+        end
+
+        if #(city.excavationPits or {}) > 0 then
+            local excavationPit
+            for i = 1, math.ceil(#city.grid / 10), 1 do
+                local e = table.remove(city.excavationPits, math.random(#city.excavationPits))
+                if e.createdAtTick + math.random(GAME_SPEED, 6 * GAME_SPEED) < game.tick then
+                    excavationPit = e
+                    break
+                else
+                    table.insert(city.excavationPits, e)
+                end
             end
 
-            if math.random() < 0.05 and city.roadEnds ~= nil and city.houseOptions ~= nil then
-                game.print("Road ends: " .. #city.roadEnds)
-                game.print("House options: " .. #city.houseOptions)
-                game.print("Grid size: " .. #city.grid)
+            if excavationPit ~= nil then
+                CITY.buildHouse(city, excavationPit)
+                growCitizenCount(city, 4)
             end
-        elseif not cityComplete then
-            game.print("reached max grid size")
-            cityComplete = true
         end
+
+        -- if math.random() < 0.05 and city.roadEnds ~= nil and city.houseOptions ~= nil then
+        --     game.print("Road ends: " .. #city.roadEnds)
+        --     game.print("House options: " .. #city.houseOptions)
+        --     game.print("Grid size: " .. #city.grid)
+        -- end
     end
 end)
 
@@ -1342,6 +1364,17 @@ script.on_init(function()
     updateNeeds(global.tycoon_cities[1])
 
     global.tycoon_primary_industries = {"tycoon-apple-farm", "tycoon-wheat-farm"}
+
+
+    -- global.tycoon_cities = {}
+    -- for i = 1, 8, 1 do
+    --     game.surfaces[1].create_entity{
+    --         name = "tycoon-house-highrise-" .. i,
+    --         position = {x = -30 + i * 8, y = 10},
+    --         force = "player"
+    --     }
+    -- end
+
 
     -- global.tycoon_enable_debug_logging = true
 

@@ -5,7 +5,6 @@ data:extend{
         icon = "__tycoon__/graphics/entity/town-hall/town-hall.png",
         icon_size = 64,
         max_health = 200,
-        minable = false,
         destructible = false,
         inventory_size = 100,
         corpse = "small-remnants",
