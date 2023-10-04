@@ -1,3 +1,5 @@
+DEBUG = require("debug")
+
 --- @class Coordinates
 --- @field x number
 --- @field y number
@@ -13,10 +15,10 @@
 --- @field coordinates Coordinates
 --- @field additionalWeight number | nil
 
-
 --- @alias CellType
 ---| "road"
 ---| "house"
+---| "unused"
 
 --- @class Cell
 --- @field type CellType
@@ -30,8 +32,10 @@
 
 --- @class City
 --- @field roadEnds RoadEnd[]
---- @field grid (Cell | nil)[][]
+--- @field grid (Cell)[][]
 --- @field center Coordinates
+--- @field houseOptions Coordinates[]
+--- @field housesTryLater Coordinates[]
 
 --- @param p1 Coordinates
 --- @param p2 Coordinates
@@ -60,77 +64,104 @@ local function getOffsetY(city)
     return -1 * (getGridSize(city.grid) - 1) / 2 + city.center.y
 end
 
+--- @param coordinates Coordinates
+--- @return string key
+local function buildCoordinatesKey(coordinates)
+    return coordinates.y .. "/" .. coordinates.x
+end
+
+local cachedDistances = {}
+
+--- @param coordinates Coordinates
+--- @return number distanceFromTownHall
+local function getCachedDistance(coordinates, offsetY, offsetX, cityCenter)
+    local key = buildCoordinatesKey(coordinates)
+    if cachedDistances[key] ~= nil then
+        return cachedDistances[key]
+    else
+        local distance = calculateDistance({
+            y = (coordinates.y + offsetY) * CELL_SIZE,
+            x = (coordinates.x + offsetX) * CELL_SIZE,
+        }, cityCenter)
+        cachedDistances[key] = distance
+        return distance
+    end
+end
+
+function TableConcat(t1,t2)
+    for i=1,#t2 do
+        t1[#t1+1] = t2[i]
+    end
+    return t1
+end
+
+local function sortAll(array, offsetY, offsetX, cityCenter)
+    table.sort(array, function (a, b)
+        local distanceA = getCachedDistance(a.coordinates, offsetY, offsetX, cityCenter)
+        local distanceB = getCachedDistance(b.coordinates, offsetY, offsetX, cityCenter)
+        return distanceA * (a.additionalWeight or 1) < distanceB * (b.additionalWeight or 1)
+    end)
+end
+
+local function sortPartially(city, count, offsetY, offsetX, cityCenter)
+    local subsection = {}
+    for _ = 1, count, 1 do
+        table.insert(subsection, table.remove(city.roadEnds, math.random(#city.roadEnds)))
+    end
+    sortAll(subsection, offsetY, offsetX, cityCenter)
+    city.roadEnds = TableConcat(subsection, city.roadEnds)
+end
+
+local function sortRoadEnds(city)
+
+    -- This might still be shifted slighty wrong, but it's goo enough for now
+    local cityCenter = {
+        x = city.center.x + CELL_SIZE,
+        y = city.center.y + CELL_SIZE,
+    }
+
+    local offsetY = getOffsetY(city)
+    local offsetX = getOffsetX(city)
+
+    local threshold = 25
+    if #city.roadEnds < threshold then
+        sortAll(city.roadEnds, offsetY, offsetX, cityCenter)
+    else
+        sortPartially(city, threshold, offsetY, offsetX, cityCenter)
+    end
+end
+
 --- @param city City
 --- @return RoadEnd | nil roadEnd
 local function getInnerCircleRoadEnd(city)
     if #city.roadEnds == 0 then
         return nil
     end
-    table.sort(city.roadEnds, function (a, b)
-        -- This might still be shifted slighty wrong, but it's goo enough for now
-        local cityCenter = {
-            x = city.center.x + CELL_SIZE,
-            y = city.center.y + CELL_SIZE,
-        }
-        local distanceA = calculateDistance({
-            y = (a.coordinates.y + getOffsetY(city)) * CELL_SIZE,
-            x = (a.coordinates.x + getOffsetX(city)) * CELL_SIZE,
-        }, cityCenter)
-        local distanceB = calculateDistance({
-            y = (b.coordinates.y + getOffsetY(city)) * CELL_SIZE,
-            x = (b.coordinates.x + getOffsetX(city)) * CELL_SIZE,
-        }, cityCenter)
-        return distanceA * (a.additionalWeight or 1) < distanceB * (b.additionalWeight or 1)
-    end)
+
     return city.roadEnds[1]
 end
 
-local function hasCliffsOrWater(area)
-    local tiles = game.surfaces[1].find_tiles_filtered{
-        area = area,
-        name = {"water", "deepwater", "cliff"},
-        limit = 1
-    }
-    return #tiles > 0
-end
+local unusedFieldWeights = {}
 
-local function isAreaFree(area, maxTreeCount)
-    -- Water / Cliffs
-    if hasCliffsOrWater(area) then
-        return false
+--- @param y number
+--- @param x number
+--- @param size number
+--- @return Coordinates[] coordinates
+local function surroundingCoordinates(y, x, size, allowDiagonal)
+   local c = {}
+   for i = -1 * size, size, 1 do
+    for j = -1 * size, size, 1 do
+        if (allowDiagonal or (i ~= j)) then
+            if i ~= 0 and j ~= 0 then
+                table.insert(c, {
+                    y = i + y,
+                    x = j + x
+                })
+            end
+        end
     end
-
-    -- Too many trees / Other entities
-    local entities = game.surfaces[1].find_entities_filtered({
-        area=area,
-        type={"tree", "character"},
-        invert=true,
-        limit = 1,
-    })
-    if #entities > 0 then
-        return false
-    end
-    local trees = game.surfaces[1].find_entities_filtered({
-        area=area,
-        type="tree",
-        limit = maxTreeCount,
-    })
-    return #trees < maxTreeCount
-end
-
---- @param city City
---- @param coordinates Coordinates
---- @return boolean hasCollidables If there are colldiables such as the player, water, cliffs or other entities in that cell.
-local function doesCellHaveCollidables(city, coordinates)
-    local startCoordinates = {
-        y = (coordinates.y + getOffsetY(city)) * CELL_SIZE,
-        x = (coordinates.x + getOffsetX(city)) * CELL_SIZE,
-    }
-    local area = {
-        {startCoordinates.x, startCoordinates.y},
-        {startCoordinates.x + CELL_SIZE, startCoordinates.y + CELL_SIZE}
-    }
-    return not isAreaFree(area, 10)
+   end
+   return c
 end
 
 -- Return the first index with the given value (or nil if not found).
@@ -146,7 +177,65 @@ local function indexOf(array, value)
     return nil
 end
 
- -- In-place expansion of the grid and the circle by 1 unit on all sides
+local removableEntities = {
+    "rock-",
+    "sand-rock-",
+    "dead-grey-trunk",
+    "tree-"
+}
+
+local function removeColldingEntities(area) 
+    local printEntities = game.surfaces[1].find_entities_filtered({area=area})
+    for _, entity in pairs(printEntities) do
+        for _, removable in pairs(removableEntities) do
+            if entity.valid and string.find(entity.name, removable, 1, true) then
+                entity.destroy()
+            end
+        end
+    end
+end
+
+local function hasCliffsOrWater(area)
+    local tiles = game.surfaces[1].find_tiles_filtered{
+        area = area,
+        name = {"water", "deepwater", "cliff"},
+        limit = 1
+    }
+    return #tiles > 0
+end
+
+local function isAreaFree(area)
+    -- Water / Cliffs
+    if hasCliffsOrWater(area) then
+        return false
+    end
+
+    -- Too many trees / Other entities
+    local entities = game.surfaces[1].find_entities_filtered({
+        area=area,
+        type={"tree"},
+        name={"rock-huge", "rock-big", "sand-rock-big", "dead-grey-trunk"},
+        invert=true,
+        limit = 1,
+    })
+    return #entities == 0
+end
+
+--- @param city City
+--- @param coordinates Coordinates
+--- @return boolean hasCollidables If there are colldiables such as the player, water, cliffs or other entities in that cell.
+local function doesCellHaveCollidables(city, coordinates)
+    local startCoordinates = {
+        y = (coordinates.y + getOffsetY(city)) * CELL_SIZE,
+        x = (coordinates.x + getOffsetX(city)) * CELL_SIZE,
+    }
+    local area = {
+        {startCoordinates.x, startCoordinates.y},
+        {startCoordinates.x + CELL_SIZE, startCoordinates.y + CELL_SIZE}
+    }
+    return not isAreaFree(area)
+end
+
  --- @param city City
  local function expand_grid(city)
     local old_size = getGridSize(city.grid)
@@ -154,20 +243,23 @@ end
 
     -- Shift rows downward to keep center
     for y = new_size, 1, -1 do
-        city.grid[y] = city.grid[y-1] or {}
+        city.grid[y] = city.grid[y - 1] or {}
     end
 
     -- Add new columns at the left and right
     for y = 1, new_size do
-        table.insert(city.grid[y], 1, nil)
-        city.grid[y][new_size] = nil
+        table.insert(city.grid[y], 1, {type = "unused"})
+        city.grid[y][new_size] = {type = "unused"}
     end
 
-    -- local old_radius = old_size / 2
-    -- local new_radius = old_radius + 1
-
-    -- Update the new circle in the existing grid
-    -- fill_circle(city, new_radius)
+    -- Fill up any nil fields with type=unused
+    for y = 1, #city.grid, 1 do
+        for x = 1, #city.grid, 1 do
+            if city.grid[y][x] == nil then
+                city.grid[y][x] = {type = "unused"}
+            end
+        end
+    end
 end
 
 --- @param coordinates Coordinates
@@ -214,77 +306,81 @@ end
 --- @param lookoutDirections Direction[]
 --- @return boolean canBuild
 local function testDirections(city, roadEnd, lookoutDirections)
+    DEBUG.log("Testing directions: " .. table.concat(lookoutDirections, ","))
 
     -- Test the compatibility of the directions
     for _, direction in ipairs(lookoutDirections) do
+        DEBUG.log("Testing direction: " .. direction)
         local neighbourPosition = continueInDirection(roadEnd.coordinates, direction, 1)
-        -- if city.grid[neighbourPosition.y] == nil then
-        --     expand_grid(city)
-        -- end
+
+
+        if doesCellHaveCollidables(city, neighbourPosition) then
+            DEBUG.log("Test result: False, because collidables")
+            return false
+        end
 
         -- This should never be fail, because the upstream function is supposed to expand the grid if the position is on the outsides
         local neighbourCell = city.grid[neighbourPosition.y][neighbourPosition.x]
+        assert(neighbourCell ~= nil, "Cell should always have a type and not be nil.")
+
+        if global.tycoon_enable_debug_logging then
+            if neighbourCell ~= nil and neighbourCell.type ~= nil and neighbourCell.type ~= "unused" then
+                DEBUG.log("Neighbour: " .. neighbourCell.type)
+                if neighbourCell.type == "road" then
+                    DEBUG.log("Neighbour(" .. "y=" .. neighbourPosition.y .. " x=" .. neighbourPosition.x  .. ") road sockets: " .. table.concat(neighbourCell.roadSockets, ","))
+                end
+            end
+        end
+
         -- Streets must not expand into houses or collidables, but may expand into empty fields or streets
-        if neighbourCell == "house" then
+        if neighbourCell.type == "unused" then
+            -- noop, cell is free
+        elseif neighbourCell.type == "house" then
+            DEBUG.log("Test result: False, because house")
             return false
-        elseif doesCellHaveCollidables(city, neighbourPosition) then
+        elseif neighbourCell.type == "road" then
+            if indexOf(neighbourCell.roadSockets, invertDirection(direction)) ~= nil then
+                DEBUG.log("Test result: False, because road with inverted direction")
+                return false
+            end
+        elseif #neighbourCell == 1 and (neighbourCell[1] == "linear.vertical" or neighbourCell[1] == "linear.horizontal" or neighbourCell[1] == "town-hall" or neighbourCell[1] == "intersection") then
+            DEBUG.log("Test result: False, because start field")
             return false
+        elseif neighbourCell.type ~= "road" then
+            DEBUG.log("---1")
+        else
+            DEBUG.log("---2")
         end
 
         -- Streets must not continue directly next to and parallel to each other
-        -- local neighboursSideDirections = {}
-        -- if roadEnd.direction == "north" or roadEnd.direction == "south" then
-        --     neighboursSideDirections = {"east", "west"}
-        -- elseif roadEnd.direction == "west" or roadEnd.direction == "east" then
-        --     neighboursSideDirections = {"south", "north"}
-        -- end
-        -- local neighboursSideNeighbours = {
-        --     continueInDirection(neighbourPosition, neighboursSideDirections[1], 1),
-        --     continueInDirection(neighbourPosition, neighboursSideDirections[2], 1),
-        -- }
-        -- for _, position in ipairs(neighboursSideNeighbours) do
-        --     if city.grid[position.y] ~= nil and city.grid[position.y][position.x] ~= nil then
-        --         local cell = city.grid[position.y][position.x]
-        --         if cell ~= nil and cell.type == "road" then
-        --             local sockets = cell.roadSockets or {}
-        --             for _, socket in ipairs(sockets) do
-        --                 if socket == roadEnd.direction or socket == invertDirection(roadEnd.direction) then
-        --                     return false
-        --                 end
-        --             end
-        --         end
-        --     end
-        -- end
-
-        -- give a small chance to dodge the lookahead so that areas will eventually close again
-        -- if math.random() > 0.7 then
-        --     -- Look at the cells 2 and 3 cells ahaed. If any of them are roads, we don't expand so that we can leave some space for houses.
-        --     for i = 2, 3, 1 do
-        --         local lookAheadPosition = continueInDirection(roadEnd.coordinates, direction, i)
-        --         -- If the cell is outside of the grid, then there should be nothing yet and it's fine for us to expand in that direction
-        --         if city.grid[lookAheadPosition.y] ~= nil and city.grid[lookAheadPosition.y][lookAheadPosition.x] ~= nil then
-        --             if city.grid[lookAheadPosition.y][lookAheadPosition.x] == "road" then
-        --                 -- todo: should we also about at houses? i think it's fine to have a road go towards a house and then stop there
-        --                 return false
-        --             end
-        --         end
-        --     end
-        -- end
-    end
-
-    return true
-end
-
---- @param array any[]
---- @param exclude any[]
-local function rebuildTableWithout(array, exclude)
-    local result = {}
-    for _, value in ipairs(array) do
-        if indexOf(exclude, value) == nil then
-            table.insert(result, value)
+        local neighboursSideDirections = {}
+        if direction == "north" or direction == "south" then
+            neighboursSideDirections = {"east", "west"}
+        elseif direction == "west" or direction == "east" then
+            neighboursSideDirections = {"south", "north"}
+        end
+        local neighboursSideNeighbours = {
+            continueInDirection(neighbourPosition, neighboursSideDirections[1], 1),
+            continueInDirection(neighbourPosition, neighboursSideDirections[2], 1),
+        }
+        for _, position in ipairs(neighboursSideNeighbours) do
+            if city.grid[position.y] ~= nil and city.grid[position.y][position.x] ~= nil then
+                local cell = city.grid[position.y][position.x]
+                if cell.type == "road" then
+                    local sockets = cell.roadSockets or {}
+                    for _, socket in ipairs(sockets) do
+                        if socket == direction or socket == invertDirection(direction) then
+                            DEBUG.log("Test result: False, because parallel road (" .. socket .. ", y=" .. position.y .. "x=" .. position.x .. ")")
+                            return false
+                        end
+                    end
+                end
+            end
         end
     end
-    return result
+
+    DEBUG.log("Test result: True")
+    return true
 end
 
 --- @param originalDirection Direction
@@ -330,9 +426,9 @@ local function getRoadConnectionCountOptions()
     -- Each value describes how many road connections should be built.
     -- weightedValues["0"] = 1
     weightedValues["3"] = 1
-    weightedValues["2"] = 1
+    weightedValues["2"] = 2
     -- One connection will later be randomized again if it should be a corner or a straight.
-    weightedValues["1"] = 1
+    weightedValues["1"] = 5
 
     local values = {}
     for value, weight in pairs(weightedValues) do
@@ -357,6 +453,7 @@ local function shuffle(tbl)
 --- @param roadEnd RoadEnd
 --- @return Direction[] | nil
 local function pickRoadExpansion(city, roadEnd)
+    DEBUG.log('ENTER pickRoadExpansion')
     local left = getLeftDirection(roadEnd.direction)
     local right = getRightDirection(roadEnd.direction)
 
@@ -364,53 +461,48 @@ local function pickRoadExpansion(city, roadEnd)
     shuffle(options)
 
     for _, option in ipairs(options) do
+        DEBUG.log('Check connections: ' .. option)
+        local picked
         if option == "3" then
-            if testDirections(city, roadEnd, {roadEnd.direction, left, right}) then
-                return {roadEnd.direction, left, right}
-            end
+            picked = {roadEnd.direction, left, right}
             -- If the test doesn't succeed, then continue trying the other options
         elseif option == "2" then
             local sides = {roadEnd.direction, left, right}
-            local picked = {
+            picked = {
                 table.remove(sides, math.random(#sides)),
                 table.remove(sides, math.random(#sides)),
             }
-            if testDirections(city, roadEnd, picked) then
-                return picked
-            end
             -- If the test doesn't succeed, then continue trying the other options
         elseif option == "1" then
             local straightStreetLength = 0
             for i = 1, 10, 1 do
                 local previousCell = continueInDirection(roadEnd.coordinates, invertDirection(roadEnd.direction), i)
-                if city.grid[previousCell.y] == nil 
-                or city.grid[previousCell.y][previousCell.x] == nil 
-                or city.grid[previousCell.y][previousCell.x].type ~= "road"
+                if (city.grid[previousCell.y] or {})[previousCell.x] == nil then
+                    -- We reached the end of the grid. The road doesn't go beyond here.
+                    break
+                end
+                if city.grid[previousCell.y][previousCell.x].type ~= "road"
                 then
                     straightStreetLength = i
                     break
                 end
             end
             local shouldBuildStraight = math.random() > (straightStreetLength / 10)
+            DEBUG.log("Should build straight: " .. tostring(shouldBuildStraight) .. " (straight length: " .. straightStreetLength .. ")")
             if shouldBuildStraight then
-                if testDirections(city, roadEnd, {roadEnd.direction}) then
-                    return {roadEnd.direction}
-                end
+                picked = {roadEnd.direction}
             else
-                local sides = {roadEnd.direction, left, right}
-                for _i = 1, 3, 1 do
-                    local picked = {
-                        table.remove(sides, math.random(#sides)),
-                    }
-                    if testDirections(city, roadEnd, picked) then
-                        return picked
-                    end
-                end
+                local sides = {left, right}
+                picked = {sides[math.random(#sides)]}
             end
         elseif option == "0" then
-            return {}
+            picked = {}
         else
             assert(false, "pickRoadExpansion doesn't yet handle the new roadConnection: " .. option)
+        end
+
+        if testDirections(city, roadEnd, picked) then
+            return picked
         end
     end
 
@@ -480,8 +572,166 @@ local function getMap(direction)
     return result
 end
 
+local function getRandomHouseName()
+    local houseNames = {}
+    for i = 1, 14, 1 do
+        table.insert(houseNames, "tycoon-house-residential-" .. i)
+    end
+    return houseNames[math.random(1, #houseNames)]
+end
+
 --- @param city City
+--- @param recentCoordinates Coordinates | nil
+local function updateHouseOptions(city, recentCoordinates)
+    if city.houseOptions == nil then
+        city.houseOptions = {}
+    end
+
+    if #city.houseOptions < 50 and city.housesTryLater ~= nil and #city.housesTryLater > 0 then
+        for i = 1, math.min(#city.housesTryLater, 10), 1 do
+            table.insert(city.houseOptions, table.remove(city.housesTryLater, math.random(#city.housesTryLater)))
+        end
+    end
+
+    local sizeBefore = #city.houseOptions
+
+    if recentCoordinates ~= nil then
+        local roadEndCoordinates = {}
+        for _, value in ipairs(city.roadEnds) do
+            table.insert(roadEndCoordinates, value.coordinates)
+        end
+
+        local surrounds = surroundingCoordinates(recentCoordinates.y, recentCoordinates.x, 1, false)
+        for _, value in ipairs(surrounds) do
+            if value.x <= 1 or value.y <= 1 or value.x >= #city.grid or value.y >= #city.grid then
+                -- Skip locations that are at the edge of the grid or beyond
+            elseif indexOf(city.houseOptions, value) == nil then
+                    -- Only check cells that are unused and may have a house built there
+                local isUnused = city.grid[value.y] ~= nil and city.grid[value.y][value.x] ~= nil and city.grid[value.y][value.x].type == "unused"
+                if isUnused then
+
+                    -- Then check if there are any open roadEnds surrounding this unused field
+                    local surroundsOfUnused = surroundingCoordinates(value.y, value.x, 1, false)
+                    local hasSurroundingRoadEnd = false
+                    for _, s in ipairs(surroundsOfUnused) do
+                        if indexOf(recentCoordinates, s) ~= nil then
+                            hasSurroundingRoadEnd = true
+                            break
+                        end
+                    end
+                    if not hasSurroundingRoadEnd then
+                        local hasSurroundingRoad = false
+                        for _, s in ipairs(surroundsOfUnused) do
+                            if city.grid[s.y][s.x].type == "road" then
+                                DEBUG.log("y=" .. value.y .. " x=" .. value.x .. " has road neighbour: y=" .. s.y .. " x=" .. s.x)
+                                hasSurroundingRoad = true
+                                break
+                            end
+                        end
+                        if hasSurroundingRoad then
+                            table.insert(city.houseOptions, value)
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    if sizeBefore < #city.houseOptions and math.random() < 0.1 then
+
+        local offsetY = getOffsetY(city)
+        local offsetX = getOffsetX(city)
+        table.sort(city.houseOptions, function (a, b)
+            -- This might still be shifted slighty wrong, but it's goo enough for now
+            local cityCenter = {
+                x = city.center.x + CELL_SIZE,
+                y = city.center.y + CELL_SIZE,
+            }
+            local distanceA = getCachedDistance(a, offsetY, offsetX, cityCenter)
+            local distanceB = getCachedDistance(b, offsetY, offsetX, cityCenter)
+
+            return distanceA * (unusedFieldWeights[buildCoordinatesKey(a)] or 1) < distanceB * (unusedFieldWeights[buildCoordinatesKey(b)] or 1)
+        end)
+    end
+end
+
+--- @param city City
+--- @return boolean hasBuiltHouse
+local function addHouse(city)
+    DEBUG.log("\n\nENTER addHouse")
+    DEBUG.logGrid(city.grid)
+
+    if city.houseOptions == nil or #city.houseOptions == 0 then
+        return false
+    end
+
+    local coordinates = table.remove(city.houseOptions, 1)
+
+    local hasBuiltHouse = false
+
+    if (city.grid[coordinates.y] or {})[coordinates.x] == nil then
+        -- noop, if the grid has not been expanded this far, then don't try to build a house here (yet)
+        local c = coordinates.y .. "/" .. coordinates.x
+        unusedFieldWeights[c] = (unusedFieldWeights[c] or 1) * 1.2
+        table.insert(city.houseOptions, coordinates)
+    elseif city.grid[coordinates.y][coordinates.x].type == "road" then
+        -- noop, there's already a road so we can ignore this cell
+    elseif city.grid[coordinates.y][coordinates.x].type == "house" then
+        -- noop, for some reason the code is trying to build a house where there already is one, not sure why
+    elseif doesCellHaveCollidables(city, coordinates) then
+        -- Try again later
+        local c = buildCoordinatesKey(coordinates)
+        unusedFieldWeights[c] = (unusedFieldWeights[c] or 1) * 1.2
+        -- table.insert(city.houseOptions, coordinates)
+        if city.housesTryLater == nil then
+            city.housesTryLater = {}
+        end
+        table.insert(city.housesTryLater, coordinates)
+    else
+        local startCoordinates = {
+            y = (coordinates.y + getOffsetY(city)) * CELL_SIZE,
+            x = (coordinates.x + getOffsetX(city)) * CELL_SIZE,
+        }
+        local area = {
+            {startCoordinates.x, startCoordinates.y},
+            {startCoordinates.x + CELL_SIZE, startCoordinates.y + CELL_SIZE}
+        }
+
+        removeColldingEntities(area)
+        printTiles(startCoordinates, {
+            "111111",
+            "111111",
+            "111111",
+            "111111",
+            "111111",
+            "111111",
+        }, "concrete")
+
+        local house = game.surfaces[1].create_entity{
+            name = getRandomHouseName(),
+            position = {x = startCoordinates.x - 0.5 + CELL_SIZE / 2, y = startCoordinates.y - 0.5  + CELL_SIZE / 2},
+            force = "player"
+        }
+        city.grid[coordinates.y][coordinates.x] = {
+            type = "house",
+            -- todo: add other things like entity
+        }
+        hasBuiltHouse = true
+    end
+
+
+    DEBUG.logGrid(city.grid)
+    DEBUG.log("\n\nEXIT addHouse")
+
+    return hasBuiltHouse
+end
+
+--- @param city City
+--- @return Coordinates | nil coordinates
 local function growAtRandomRoadEnd(city)
+
+    DEBUG.log("\n\nENTER growAtRandomRoadEnd")
+    DEBUG.logGrid(city.grid)
 
     local roadEnd = getInnerCircleRoadEnd(city)
 
@@ -489,56 +739,51 @@ local function growAtRandomRoadEnd(city)
         return
     end
 
+    DEBUG.log('Coordinates: y=' .. roadEnd.coordinates.y .. " x=" .. roadEnd.coordinates.x)
+
     if roadEnd.coordinates.x == 1
      or roadEnd.coordinates.x == getGridSize(city.grid)
      or roadEnd.coordinates.y == 1
      or roadEnd.coordinates.y == getGridSize(city.grid)
      then
+        DEBUG.log('Expanding city')
         expand_grid(city)
         -- Since we extended the grid (and inserted a top/left row/colum) all roadEnd coordinates need to shift one
         for _, r in ipairs(city.roadEnds) do
             r.coordinates.x = r.coordinates.x + 1
             r.coordinates.y = r.coordinates.y + 1
         end
+        if city.houseOptions ~= nil then
+            for _, r in ipairs(city.houseOptions) do
+                r.x = r.x + 1
+                r.y = r.y + 1
+            end
+        end
         return
     end
-    -- We received the position for a road that extended into a cell. We now need to figure out if we can grow the road in any direction, and if we should add houses.
-    -- local neighbours = {
-    --     {0, 1},
-    --     {0, -1},
-    --     {1, 0},
-    --     {-1, 0},
-    -- }
-    -- -- Randomly sort the neighbours, so that we always start looking in different directions
-    -- table.sort(neighbours, function (_a, _b)
-    --     return math.random() > 0.5
-    -- end)
-
-
-    -- local continuationOptions = {
-    --     "intersection",
-    --     "t-section:front-left",
-    --     "t-section:front-right",
-    --     "t-section:sides",
-    --     "corner:left",
-    --     "corner:right",
-    -- }
-    --     -- Randomly sort the continuationOptions, so that we always attempt to build something different
-    -- table.sort(continuationOptions, function (_a, _b)
-    --     return math.random() > 0.5
-    -- end)
-
-    local cellsExpandedInto = {}
 
     local pickedExpansionDirections = pickRoadExpansion(city, roadEnd)
     if pickedExpansionDirections ~= nil then
+        DEBUG.log('Picked Expansion Directions: ' .. #pickedExpansionDirections .. " (" .. table.concat(pickedExpansionDirections, ",") .. ")")
         -- For each direction, fill the current cell with the direction and the neighbour with the inverse direction
         for _, direction in ipairs(pickedExpansionDirections) do
             local currentCellStartCoordinates = {
                 y = (roadEnd.coordinates.y + getOffsetY(city)) * CELL_SIZE,
                 x = (roadEnd.coordinates.x + getOffsetX(city)) * CELL_SIZE,
             }
+
+            local currentArea = {
+                {currentCellStartCoordinates.x, currentCellStartCoordinates.y},
+                {currentCellStartCoordinates.x + CELL_SIZE, currentCellStartCoordinates.y + CELL_SIZE}
+            }
+            removeColldingEntities(currentArea)
+
             printTiles(currentCellStartCoordinates, getMap(direction), "concrete")
+            local currentCell = city.grid[roadEnd.coordinates.y][roadEnd.coordinates.x]
+            if indexOf(currentCell.roadSockets, direction) == nil then
+                table.insert(currentCell.roadSockets, direction)
+            end
+
             local neighbourPosition
             if direction == "south" then
                 neighbourPosition = {x = roadEnd.coordinates.x, y = roadEnd.coordinates.y + 1}
@@ -553,80 +798,39 @@ local function growAtRandomRoadEnd(city)
                 y = (neighbourPosition.y + getOffsetY(city)) * CELL_SIZE,
                 x = (neighbourPosition.x + getOffsetX(city)) * CELL_SIZE,
             }
-            printTiles(neighbourCellStartCoordinates, getMap(invertDirection(direction)), "concrete")
-
-            table.insert(cellsExpandedInto, {
-                coordinates = neighbourPosition,
-                direction = invertDirection(direction),
-            })
-        end
-
-        if #pickedExpansionDirections == 1 then
-            local possibleHouseOptions = {}
-            if roadEnd.direction == pickedExpansionDirections[1] then
-                if roadEnd.direction == "south" then
-                    table.insert(possibleHouseOptions, {x = roadEnd.coordinates.x - 1, y = roadEnd.coordinates.y})
-                    table.insert(possibleHouseOptions, {x = roadEnd.coordinates.x + 1, y = roadEnd.coordinates.y})
-                elseif roadEnd.direction == "east" then
-                    table.insert(possibleHouseOptions, {x = roadEnd.coordinates.x, y = roadEnd.coordinates.y - 1})
-                    table.insert(possibleHouseOptions, {x = roadEnd.coordinates.x, y = roadEnd.coordinates.y + 1})
-                elseif roadEnd.direction == "north" then
-                    table.insert(possibleHouseOptions, {x = roadEnd.coordinates.x - 1, y = roadEnd.coordinates.y})
-                    table.insert(possibleHouseOptions, {x = roadEnd.coordinates.x + 1, y = roadEnd.coordinates.y})
-                elseif roadEnd.direction == "west" then
-                    table.insert(possibleHouseOptions, {x = roadEnd.coordinates.x, y = roadEnd.coordinates.y - 1})
-                    table.insert(possibleHouseOptions, {x = roadEnd.coordinates.x, y = roadEnd.coordinates.y + 1})
-                end
-            end
-
-            for _, value in ipairs(possibleHouseOptions) do
-                local row = city.grid[value.y]
-                assert(row ~= nil, "Cell should not be nil, because the grid should previously have been expanded")
-                local cell = city.grid[value.y][value.x]
-                if cell == nil then
-                    city.grid[value.y][value.x] = {
-                        type = "house"
-                    }
-                else
-                    -- This cell is already taken, so we're not doing anything
-                end
-            end
-        end
-
-        if city.grid[roadEnd.coordinates.y][roadEnd.coordinates.x] == nil then
-            city.grid[roadEnd.coordinates.y][roadEnd.coordinates.x] = {
-                type = "road",
-                roadSockets = pickedExpansionDirections
+            
+            local neighourArea = {
+                {neighbourCellStartCoordinates.x, neighbourCellStartCoordinates.y},
+                {neighbourCellStartCoordinates.x + CELL_SIZE, neighbourCellStartCoordinates.y + CELL_SIZE}
             }
-        else
-            -- patch values from city initialization (should be moved there)
-            local cell = city.grid[roadEnd.coordinates.y][roadEnd.coordinates.x]
-            if cell == "intersection" then
-                cell = {
-                    type = "road",
-                    roadSockets = {"south", "north", "east", "west"}
-                }
-            elseif cell == "linear.horizontal" then
-                cell = {
-                    type = "road",
-                    roadSockets = {"east", "west"}
-                }
-            elseif cell == "linear.vertical" then
-                cell = {
-                    type = "road",
-                    roadSockets = {"south", "north"}
-                }
-            elseif cell == "town-hall" then
-                cell = {
-                    type = "house"
-                }
-            end
-            if cell ~= nil and cell.type == "road" and #cell.roadSockets < 4 then
-                for _, direction in ipairs(pickedExpansionDirections) do
-                    table.insert(cell.roadSockets, direction)
+            removeColldingEntities(neighourArea)
+            
+            local neighourSocket = invertDirection(direction)
+            printTiles(neighbourCellStartCoordinates, getMap(neighourSocket), "concrete")
+            local neighbourCell = city.grid[neighbourPosition.y][neighbourPosition.x]
+            if neighbourCell.type == "road" then
+                if indexOf(neighbourCell.roadSockets, neighourSocket) == nil then
+                    table.insert(neighbourCell.roadSockets, neighourSocket)
                 end
+            elseif neighbourCell.type == "unused" then
+                city.grid[neighbourPosition.y][neighbourPosition.x] = {
+                    type = "road",
+                    roadSockets = {neighourSocket}
+                }
+                -- When creating a new road cell, then we also mark that as a roadEnd to later continue from
+                table.insert(city.roadEnds, {
+                    coordinates = neighbourPosition,
+                    -- We need to use the original direction, so that the next expansion continues in the same direction
+                    direction = direction,
+                })
+                if math.random() > 0.5 then
+                    sortRoadEnds(city)
+                end
+            else
+                assert(false, "Road should not be expanding into a cell that's not a road or unused.")
             end
         end
+
 
         -- If we completed the expansion, then remove the current cell from the roadEnds
         local rix = indexOf(city.roadEnds, roadEnd)
@@ -637,34 +841,18 @@ local function growAtRandomRoadEnd(city)
         
         -- Add some weight onto this roadEnd, so that it gets processed later (compared to others who are at a similar distance or don't have their weight changed as much)
         roadEnd.additionalWeight = (roadEnd.additionalWeight or 1) * 1.2
-    end
-
-    
-    -- Update the grid so it knows where the new roads are
-    -- Add cells that we expanded (and that weren't a road before) into the array of roadEnds
-    for _, cell in ipairs(cellsExpandedInto) do
-        -- if city.grid[cell.coordinates.y] == nil then
-        --     city.grid[cell.coordinates.y] = {}
-        -- end
-
-        -- test
-        cell.direction = invertDirection(cell.direction)
-
-        if city.grid[cell.coordinates.y][cell.coordinates.x] == nil then
-            city.grid[cell.coordinates.y][cell.coordinates.x] = {
-                type = "road",
-                roadSockets = {cell.direction}
-            }
-            table.insert(city.roadEnds, cell)
-        elseif city.grid[cell.coordinates.y][cell.coordinates.x].type == "road" then
-            table.insert(city.grid[cell.coordinates.y][cell.coordinates.x].roadSockets, cell.direction)
-            table.insert(city.roadEnds, cell)
+        if math.random() > 0.75 then
+            sortRoadEnds(city)
         end
     end
+    DEBUG.logGrid(city.grid)
+    return roadEnd.coordinates
 end
 
 local CITY = {
-    growAtRandomRoadEnd = growAtRandomRoadEnd
+    growAtRandomRoadEnd = growAtRandomRoadEnd,
+    addHouse = addHouse,
+    updateHouseOptions = updateHouseOptions,
 }
 
 return CITY

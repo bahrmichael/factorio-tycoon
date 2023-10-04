@@ -222,11 +222,41 @@ local function isAreaFree(area, maxTreeCount)
     return #trees < maxTreeCount
 end
 
+local function translateStarterCell(cell)
+    if cell == "intersection" then
+        cell = {
+            type = "road",
+            roadSockets = {"south", "north", "east", "west"}
+        }
+    elseif cell == "linear.horizontal" then
+        cell = {
+            type = "road",
+            roadSockets = {"east", "west"}
+        }
+    elseif cell == "linear.vertical" then
+        cell = {
+            type = "road",
+            roadSockets = {"south", "north"}
+        }
+    elseif cell == "town-hall" then
+        cell = {
+            type = "house"
+        }
+    else
+        cell = {
+            type = "road",
+            roadSockets = {"south", "north", "east", "west"}
+        }
+        -- assert(false, "Should not reach this branch in translateStarterCell.")
+    end
+    return cell
+end
+
 local function initializeCity(city)
     city.grid = {
-        {{"intersection"},    {"linear.horizontal"}, {"intersection"}},
+        {{"corner.rightToBottom"},    {"linear.horizontal"}, {"corner.bottomToLeft"}},
         {{"linear.vertical"}, {"town-hall"},         {"linear.vertical"}},
-        {{"intersection"},    {"linear.horizontal"}, {"intersection"}},
+        {{"corner.topToRight"},    {"linear.horizontal"}, {"corner.leftToTop"}},
     }
 
     local position = game.surfaces[1].find_non_colliding_position("tycoon-town-center-virtual", {0, 0}, 200, 5, true)
@@ -280,8 +310,14 @@ local function initializeCity(city)
         end
     end
 
-    -- todo: add the remaining options
-    city.roadEnds = {
+
+    for i = 1, #city.grid, 1 do
+        for j = 1, #city.grid, 1 do
+            city.grid[i][j] = translateStarterCell(city.grid[i][j][1])
+        end
+    end
+
+    local possibleRoadEnds = {
         {
             coordinates = {
                 x = 1,
@@ -342,6 +378,17 @@ local function initializeCity(city)
             direction = "south"
         },
     }
+
+    -- We're adding some randomness here
+    -- Instead of adding 8 road connections to the town center, we pick between 4 and 8.
+    -- This makes individual towns feel a bit more diverse.
+    local roadEndCount = math.random(4, 8)
+    local pickedRoadEnds = {}
+    for i = 1, roadEndCount, 1 do
+        table.insert(pickedRoadEnds, table.remove(possibleRoadEnds, math.random(#possibleRoadEnds)))
+    end
+
+    city.roadEnds = pickedRoadEnds
 end
 
 local function popRandomLowEntropyElementFromTable(t, city_grid)
@@ -1151,41 +1198,29 @@ script.on_nth_tick(600, function()
     end
 end)
 
-script.on_nth_tick(5, function(event)
+local cityComplete = false
+
+script.on_nth_tick(10, function(event)
     for _, city in ipairs(global.tycoon_cities) do
-        CITY.growAtRandomRoadEnd(city)
-
-        local houseOptions = {}
-        for y = 1, getGridSize(city.grid), 1 do
-            for x = 1, getGridSize(city.grid), 1 do
-                local cell = city.grid[y][x]
-                if cell ~= nil and cell.type == "house" and not cell.built then
-                    table.insert(houseOptions, {
-                        x = x,
-                        y = y
-                    })
-                end
+        if not cityComplete and #city.grid < 100 then
+            if #(city.houseOptions or {}) < #city.grid then
+                local coordinates = CITY.growAtRandomRoadEnd(city)
+                CITY.updateHouseOptions(city, coordinates)
             end
-        end
-        if #houseOptions > 0 and math.random() > 0.5 then
-            local position = houseOptions[math.random(#houseOptions)]
-            local cell = city.grid[position.y][position.x]
-            cell.built = true
-
-            local startCoordinates = {
-                y = (position.y + getOffsetY(city)) * SEGMENTS.segmentSize,
-                x = (position.x + getOffsetX(city)) * SEGMENTS.segmentSize,
-            }
-            if isAreaFree({
-                {startCoordinates.x, startCoordinates.y},
-                {startCoordinates.x + SEGMENTS.segmentSize, startCoordinates.y + SEGMENTS.segmentSize},
-            }, 10) then
-                game.surfaces[1].create_entity{
-                    name = getRandomHouseName(),
-                    position = {x = startCoordinates.x - 0.5 + SEGMENTS.segmentSize / 2, y = startCoordinates.y - 0.5  + SEGMENTS.segmentSize / 2},
-                    force = "player"
-                }
+            local hasBuiltHouse = CITY.addHouse(city)
+            if not hasBuiltHouse then
+                local coordinates = CITY.growAtRandomRoadEnd(city)
+                CITY.updateHouseOptions(city, coordinates)
             end
+
+            if math.random() < 0.05 and city.roadEnds ~= nil and city.houseOptions ~= nil then
+                game.print("Road ends: " .. #city.roadEnds)
+                game.print("House options: " .. #city.houseOptions)
+                game.print("Grid size: " .. #city.grid)
+            end
+        elseif not cityComplete then
+            game.print("reached max grid size")
+            cityComplete = true
         end
     end
 end)
@@ -1308,20 +1343,11 @@ script.on_init(function()
 
     global.tycoon_primary_industries = {"tycoon-apple-farm", "tycoon-wheat-farm"}
 
-    -- TYCOON_STORY[1]()
+    -- global.tycoon_enable_debug_logging = true
 
-    -- local x, y = 1,1
-    -- local startCoordinates = {
-    --     y = (y + getOffsetY(global.tycoon_city[1])) * SEGMENTS.segmentSize,
-    --     x = (x + getOffsetX(global.tycoon_city[1])) * SEGMENTS.segmentSize,
-    -- }
-    -- printTiles(startCoordinates.x, startCoordinates.y, SEGMENTS.house.map, "concrete")
-    -- game.surfaces[1].create_entity{
-    --     name = "tycoon-stable",
-    --     position = {x = 0, y = 20},
-    --     force = "player"
-    -- }
+   -- TYCOON_STORY[1]()
 
+    
         -- /c game. player. insert{ name="stone", count=1000 }
         -- /c game. player. insert{ name="tycoon-water-tower", count=1 }
         -- /c game. player. insert{ name="tycoon-cow", count=100 }
