@@ -777,6 +777,7 @@ local function consumeItems(items, entities, city)
     end
 end
 
+-- todo: migrate this code into the newCityGrowth function (or around it)
 local function cityGrowth(city)
     if getGridSize(city.grid) > 1 then
 
@@ -1058,9 +1059,11 @@ script.on_event(defines.events.on_player_mined_entity, function(event)
 end)
 
 -- This event does not trigger when the player (or another entity mines a building)
+-- todo: does it trigger when the game destroys an entity via scripts?
 script.on_event(defines.events.on_entity_destroyed, function(event)
     local unit_number = event.unit_number
     if unit_number ~= nil then
+        -- todo: make sure that new buildings are listed here
         local building = global.tycoon_city_buildings[unit_number]
         if building ~= nil then
             if string.find(building.entity_name, "tycoon-house-residential-", 1, true) then
@@ -1068,6 +1071,12 @@ script.on_event(defines.events.on_entity_destroyed, function(event)
                 local city = findCityById(cityId)
                 if city ~= nil then
                     city.stats.citizen_count = city.stats.citizen_count - 4
+                end
+            elseif string.find(building.entity_name, "tycoon-house-highrise-", 1, true) then
+                local cityId = building.cityId
+                local city = findCityById(cityId)
+                if city ~= nil then
+                    city.stats.citizen_count = city.stats.citizen_count - 40
                 end
             end
         end
@@ -1193,67 +1202,58 @@ script.on_nth_tick(600, function()
     end
 end)
 
-local GAME_SPEED = 10
+local CITY_GROWTH_TICKS = 60
 
-script.on_nth_tick(GAME_SPEED, function(event)
+local function newCityGrowth(city)
+    if #(city.houseOptions or {}) < #city.grid then
+        local coordinates = CITY.growAtRandomRoadEnd(city)
+        CITY.updateHouseOptions(city, coordinates)
+    end
+    -- The second part limits the number of residential houses, so the city has to grow into skyscrapers at some point
+    local residentialCount = ((city.houseCounts or {})["residential"] or 0)
+    local highriseCount = ((city.houseCounts or {})["highrise"] or 0)
+    if #(city.excavationPits or {}) < math.floor(#city.grid / 2) and residentialCount < (#city.grid * 10) then
+        local hasBuiltExcavationPit = CITY.addExcavationPit(city)
+        if not hasBuiltExcavationPit then
+            local coordinates = CITY.growAtRandomRoadEnd(city)
+            CITY.updateHouseOptions(city, coordinates)
+        end
+    -- This condition is her so that the number of highrise buildings is lower than the outer area buildings
+    -- todo: needs finetuning
+    end
+        
+    if residentialCount > 20 and highriseCount < residentialCount / 20 then
+        CITY.upgradeHouse(city)
+        growCitizenCount(city, 40)
+    end
+
+    if #(city.excavationPits or {}) > 0 then
+        local excavationPit
+        for i = 1, math.ceil(#city.grid / 10), 1 do
+            local e = table.remove(city.excavationPits, math.random(#city.excavationPits))
+            if e.createdAtTick + math.random(CITY_GROWTH_TICKS, 6 * CITY_GROWTH_TICKS) < game.tick then
+                excavationPit = e
+                break
+            else
+                table.insert(city.excavationPits, e)
+            end
+        end
+
+        if excavationPit ~= nil then
+            CITY.buildHouse(city, excavationPit)
+            growCitizenCount(city, 4)
+        end
+    end
+end
+
+script.on_nth_tick(CITY_GROWTH_TICKS, function(event)
     if event.tick < 200 then
         return
     end
     for _, city in ipairs(global.tycoon_cities) do
-        if #(city.houseOptions or {}) < #city.grid then
-            local coordinates = CITY.growAtRandomRoadEnd(city)
-            CITY.updateHouseOptions(city, coordinates)
-        end
-        -- The second part limits the number of residential houses, so the city has to grow into skyscrapers at some point
-        local residentialCount = ((city.houseCounts or {})["residential"] or 0)
-        local highriseCount = ((city.houseCounts or {})["highrise"] or 0)
-        if #(city.excavationPits or {}) < math.floor(#city.grid / 2) and residentialCount < (#city.grid * 10) then
-            local hasBuiltExcavationPit = CITY.addExcavationPit(city)
-            if not hasBuiltExcavationPit then
-                local coordinates = CITY.growAtRandomRoadEnd(city)
-                CITY.updateHouseOptions(city, coordinates)
-            end
-        -- This condition is her so that the number of highrise buildings is lower than the outer area buildings
-        -- todo: needs finetuning
-        end
-            
-        if residentialCount > 20 and highriseCount < residentialCount / 20 then
-            CITY.upgradeHouse(city)
-        end
-
-        if #(city.excavationPits or {}) > 0 then
-            local excavationPit
-            for i = 1, math.ceil(#city.grid / 10), 1 do
-                local e = table.remove(city.excavationPits, math.random(#city.excavationPits))
-                if e.createdAtTick + math.random(GAME_SPEED, 6 * GAME_SPEED) < game.tick then
-                    excavationPit = e
-                    break
-                else
-                    table.insert(city.excavationPits, e)
-                end
-            end
-
-            if excavationPit ~= nil then
-                CITY.buildHouse(city, excavationPit)
-                growCitizenCount(city, 4)
-            end
-        end
-
-        -- if math.random() < 0.05 and city.roadEnds ~= nil and city.houseOptions ~= nil then
-        --     game.print("Road ends: " .. #city.roadEnds)
-        --     game.print("House options: " .. #city.houseOptions)
-        --     game.print("Grid size: " .. #city.grid)
-        -- end
-    end
-end)
-
-script.on_nth_tick(60, function(event)
-
-    for _, city in ipairs(global.tycoon_cities) do
-
         if city.special_buildings.town_hall ~= nil and city.special_buildings.town_hall.valid then
             if areBasicNeedsMet(city) and city.constructionProbability > math.random() then
-                cityGrowth(city)
+                newCityGrowth(city)
             end
 
             -- We need to initialize the tag here, because tags can only be placed on charted chunks.
@@ -1268,6 +1268,11 @@ script.on_nth_tick(60, function(event)
                 city.tag = tag
             end
         end
+        -- if math.random() < 0.05 and city.roadEnds ~= nil and city.houseOptions ~= nil then
+        --     game.print("Road ends: " .. #city.roadEnds)
+        --     game.print("House options: " .. #city.houseOptions)
+        --     game.print("Grid size: " .. #city.grid)
+        -- end
     end
 
     if global.tycoon_new_primary_industries ~= nil and #global.tycoon_new_primary_industries > 0 then

@@ -604,7 +604,7 @@ local function getRandomHouseName(houseType)
 end
 
 local function getRandomExcavationPitName()
-    return "tycoon-excavation-pit-" .. math.random(1, 6)
+    return "tycoon-excavation-pit-" .. math.random(1, 20)
 end
 
 --- @param city City

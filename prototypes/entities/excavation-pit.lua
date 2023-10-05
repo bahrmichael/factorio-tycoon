@@ -29,6 +29,6 @@ local function createExcavationPit(name)
   }
 end
 
-for i = 1, 6, 1 do
+for i = 1, 20, 1 do
   data:extend{createExcavationPit("excavation-pit-" .. i)}
 end
