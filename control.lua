@@ -37,191 +37,6 @@ local function getCell(grid, y, x)
     return row[x]
 end
 
-local function getInverseDirection(direction)
-    if direction == "top" then
-        return "bottom"
-    elseif direction == "bottom" then
-        return "top"
-    elseif direction == "right" then
-        return "left"
-    elseif direction == "left" then
-        return "right"
-    end
-end
-
-local function getSocket(sockets, direction)
-    if direction == "top" then
-        return sockets.top
-    elseif direction == "bottom" then
-        return sockets.bottom
-    elseif direction == "right" then
-        return sockets.right
-    elseif direction == "left" then
-        return sockets.left
-    end
-end
-
-local function isOptionValid(grid, y, x, localOption)
-
-    local sides = {
-        {
-            direction = "left",
-            cell = getCell(grid, y, x - 1)
-        },
-        {
-            direction = "top",
-            cell = getCell(grid, y - 1, x)
-        },
-        {
-            direction = "right",
-            cell = getCell(grid, y, x + 1)
-        },
-        {
-            direction = "bottom",
-            cell = getCell(grid, y + 1, x)
-        }
-    }
-
-    local skipNeighbours = {"intersection"}
-
-    for _, side in ipairs(sides) do
-        -- If a side's cell is nil, then it means that this cell is
-        -- not part of the grid yet and doesn't affect the collapse.
-        if side.cell ~= nil then
-
-            local localSocket = getSocket(SEGMENTS.getObjectForKey(localOption).sockets, side.direction)
-            local directionFromSide = getInverseDirection(side.direction)
-
-            -- For certain cells it makes little sense to have them next to each other.
-            -- E.g. an intersection next to an intersection looks a bit odd.
-            if #side.cell == 1 then
-                for _, skippable in ipairs(skipNeighbours) do
-                    if localOption == skippable and side.cell[1] == skippable then
-                        return false
-                    end
-                end
-            end
-
-            local hasValidOption = false
-            for _, option in ipairs(side.cell) do
-                local socketOfSide = getSocket(SEGMENTS.getObjectForKey(option).sockets, directionFromSide)
-                if localSocket == socketOfSide then
-                    hasValidOption = true
-                    break
-                end
-            end
-            if not hasValidOption then
-                return false
-            end
-        end
-    end
-
-    return true
-end
-
-local function reduceCell(grid, y, x)
-    if grid[y] == nil or grid[y][x] == nil then
-        return
-    end
-    -- If there is only 1 option, then we don't need to collapse further
-    if #grid[y][x] > 1 then
-        local currentOptions = grid[y][x]
-        local newOptions = {}
-        
-        for _, option in ipairs(currentOptions) do
-            if isOptionValid(grid, y, x, option) then
-                table.insert(newOptions, option)
-            end
-        end
-
-        grid[y][x] = newOptions
-    end
-end
-
-function table.shallow_copy_tycoon(t)
-    local t2 = {}
-    for k,v in pairs(t) do
-      t2[k] = v
-    end
-    return t2
-end
-
--- Fill a circle in the grid with center (h, k) and radius r
-local function fill_circle(city, radius)
-    local size = getGridSize(city.grid)
-    local half = size / 2
-    
-    for y = 1, size do
-        for x = 1, size do
-            if city.grid[y] == nil or city.grid[y][x] == nil then
-                local dx, dy = x - half, y - half
-                local d = math.sqrt(dx * dx + dy * dy)
-                if d <= radius then
-                    city.grid[y][x] = table.shallow_copy_tycoon(SEGMENTS.allPossibilities)
-                    table.insert(city.pending_cells, {y = y, x = x})
-                end
-            end
-        end
-    end
-end
-
- -- In-place expansion of the grid and the circle by 1 unit on all sides
-local function expand_grid(city)
-    local old_size = getGridSize(city.grid)
-    local new_size = old_size + 2  -- Expand by 1 on each side
-
-    -- Shift rows downward to keep center
-    for y = new_size, 1, -1 do
-        city.grid[y] = city.grid[y-1] or {}
-    end
-
-    -- Add new columns at the left and right
-    for y = 1, new_size do
-        table.insert(city.grid[y], 1, nil)
-        city.grid[y][new_size] = nil
-    end
-
-    -- local old_radius = old_size / 2
-    -- local new_radius = old_radius + 1
-
-    -- Update the new circle in the existing grid
-    -- fill_circle(city, new_radius)
-end
-
-
-local function hasCliffsOrWater(area)
-    local tiles = game.surfaces[1].find_tiles_filtered{
-        area = area,
-        name = {"water", "deepwater", "cliff"},
-        limit = 1
-    }
-    return #tiles > 0
-end
-
-local function isAreaFree(area, maxTreeCount)
-    -- Water / Cliffs
-    if hasCliffsOrWater(area) then
-        return false
-    end
-
-    -- Too many trees / Other entities
-    local entities = game.surfaces[1].find_entities_filtered({
-        area=area,
-        type={"tree", "rock", "corpse"},
-        invert=true,
-        limit = 1,
-    })
-    if #entities > 0 then
-        return false
-    end
-    local trees = game.surfaces[1].find_entities_filtered({
-        area=area,
-        type="tree",
-        limit = maxTreeCount,
-    })
-    return #trees < maxTreeCount
-end
-
 local function translateStarterCell(cell)
     if cell == "intersection" then
         cell = {
@@ -240,7 +55,7 @@ local function translateStarterCell(cell)
         }
     elseif cell == "town-hall" then
         cell = {
-            type = "house"
+            type = "building"
         }
     else
         cell = {
@@ -391,168 +206,6 @@ local function initializeCity(city)
     city.roadEnds = pickedRoadEnds
 end
 
-local function popRandomLowEntropyElementFromTable(t, city_grid)
-    assert(city_grid ~= nil, "Grid must not be nil. Has it been initialized?")
-    assert(t ~= nil, "Table must not be nil. Has it been initialized?")
-    if #t == 0 then
-        return nil
-    end
-    -- "The sort algorithm is not stable; that is, elements considered equal by the given order may have their relative positions changed by the sort."
-    -- We make use of this to have the lowest entropy values first, but then have some randomization (I assume).
-    table.sort(t, function (a, b)
-        return #a < #b
-    end)
-
-    -- Try to find an element that is next to a street coming out of the existing grid
-    for i, coordinates in ipairs(t) do
-        local neighbours = {
-            {
-                y = coordinates.y,
-                x = coordinates.x + 1,
-                side = "right"
-            },
-            {
-                y = coordinates.y + 1,
-                x = coordinates.x,
-                side = "top"
-            },
-            {
-                y = coordinates.y,
-                x = coordinates.x - 1,
-                side = "left"
-            },
-            {
-                y = coordinates.y - 1,
-                x = coordinates.x,
-                side = "bottom"
-            }
-        }
-        for _, neighbour in ipairs(neighbours) do
-            local neighbourRow = city_grid[neighbour.y]
-            if neighbourRow ~= nil then
-                local neighbourCell = neighbourRow[neighbour.y]
-                if neighbourCell ~= nil and #neighbourCell == 1 and neighbourCell[1] ~= "empty" then
-                    local socket = getSocket(SEGMENTS.getObjectForKey(neighbourCell[1]).sockets, getInverseDirection(neighbour.side))
-                    if socket == "street" then
-                        return table.remove(t, i)
-                    end
-                end
-            end
-        end
-    end
-
-    return table.remove(t, 1)
-end
-
--- https://stackoverflow.com/a/66699630
-local function utils_Set(list)
-    if list == nil then
-        return {}
-    end
-    local set = {}
-    for _, l in ipairs(list) do set[l] = true end
-    return set
-end
-
-local function countConnectedHouses(grid, y, x, count, visited)
-    -- Verify that the current cell is a house
-    if grid[y] == nil or grid[y][x] == nil then
-        return 0
-    end
-
-    -- Check if we already visited this cell
-    local _set = utils_Set(visited)
-    if _set[y .. "x" .. x] then
-        return 0
-    end
-    table.insert(visited, y .. "x" .. x)
-
-    local leftCell = getCell(grid, y, x - 1)
-    local rightCell = getCell(grid, y, x + 1)
-    local topCell = getCell(grid, y - 1, x)
-    local bottomCell = getCell(grid, y + 1, x)
-
-    local function isHouseNeighbour(cell)
-        if cell == nil or #cell ~= 1 then
-            return false
-        end
-        return cell[1] == "house"
-    end
-
-    if isHouseNeighbour(leftCell) then
-        count = count + countConnectedHouses(grid, y, x - 1, count, visited)
-    end
-    if isHouseNeighbour(rightCell) then
-        count = count + countConnectedHouses(grid, y, x + 1, count, visited)
-    end
-    if isHouseNeighbour(topCell) then
-        count = count + countConnectedHouses(grid, y - 1, x, count, visited)
-    end
-    if isHouseNeighbour(bottomCell) then
-        count = count + countConnectedHouses(grid, y + 1, x, count, visited)
-    end
-    return count + 1
-end
-
-local function collapseCell(grid, y, x)
-    local cell = grid[y][x]
-    local pick
-    if #cell == 0 then
-        pick = "empty"
-    elseif #cell == 1 then
-        pick = cell[1]
-    else
-        local weightedValues = {}
-        for _, value in ipairs(cell) do
-            local weight = SEGMENTS.getWeightForKey(value)
-            if value == "house" then
-                local connectedFields = countConnectedHouses(grid, y, x, 0, {})
-                weight = weight / connectedFields
-                if weight < 1 then
-                    weight = 1
-                end
-            end
-            for i = 1, weight, 1 do
-                table.insert(weightedValues, value)
-            end
-        end
-        pick = weightedValues[math.random(1, #weightedValues)]
-    end
-    grid[y][x] = {pick}
-end
-
-local removableEntities = {
-    "rock-",
-    "dead-grey-trunk",
-    "tree-"
-}
-
-local function removeColldingEntities(area) 
-    local printEntities = game.surfaces[1].find_entities_filtered({area=area})
-    for _, entity in pairs(printEntities) do
-        for _, removable in pairs(removableEntities) do
-            if entity.valid and string.find(entity.name, removable, 1, true) then
-                entity.destroy()
-            end
-        end
-    end
-end
-
-local function getRandomHouseName(houseType)
-    return "tycoon-house-" .. houseType .. "-" .. math.random(1, 8)
-end
-
-local function getPriorityBuilding(city)
-    local priorityBuildings = city.priority_buildings
-    if priorityBuildings == nil or #priorityBuildings == 0 then
-        return nil
-    end
-    table.sort(city.priority_buildings, function (a, b)
-        return (b.priority or 0) > (a.priority or 0)
-    end)
-    return table.remove(city.priority_buildings, 1)
-end
-
 local DAY_TO_MINUTE_FACTOR = 600 / 25000
 
 local function getRequiredAmount(amountPerDay, citizenCount)
@@ -629,61 +282,6 @@ local function growCitizenCount(city, count)
     updateNeeds(city)
 end
 
-local function printCell(y, x, city)
-
-    local grid = city.grid
-
-    local startCoordinates = {
-        y = (y + getOffsetY(city)) * SEGMENTS.segmentSize,
-        x = (x + getOffsetX(city)) * SEGMENTS.segmentSize,
-    }
-    local area = {
-        {startCoordinates.x, startCoordinates.y},
-        {startCoordinates.x + SEGMENTS.segmentSize, startCoordinates.y + SEGMENTS.segmentSize}
-    }
-
-    if not isAreaFree(area, 10) then
-        return
-    end
-    
-    removeColldingEntities(area)
-
-    local key = grid[y][x][1]
-    if key ~= "empty" then
-        local map = SEGMENTS.getMapForKey(key)
-        if map ~= nil then
-            printTiles(startCoordinates.y, startCoordinates.x, map, "concrete")
-        end
-        if key == "house" then
-            local priorityBuilding = getPriorityBuilding(city)
-            if priorityBuilding ~= nil then
-                local building = game.surfaces[1].create_entity{
-                    name = priorityBuilding.name,
-                    position = {x = startCoordinates.x - 0.5 + SEGMENTS.segmentSize / 2, y = startCoordinates.y - 0.5  + SEGMENTS.segmentSize / 2},
-                    force = "player"
-                }
-                global.tycoon_city_buildings[building.unit_number] = {
-                    cityId = city.id,
-                    entity_name = building.name
-                }
-                -- todo: how should we handle the town hall being destroyed?
-            else
-                local house = game.surfaces[1].create_entity{
-                    name = getRandomHouseName("residential"),
-                    position = {x = startCoordinates.x - 0.5 + SEGMENTS.segmentSize / 2, y = startCoordinates.y - 0.5  + SEGMENTS.segmentSize / 2},
-                    force = "player"
-                }
-                growCitizenCount(city, 4)
-                script.register_on_entity_destroyed(house)
-                global.tycoon_city_buildings[house.unit_number] = {
-                    cityId = city.id,
-                    entity_name = house.name
-                }
-            end
-        end
-    end
-end
-
 local function invalidateSpecialBuildingsList(city, name)
     assert(city.special_buildings ~= nil, "The special buildings should never be nil. There has been one error though, so I added this assetion.")
     -- Support for savegames <= 0.0.14
@@ -723,41 +321,27 @@ local function listSpecialCityBuildings(city, name)
     return result
 end
 
-local function areItemsAvailable(items, entities)
-    for _, item in ipairs(items) do
-        for _, entity in ipairs(entities) do
-            local availableCount = entity.get_item_count(item.resource)
-            item.available = item.available + availableCount
-        end
-    end
-
-    local areAllSupplied = true
-    for _, item in ipairs(items) do
-        if item.amount > item.available then
-            areAllSupplied = false
-            break
-        end
-    end
-
-    return areAllSupplied
-end
-
-local function consumeItems(items, entities, city)
+local function consumeItems(items, entities, city, isConstruction)
 
     for _, item in ipairs(items) do
         local entitiesWithSupply = {}
         for _, entity in ipairs(entities) do
-            local availableCount = entity.get_item_count(item.resource)
+            local availableCount = entity.get_item_count(item.name)
             if availableCount > 0 then
                 table.insert(entitiesWithSupply, entity)
             end
         end
         
-        local requiredAmount = getRequiredAmount(item.amount, city.stats.citizen_count)
+        local requiredAmount
+        if isConstruction then
+            requiredAmount = item.required
+        else
+            requiredAmount = getRequiredAmount(item.required, city.stats.citizen_count)
+        end
         local consumedAmount = 0
         for _, entity in ipairs(entitiesWithSupply) do
-            local availableCount = entity.get_item_count(item.resource)
-            local removed = entity.remove_item({name = item.resource, count = math.min(requiredAmount, availableCount)})
+            local availableCount = entity.get_item_count(item.name)
+            local removed = entity.remove_item({name = item.name, count = math.min(requiredAmount, availableCount)})
             consumedAmount = consumedAmount + removed
             requiredAmount = requiredAmount - consumedAmount
             if requiredAmount <= 0 then
@@ -773,50 +357,6 @@ local function consumeItems(items, entities, city)
             if reward > 0 then
                 randomTreasury.insert{name = "tycoon-currency", count = reward}
             end
-        end
-    end
-end
-
--- todo: migrate this code into the newCityGrowth function (or around it)
-local function cityGrowth(city)
-    if getGridSize(city.grid) > 1 then
-
-        local hardwareStores = listSpecialCityBuildings(city, "tycoon-hardware-store")
-        if #hardwareStores == 0 then
-            return
-        end
-
-        local hardwareConsumption = {
-            {
-                resource = "iron-plate",
-                amount = 1,
-                available = 0,
-            },
-            {
-                resource = "stone",
-                amount = 1,
-                available = 0,
-            }
-        }
-
-        -- With construction material we do a preemptive check if enough resources are available.
-        -- It doesn't make much sense that there would be partial consumption, as is with basic needs.
-        -- A house doesn't get built partially, and then is torn down again.
-        if not areItemsAvailable(hardwareConsumption, hardwareStores) then
-            return
-        end
-        
-        local nextCell = popRandomLowEntropyElementFromTable(city.pending_cells, city.grid)
-        if nextCell == nil then
-            expand_grid(city)
-        else
-            reduceCell(city.grid, nextCell.y, nextCell.x)
-            collapseCell(city.grid, nextCell.y, nextCell.x)
-            
-            -- todo: this may consume resources even if the house/street is not printed.
-            -- move the consumption further in, or return a print result from printCell
-            consumeItems(hardwareConsumption, hardwareStores, city)
-            printCell(nextCell.y, nextCell.x, city)
         end
     end
 end
@@ -1202,79 +742,159 @@ script.on_nth_tick(600, function()
     end
 end)
 
-local CITY_GROWTH_TICKS = 60
+local CITY_GROWTH_TICKS = 5
+
+local function canBuildResidentialHouse(city)
+    local residentialCount = ((city.buildingCounts or {})["residential"] or 0)
+    -- Todo: come up with a good function that slows down growth if there are too many
+        -- low tier houses.
+    local excavationPitCount = #(city.excavationPits or {})
+    return residentialCount < (#city.grid * 10)
+        and excavationPitCount <= #city.grid
+end
+
+local function canUpgradeToHighrise(city)
+    local residentialCount = ((city.buildingCounts or {})["residential"] or 0)
+    if residentialCount < 20 then
+        return false
+    end
+
+    -- highrise should not cover more than 50% of the houses
+    -- ideally only an inner circle
+    local highriseCount = ((city.buildingCounts or {})["highrise"] or 0)
+    local gridSize = #city.grid
+    local inner10Percent = math.ceil(gridSize * 0.1)
+    local inner10PercentCells = inner10Percent * inner10Percent
+    return highriseCount < inner10PercentCells
+end
 
 local function newCityGrowth(city)
-    if #(city.houseOptions or {}) < #city.grid then
-        local coordinates = CITY.growAtRandomRoadEnd(city)
-        CITY.updateHouseOptions(city, coordinates)
-    end
-    -- The second part limits the number of residential houses, so the city has to grow into skyscrapers at some point
-    local residentialCount = ((city.houseCounts or {})["residential"] or 0)
-    local highriseCount = ((city.houseCounts or {})["highrise"] or 0)
-    if #(city.excavationPits or {}) < math.floor(#city.grid / 2) and residentialCount < (#city.grid * 10) then
-        local hasBuiltExcavationPit = CITY.addExcavationPit(city)
-        if not hasBuiltExcavationPit then
-            local coordinates = CITY.growAtRandomRoadEnd(city)
-            CITY.updateHouseOptions(city, coordinates)
+    assert(city.grid ~= nil and #city.grid > 1, "Expected grid to be initialized and larger than 1x1.")
+
+    -- Attempt to complete constructions first
+    local completedConsructionBuildingType = CITY.completeConstruction(city)
+    if completedConsructionBuildingType ~= nil then
+        if completedConsructionBuildingType == "residential" then
+            growCitizenCount(city, 4)
+        elseif completedConsructionBuildingType == "highrise" then
+            growCitizenCount(city, 40)
         end
-    -- This condition is her so that the number of highrise buildings is lower than the outer area buildings
-    -- todo: needs finetuning
-    end
-        
-    if residentialCount > 20 and highriseCount < residentialCount / 20 then
-        CITY.upgradeHouse(city)
-        growCitizenCount(city, 40)
+
+        return
     end
 
-    if #(city.excavationPits or {}) > 0 then
-        local excavationPit
-        for i = 1, math.ceil(#city.grid / 10), 1 do
-            local e = table.remove(city.excavationPits, math.random(#city.excavationPits))
-            if e.createdAtTick + math.random(CITY_GROWTH_TICKS, 6 * CITY_GROWTH_TICKS) < game.tick then
-                excavationPit = e
-                break
-            else
-                table.insert(city.excavationPits, e)
+    -- Check if resources are available. Without resources no growth is possible.
+    local hardwareStores = listSpecialCityBuildings(city, "tycoon-hardware-store")
+    if #hardwareStores == 0 then
+        -- If there are no hardware stores, then no construction resources are available.
+        return
+    end
+
+    -- This array is ordered from most expensive to cheapest, so that
+    -- we do expensive upgrades first (instead of just letting the road always expand).
+    -- Sepcial buildings (like the treasury) are an exception that should ideally come first.
+    local constructionResources = {
+        specialBuildings = {{
+            name = "stone",
+            required = 1,
+        }, {
+            name = "iron-plate",
+            required = 1,
+        }},
+        highrise = {{
+            name = "stone",
+            required = 10,
+        }, {
+            name = "iron-plate",
+            required = 10,
+        }},
+        residential = {{
+            name = "stone",
+            required = 1,
+        }, {
+            name = "iron-plate",
+            required = 1,
+        }},
+        -- road = {{
+        --     name = "stone",
+        --     required = 1,
+        -- }},
+    }
+
+    local buildables = {}
+    for key, resources in pairs(constructionResources) do
+        local anyResourceMissing = false
+        for _, resource in ipairs(resources) do
+            for _, hardwareStore in ipairs(hardwareStores) do
+                local availableCount = hardwareStore.get_item_count(resource.name)
+                resource.available = (resource.available or 0) + availableCount
+            end
+
+            if resource.available < resource.required then
+                anyResourceMissing = true
             end
         end
 
-        if excavationPit ~= nil then
-            CITY.buildHouse(city, excavationPit)
-            growCitizenCount(city, 4)
+        if not anyResourceMissing then
+            table.insert(buildables, {
+                key = key,
+                resources = resources,
+            })
+        end
+    end
+
+    -- DONE: check if the buildable array matches expectations
+    -- game.print("debug")
+
+    for _, buildable in ipairs(buildables) do
+        local isBuilt
+        if buildable.key == "specialBuildings" and #(city.priority_buildings or {}) > 0 then
+            local prioBuilding = table.remove(city.priority_buildings, 1)
+            isBuilt = CITY.startConstruction(city, {
+                buildingType = prioBuilding.name,
+                -- Special buildings should be completed very quickly.
+                -- Here we just wait 2 seconds by default.
+                constructionTimeInTicks = 120,
+            })
+            if not isBuilt then
+                table.insert(city.priority_buildings, 1, prioBuilding)
+            end
+        elseif buildable.key == "highrise" and canUpgradeToHighrise(city) then
+            isBuilt = CITY.upgradeHouse(city)
+            if isBuilt then
+                growCitizenCount(city, -4)
+            end
+        elseif buildable.key == "residential" and canBuildResidentialHouse(city) then
+            isBuilt = CITY.startConstruction(city, {
+                buildingType = "residential",
+                constructionTimeInTicks = math.random(600, 1200)
+            })
+        end
+        -- Keep the road construction outside the above if block,
+        -- so that the roads can expand if no building has been constructed
+        -- todo: count excavation pits so that we don't have too many before further expanding roads
+        -- We can't add this to the buildables check, or the iteration will never get there
+        if not isBuilt then
+            -- The city should not grow its road network too much if there are (valid) possibleBuildingLocations
+            -- todo: how do we separate out invalid ones?
+            local excavationPitCount = #(city.excavationPits or {})
+            local possibleBuildingLocationsCount = #(city.possibleBuildingLocations or {})
+            if possibleBuildingLocationsCount < #city.grid * 4 and excavationPitCount < #city.grid then
+                -- todo: add check that road resources are available
+                local coordinates = CITY.growAtRandomRoadEnd(city)
+                if coordinates ~= nil then
+                    CITY.updatepossibleBuildingLocations(city, coordinates)
+                    isBuilt = true
+                end
+            end
+        else
+            consumeItems(buildable.resources, hardwareStores, city, true)
+            break
         end
     end
 end
 
-script.on_nth_tick(CITY_GROWTH_TICKS, function(event)
-    if event.tick < 200 then
-        return
-    end
-    for _, city in ipairs(global.tycoon_cities) do
-        if city.special_buildings.town_hall ~= nil and city.special_buildings.town_hall.valid then
-            if areBasicNeedsMet(city) and city.constructionProbability > math.random() then
-                newCityGrowth(city)
-            end
-
-            -- We need to initialize the tag here, because tags can only be placed on charted chunks.
-            -- And the game needs a moment to start and chart the initial chunks, even if it can already place entities.
-            if city.tag == nil and city.special_buildings.town_hall ~= nil then
-                local tag = game.forces.player.add_chart_tag(game.surfaces[1],
-                    {
-                        position = {x = city.special_buildings.town_hall.position.x, y = city.special_buildings.town_hall.position.y},
-                        text = city.name .. " Town Center"
-                    }
-                )
-                city.tag = tag
-            end
-        end
-        -- if math.random() < 0.05 and city.roadEnds ~= nil and city.houseOptions ~= nil then
-        --     game.print("Road ends: " .. #city.roadEnds)
-        --     game.print("House options: " .. #city.houseOptions)
-        --     game.print("Grid size: " .. #city.grid)
-        -- end
-    end
-
+local function spawnPrimaryIndustries()
     if global.tycoon_new_primary_industries ~= nil and #global.tycoon_new_primary_industries > 0 then
         for i, primaryIndustry in ipairs(global.tycoon_new_primary_industries) do
             local x, y
@@ -1293,6 +913,38 @@ script.on_nth_tick(CITY_GROWTH_TICKS, function(event)
             end
         end
     end
+end
+
+script.on_nth_tick(CITY_GROWTH_TICKS, function(event)
+    if event.tick < 200 then
+        return
+    end
+    for _, city in ipairs(global.tycoon_cities) do
+        if city.special_buildings.town_hall ~= nil and city.special_buildings.town_hall.valid then
+            if areBasicNeedsMet(city) then
+                newCityGrowth(city)
+            end
+
+            -- We need to initialize the tag here, because tags can only be placed on charted chunks.
+            -- And the game needs a moment to start and chart the initial chunks, even if it can already place entities.
+            if city.tag == nil and city.special_buildings.town_hall ~= nil then
+                local tag = game.forces.player.add_chart_tag(game.surfaces[1],
+                    {
+                        position = {x = city.special_buildings.town_hall.position.x, y = city.special_buildings.town_hall.position.y},
+                        text = city.name .. " Town Center"
+                    }
+                )
+                city.tag = tag
+            end
+        end
+        -- if math.random() < 0.05 and city.roadEnds ~= nil and city.possibleBuildingLocations ~= nil then
+        --     game.print("Road ends: " .. #city.roadEnds)
+        --     game.print("Building options: " .. #city.buildingOptions)
+        --     game.print("Grid size: " .. #city.grid)
+        -- end
+    end
+
+    spawnPrimaryIndustries()
 end)
 
 script.on_init(function()
@@ -1383,7 +1035,7 @@ script.on_init(function()
 
     -- global.tycoon_enable_debug_logging = true
 
-   -- TYCOON_STORY[1]()
+--    TYCOON_STORY[1]()
 
     
         -- /c game. player. insert{ name="stone", count=1000 }

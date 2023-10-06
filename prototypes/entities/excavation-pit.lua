@@ -1,4 +1,4 @@
-local function createExcavationPit(name)
+local function createExcavationPit(name, spriteSize)
   return {
     type = "container",
     name = "tycoon-" .. name,
@@ -19,8 +19,8 @@ local function createExcavationPit(name)
             {
                 filename = "__tycoon__/graphics/entity/" .. name .. "/" .. name .. ".png",
                 priority = "high",
-                width = 200,
-                height = 200,
+                width = spriteSize.width,
+                height = spriteSize.height,
                 scale = 1,
                 shift = {0.5, 0.5}
             },
@@ -29,6 +29,40 @@ local function createExcavationPit(name)
   }
 end
 
+local function getSpriteSize(i)
+  if i == 5 then
+    return {
+      width = 170,
+      height = 173,
+    }
+  elseif i == 10 or i == 11 then
+    return {
+      width = 170,
+      height = 170,
+    }
+  elseif i == 17 then
+    return {
+      width = 190,
+      height = 185,
+    }
+  elseif i == 18 then
+    return {
+      width = 161,
+      height = 177,
+    }
+  elseif i == 19 then
+    return {
+      width = 160,
+      height = 164,
+    }
+  else
+    return {
+      width = 200,
+      height = 200,
+    }
+  end
+end
+
 for i = 1, 20, 1 do
-  data:extend{createExcavationPit("excavation-pit-" .. i)}
+  data:extend{createExcavationPit("excavation-pit-" .. i, getSpriteSize(i))}
 end
