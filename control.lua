@@ -1,3 +1,4 @@
+local Queue = require "queue"
 SEGMENTS = require("segments")
 CITY = require("city")
 -- TYCOON_STORY = require("tycoon-story")
@@ -194,16 +195,15 @@ local function initializeCity(city)
         },
     }
 
+    city.roadEnds = Queue.new()
+
     -- We're adding some randomness here
     -- Instead of adding 8 road connections to the town center, we pick between 4 and 8.
     -- This makes individual towns feel a bit more diverse.
     local roadEndCount = math.random(4, 8)
-    local pickedRoadEnds = {}
     for i = 1, roadEndCount, 1 do
-        table.insert(pickedRoadEnds, table.remove(possibleRoadEnds, math.random(#possibleRoadEnds)))
+        Queue.pushright(city.roadEnds, table.remove(possibleRoadEnds, math.random(#possibleRoadEnds)))
     end
-
-    city.roadEnds = pickedRoadEnds
 end
 
 local DAY_TO_MINUTE_FACTOR = 600 / 25000
@@ -298,6 +298,11 @@ local function listSpecialCityBuildings(city, name)
     -- Support for savegames <= 0.0.14
     if city.special_buildings.other == nil then
         city.special_buildings.other = {}
+    end
+
+    -- dev hack for profiling
+    if name == "tycoon-treasury" then
+        return {}
     end
 
     local entities = {}
@@ -677,6 +682,7 @@ local function areBasicNeedsMet(city)
     return true
 end
 
+ -- todo: show excavation site count / show construction material supply
 script.on_event(defines.events.on_gui_opened, function (gui)
     if gui.entity ~= nil and gui.entity.name == "tycoon-town-hall" then
         local player = game.players[gui.player_index]
@@ -742,7 +748,7 @@ script.on_nth_tick(600, function()
     end
 end)
 
-local CITY_GROWTH_TICKS = 5
+local CITY_GROWTH_TICKS = 20
 
 local function canBuildResidentialHouse(city)
     local residentialCount = ((city.buildingCounts or {})["residential"] or 0)
@@ -878,7 +884,7 @@ local function newCityGrowth(city)
             -- The city should not grow its road network too much if there are (valid) possibleBuildingLocations
             -- todo: how do we separate out invalid ones?
             local excavationPitCount = #(city.excavationPits or {})
-            local possibleBuildingLocationsCount = #(city.possibleBuildingLocations or {})
+            local possibleBuildingLocationsCount = Queue.count(city.buildingLocationQueue)
             if possibleBuildingLocationsCount < #city.grid * 4 and excavationPitCount < #city.grid then
                 -- todo: add check that road resources are available
                 local coordinates = CITY.growAtRandomRoadEnd(city)
@@ -916,12 +922,14 @@ local function spawnPrimaryIndustries()
 end
 
 script.on_nth_tick(CITY_GROWTH_TICKS, function(event)
+    
+    -- global.tycoon_enable_debug_logging = true
     if event.tick < 200 then
         return
     end
     for _, city in ipairs(global.tycoon_cities) do
         if city.special_buildings.town_hall ~= nil and city.special_buildings.town_hall.valid then
-            if areBasicNeedsMet(city) then
+            if true or areBasicNeedsMet(city) then
                 newCityGrowth(city)
             end
 
@@ -937,11 +945,6 @@ script.on_nth_tick(CITY_GROWTH_TICKS, function(event)
                 city.tag = tag
             end
         end
-        -- if math.random() < 0.05 and city.roadEnds ~= nil and city.possibleBuildingLocations ~= nil then
-        --     game.print("Road ends: " .. #city.roadEnds)
-        --     game.print("Building options: " .. #city.buildingOptions)
-        --     game.print("Grid size: " .. #city.grid)
-        -- end
     end
 
     spawnPrimaryIndustries()
@@ -1022,6 +1025,7 @@ script.on_init(function()
 
     global.tycoon_primary_industries = {"tycoon-apple-farm", "tycoon-wheat-farm"}
 
+    global.tycoon_dev_no_city_special_buildings = true
 
     -- global.tycoon_cities = {}
     -- for i = 1, 8, 1 do
@@ -1031,9 +1035,6 @@ script.on_init(function()
     --         force = "player"
     --     }
     -- end
-
-
-    -- global.tycoon_enable_debug_logging = true
 
 --    TYCOON_STORY[1]()
 

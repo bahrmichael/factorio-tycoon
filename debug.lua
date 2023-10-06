@@ -1,7 +1,20 @@
+local Queue = require "queue"
+
 local function log(message)
     if global.tycoon_enable_debug_logging == true then
         game.write_file("debug.log", message .. "\n", true)
     end
+end
+
+local function logRoadEnds(roadEnds)
+    if roadEnds == nil then
+        return
+    end
+    local printable = ''
+    for value in Queue.iterate(roadEnds) do
+        printable = printable .. " " .. value.coordinates.y .. "/" .. value.coordinates.x
+    end
+    log(printable)
 end
 
 local function logGrid(grid)
@@ -15,7 +28,7 @@ local function logGrid(grid)
                 local cell = row[x]
                 if cell.type == "unused" then
                     printRow = printRow .. ". "
-                elseif cell.type == "house" then
+                elseif cell.type == "building" then
                     printRow = printRow .. "H "
                 elseif cell.type == "road" then
                     printRow = printRow .. "R "
@@ -32,5 +45,6 @@ end
 local DEBUG = {
     log = log,
     logGrid = logGrid,
+    logRoadEnds = logRoadEnds
 }
 return DEBUG
