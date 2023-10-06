@@ -5,6 +5,7 @@ data:extend{
         icon = "__tycoon__/graphics/entity/town-hall/town-hall.png",
         icon_size = 64,
         max_health = 200,
+        destructible = false,
         inventory_size = 100,
         corpse = "small-remnants",
         vehicle_impact_sound = {filename = "__base__/sound/car-metal-impact.ogg", volume = 0.65},
