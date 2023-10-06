@@ -12,6 +12,7 @@ local Queue = require("queue")
 ---| "west"
 
 --- @alias BuildingType
+---| "simple"
 ---| "residential"
 ---| "highrise"
 
@@ -24,10 +25,6 @@ local Queue = require("queue")
 --- @field coordinates Coordinates
 --- @field additionalWeight number | nil
 
---- @alias ConstructionStage
----| "in_progress"
----| "complete"
-
 --- @alias CellType
 ---| "road"
 ---| "building"
@@ -36,7 +33,6 @@ local Queue = require("queue")
 --- @class Cell
 --- @field type CellType
 --- @field roadSockets Direction[] | nil
---- @field constructionStage ConstructionStage | nil
 --- @field entity any | nil
 --- @field buildingType BuildingType | nil
 --- @field createdAtTick number | nil
@@ -559,7 +555,15 @@ local function getIteratedExcavationPitName()
     return "tycoon-excavation-pit-" .. (excavationPitSpriteIterator % totalExcavationPitSprites) + 1
 end
 
-local totalResidentialHouseSprites = 14
+local totalSimpleHouseSprites = 14
+local simpleHouseSpriteIterator = 0
+
+local function getIteratedSimpleHouseName()
+    simpleHouseSpriteIterator = simpleHouseSpriteIterator + 1
+    return "tycoon-house-simple-" .. (simpleHouseSpriteIterator % totalSimpleHouseSprites) + 1
+end
+
+local totalResidentialHouseSprites = 9
 local residentialHouseSpriteIterator = 0
 
 local function getIteratedResidentialHouseName()
@@ -577,12 +581,14 @@ end
 
 --- @param buildingType BuildingType
 local function getIteratedHouseName(buildingType)
-    if buildingType == "residential" then
+    if buildingType == "simple" then
+        return getIteratedSimpleHouseName()
+    elseif buildingType == "residential" then
         return getIteratedResidentialHouseName()
     elseif buildingType == "highrise" then
         return getIteratedHighriseHouseName()
     else
-        assert(buildingType == "residential" or buildingType == "highrise", "Expected building type, but received: " .. tostring(buildingType))
+        assert(false, "Expected building type, but received: " .. tostring(buildingType))
     end
 end
 
@@ -719,75 +725,6 @@ local function startConstruction(city, buildingConstruction, allowedCoordinates)
         end
     end
     return false
-end
-
---- @param city City
---- @return boolean hasBuiltExcavationPit
-local function addExcavationPit(city)
-    DEBUG.log("\n\nENTER addExcavationPit")
-    DEBUG.logGrid(city.grid)
-
-    if city.buildingLocationQueue == nil then
-        city.buildingLocationQueue = Queue.new()
-    end
-
-    local coordinates = Queue.popleft(city.buildingLocationQueue)
-    if coordinates == nil then
-        return false
-    end
-
-    local hasBuiltExcavationPit = false
-
-    if (city.grid[coordinates.y] or {})[coordinates.x] == nil then
-        -- noop, if the grid has not been expanded this far, then don't try to build a building here (yet)
-        Queue.pushright(city.buildingLocationQueue, coordinates)
-    elseif city.grid[coordinates.y][coordinates.x].type == "road" then
-        -- noop, there's already a road so we can ignore this cell
-    elseif city.grid[coordinates.y][coordinates.x].type == "building" then
-        -- noop, for some reason the code is trying to build a building where there already is one, not sure why
-    elseif doesCellHaveCollidables(city, coordinates) then
-        -- Try again later
-        Queue.pushright(city.buildingLocationQueue, coordinates)
-    else
-        local startCoordinates = {
-            y = (coordinates.y + getOffsetY(city)) * CELL_SIZE,
-            x = (coordinates.x + getOffsetX(city)) * CELL_SIZE,
-        }
-        local area = {
-            {startCoordinates.x, startCoordinates.y},
-            {startCoordinates.x + CELL_SIZE, startCoordinates.y + CELL_SIZE}
-        }
-
-        removeColldingEntities(area)
-
-        local excavationPit = game.surfaces[1].create_entity{
-            name = getIteratedExcavationPitName(),
-            position = {x = startCoordinates.x - 0.5 + CELL_SIZE / 2, y = startCoordinates.y - 0.5  + CELL_SIZE / 2},
-            force = "player"
-        }
-
-        city.grid[coordinates.y][coordinates.x] = {
-            type = "building",
-            buildingType = "residential",
-            constructionStage = "in_progress",
-            entity = excavationPit,
-            createdAtTick = game.tick
-        }
-        if city.excavationPits == nil then
-            city.excavationPits = {}
-        end
-        table.insert(city.excavationPits, {
-            coordinates = coordinates,
-            createdAtTick = game.tick,
-            buildingType = "residential"
-        })
-        hasBuiltExcavationPit = true
-    end
-
-    DEBUG.logGrid(city.grid)
-    DEBUG.log("\n\nEXIT addExcavationPit")
-
-    return hasBuiltExcavationPit
 end
 
 --- @param city City
@@ -968,7 +905,7 @@ local function completeConstruction(city)
     }, "concrete")
     local entityName = excavationPit.buildingConstruction.buildingType
     local entity
-    if entityName == "residential" or entityName == "highrise" then
+    if entityName == "simple" or entityName == "residential" or entityName == "highrise" then
         entity = game.surfaces[1].create_entity{
             name = getIteratedHouseName(entityName),
             position = {x = startCoordinates.x - 0.5 + CELL_SIZE / 2, y = startCoordinates.y - 0.5  + CELL_SIZE / 2},
@@ -979,6 +916,7 @@ local function completeConstruction(city)
 
         if city.buildingCounts == nil then
             city.buildingCounts = {
+                simple = 0,
                 residential = 0,
                 highrise = 0,
             }
@@ -1008,21 +946,30 @@ local function completeConstruction(city)
 end
 
 local upgradePaths = {
-    residential = {
+    simple = {
         waitTime = 300,
+        previousStage = "simple",
+        nextStage = "residential",
+        upgradeDurationInSeconds = {30, 60},
+        requiresUsedAreaSize = 2
+    },
+    residential = {
+        waitTime = 600,
         previousStage = "residential",
-        nextStage = "highrise"
+        nextStage = "highrise",
+        upgradeDurationInSeconds = {120, 240},
+        requiresUsedAreaSize = 3
     }
 }
 
 --- @param city City
 --- @param coordinates Coordinates
-local function hasEmptySurroundingSpace(city, coordinates)
+local function hasEmptySurroundingSpace(city, coordinates, size)
     local y = coordinates.y
     local x = coordinates.x
     assert(y ~= nil and x ~= nil, "Coordinates must not be nil, but received ".. tostring(coordinates))
-    for i = -1 * 2, 2, 1 do
-        for j = -1 * 2, 2, 1 do
+    for i = -1 * size, size, 1 do
+        for j = -1 * size, size, 1 do
             if city.grid[y + i] == nil or city.grid[y + i][x + j] == nil or city.grid[y + i][x + j].type == "unused" then
                 return true
             end
@@ -1031,17 +978,19 @@ local function hasEmptySurroundingSpace(city, coordinates)
 end
 
 --- @param city City
-local function findUpgradableCells(city, limit)
+--- @param limit number
+--- @param upgradeTo BuildingType
+local function findUpgradableCells(city, limit, upgradeTo)
     local upgradeCells = {}
     for _, coordinates in ipairs(city.houseLocations) do
         local cell = city.grid[coordinates.y][coordinates.x]
         if cell.type == "building" and cell.buildingType ~= nil then
             local upgradePath = upgradePaths[cell.buildingType]
-            if upgradePath ~= nil then
+            if upgradePath ~= nil and upgradePath.nextStage == upgradeTo then
                 if (cell.createdAtTick + upgradePath.waitTime) < game.tick then
 
                     -- Check that all surrounding cells are in use. It would be odd to build a skyscraper in open space.
-                    local emptySurroundingSpace = hasEmptySurroundingSpace(city, coordinates)
+                    local emptySurroundingSpace = hasEmptySurroundingSpace(city, coordinates, upgradePath.requiresUsedAreaSize)
 
                     if not emptySurroundingSpace then
                         table.insert(upgradeCells, {
@@ -1091,10 +1040,9 @@ end
 
 --- @param city City
 --- @return boolean upgradeStarted
-local function upgradeHouse(city)
-    -- todo: re-register on destroy hooks
+local function upgradeHouse(city, newStage)
     -- todo: test if the game destroying an entity also triggers the destroy hook (and change the citizen counter reduction accordingly)
-    local upgradeCells = findUpgradableCells(city, 10)
+    local upgradeCells = findUpgradableCells(city, 10, newStage)
 
     if #upgradeCells == 0 then
         return false
@@ -1105,10 +1053,11 @@ local function upgradeHouse(city)
     local upgradeCell = upgradeCells[1]
     clearCell(city, upgradeCell)
 
+    local upgradePath = upgradeCell.upgradePath
+
     startConstruction(city, {
-        buildingType = "highrise",
-        -- Highrise constructions should take 30 to 60 seconds to complete
-        constructionTimeInTicks = math.random(1800, 3600),
+        buildingType = upgradePath.nextStage,
+        constructionTimeInTicks = math.random(upgradePath.upgradeDurationInSeconds[1] * 60, upgradePath.upgradeDurationInSeconds[2] * 60),
     }, {upgradeCell.coordinates})
 
     return true
@@ -1116,7 +1065,6 @@ end
 
 local CITY = {
     growAtRandomRoadEnd = growAtRandomRoadEnd,
-    addExcavationPit = addExcavationPit,
     updatepossibleBuildingLocations = addBuildingLocations,
     completeConstruction = completeConstruction,
     upgradeHouse = upgradeHouse,

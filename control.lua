@@ -699,7 +699,8 @@ script.on_event(defines.events.on_gui_opened, function (gui)
             cityGui.add{type = "label", caption = {"", {"tycoon-gui-update-info"}}}
 
             local stats = cityGui.add{type = "frame", direction = "vertical", caption = {"", {"tycoon-gui-stats"}}, name = "city_stats"}
-            stats.add{type = "label", caption = "Citizens: " .. city.stats.citizen_count, name = "citizen_count"}
+            stats.add{type = "label", caption = {"", {"tycoon-gui-citizens"}, ": ",  city.stats.citizen_count}, name = "citizen_count"}
+            stats.add{type = "label", caption = {"", {"tycoon-gui-construction-sites"}, ": ",  #(city.excavationPits or {}), "/", #city.grid}, name = "construction_sites_count"}
 
             local basicNeeds = cityGui.add{type = "frame", direction = "vertical", caption = {"", {"tycoon-gui-basic-needs"}}, name = "basic_needs"}
             basicNeeds.add{type = "label", caption = {"", {"tycoon-gui-consumption-cycle-1"}}}
@@ -708,6 +709,7 @@ script.on_event(defines.events.on_gui_opened, function (gui)
         end
 
         cityGui.city_stats.citizen_count.caption = {"", {"tycoon-gui-citizens"}, ": ",  city.stats.citizen_count}
+        cityGui.city_stats.construction_sites_count.caption = {"", {"tycoon-gui-construction-sites"}, ": ",  #(city.excavationPits or {}), "/", #city.grid}
 
         if cityGui.city_stats.basic_needs_met ~= nil then
             -- Remove surplus UI from 0.0.14 and before
@@ -748,15 +750,28 @@ script.on_nth_tick(600, function()
     end
 end)
 
-local CITY_GROWTH_TICKS = 20
+local CITY_GROWTH_TICKS = 60
 
-local function canBuildResidentialHouse(city)
-    local residentialCount = ((city.buildingCounts or {})["residential"] or 0)
+local function canBuildSimpleHouse(city)
+    local simpleCount = ((city.buildingCounts or {})["simple"] or 0)
     -- Todo: come up with a good function that slows down growth if there are too many
         -- low tier houses.
     local excavationPitCount = #(city.excavationPits or {})
-    return residentialCount < (#city.grid * 10)
+    return simpleCount < (#city.grid * 10)
         and excavationPitCount <= #city.grid
+end
+
+local function canUpgradeToResidential(city)
+    local simpleCount = ((city.buildingCounts or {})["simple"] or 0)
+    if simpleCount < 20 then
+        return false
+    end
+
+    local residentialCount = ((city.buildingCounts or {})["residential"] or 0)
+    local gridSize = #city.grid
+    local inner10Percent = math.ceil(gridSize * 0.1)
+    local inner10PercentCells = inner10Percent * inner10Percent
+    return residentialCount < inner10PercentCells
 end
 
 local function canUpgradeToHighrise(city)
@@ -774,16 +789,24 @@ local function canUpgradeToHighrise(city)
     return highriseCount < inner10PercentCells
 end
 
+local citizenCounts = {
+    simple = 4,
+    residential = 20,
+    highrise = 100,
+}
+
 local function newCityGrowth(city)
     assert(city.grid ~= nil and #city.grid > 1, "Expected grid to be initialized and larger than 1x1.")
 
     -- Attempt to complete constructions first
     local completedConsructionBuildingType = CITY.completeConstruction(city)
     if completedConsructionBuildingType ~= nil then
-        if completedConsructionBuildingType == "residential" then
-            growCitizenCount(city, 4)
+        if completedConsructionBuildingType == "simple" then
+            growCitizenCount(city, citizenCounts["simple"])
+        elseif completedConsructionBuildingType == "residential" then
+            growCitizenCount(city, citizenCounts["residential"])
         elseif completedConsructionBuildingType == "highrise" then
-            growCitizenCount(city, 40)
+            growCitizenCount(city, citizenCounts["highrise"])
         end
 
         return
@@ -809,12 +832,22 @@ local function newCityGrowth(city)
         }},
         highrise = {{
             name = "stone",
+            required = 100,
+        }, {
+            name = "iron-plate",
+            required = 50,
+        }, {
+            name = "steel-plate",
+            required = 25,
+        }},
+        residential = {{
+            name = "stone",
             required = 10,
         }, {
             name = "iron-plate",
             required = 10,
         }},
-        residential = {{
+        simple = {{
             name = "stone",
             required = 1,
         }, {
@@ -866,13 +899,18 @@ local function newCityGrowth(city)
                 table.insert(city.priority_buildings, 1, prioBuilding)
             end
         elseif buildable.key == "highrise" and canUpgradeToHighrise(city) then
-            isBuilt = CITY.upgradeHouse(city)
+            isBuilt = CITY.upgradeHouse(city, "highrise")
             if isBuilt then
-                growCitizenCount(city, -4)
+                growCitizenCount(city, -1 * citizenCounts["residential"])
             end
-        elseif buildable.key == "residential" and canBuildResidentialHouse(city) then
+        elseif buildable.key == "residential" and canUpgradeToResidential(city) then
+            isBuilt = CITY.upgradeHouse(city, "residential")
+            if isBuilt then
+                growCitizenCount(city, -1 * citizenCounts["simple"])
+            end
+        elseif buildable.key == "simple" and canBuildSimpleHouse(city) then
             isBuilt = CITY.startConstruction(city, {
-                buildingType = "residential",
+                buildingType = "simple",
                 constructionTimeInTicks = math.random(600, 1200)
             })
         end
@@ -885,7 +923,7 @@ local function newCityGrowth(city)
             -- todo: how do we separate out invalid ones?
             local excavationPitCount = #(city.excavationPits or {})
             local possibleBuildingLocationsCount = Queue.count(city.buildingLocationQueue)
-            if possibleBuildingLocationsCount < #city.grid * 4 and excavationPitCount < #city.grid then
+            if math.random() < (#city.grid / possibleBuildingLocationsCount) and excavationPitCount < #city.grid then
                 -- todo: add check that road resources are available
                 local coordinates = CITY.growAtRandomRoadEnd(city)
                 if coordinates ~= nil then
@@ -929,7 +967,7 @@ script.on_nth_tick(CITY_GROWTH_TICKS, function(event)
     end
     for _, city in ipairs(global.tycoon_cities) do
         if city.special_buildings.town_hall ~= nil and city.special_buildings.town_hall.valid then
-            if true or areBasicNeedsMet(city) then
+            if false or areBasicNeedsMet(city) then
                 newCityGrowth(city)
             end
 
@@ -1031,7 +1069,7 @@ script.on_init(function()
     -- for i = 1, 8, 1 do
     --     game.surfaces[1].create_entity{
     --         name = "tycoon-house-highrise-" .. i,
-    --         position = {x = -30 + i * 8, y = 10},
+    --         position = {x = -30 + i * 8, y = 20},
     --         force = "player"
     --     }
     -- end

@@ -4,7 +4,7 @@ local function createHouse(name)
     name = "tycoon-" .. name,
     icon = "__tycoon__/graphics/entity/" .. name .. "/" .. name .. ".png",
     icon_size = 64,
-    max_health = 200,
+    max_health = 1000,
     minable = {
       mining_time = 1,  -- Adjust the mining time as you see fit
       results = {}  -- Empty table means no items will be returned
@@ -24,8 +24,8 @@ local function createHouse(name)
                 priority = "high",
                 width = 125,
                 height = 160,
-                scale = 1.5,
-                shift = {0.5, 0.5}
+                scale = 1.9,
+                shift = {0.5, -1.6}
             },
         }
     },
