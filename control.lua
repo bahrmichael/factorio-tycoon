@@ -1,7 +1,7 @@
 local Queue = require "queue"
 SEGMENTS = require("segments")
 CITY = require("city")
--- TYCOON_STORY = require("tycoon-story")
+TYCOON_STORY = require("tycoon-story")
 
 local function getGridSize(grid)
     return #grid
@@ -284,10 +284,6 @@ end
 
 local function invalidateSpecialBuildingsList(city, name)
     assert(city.special_buildings ~= nil, "The special buildings should never be nil. There has been one error though, so I added this assetion.")
-    -- Support for savegames <= 0.0.14
-    if city.special_buildings.other == nil then
-        city.special_buildings.other = {}
-    end
 
     if city.special_buildings.other[name] ~= nil then
         city.special_buildings.other[name] = nil
@@ -295,16 +291,6 @@ local function invalidateSpecialBuildingsList(city, name)
 end
 
 local function listSpecialCityBuildings(city, name)
-    -- Support for savegames <= 0.0.14
-    if city.special_buildings.other == nil then
-        city.special_buildings.other = {}
-    end
-
-    -- dev hack for profiling
-    if name == "tycoon-treasury" then
-        return {}
-    end
-
     local entities = {}
     if city.special_buildings.other[name] ~= nil and #city.special_buildings.other[name] > 0 then
         entities = city.special_buildings.other[name]
@@ -603,6 +589,12 @@ script.on_event(defines.events.on_player_mined_entity, function(event)
     invalidateSpecialBuildingsList(city, entity.name)
 end)
 
+local citizenCounts = {
+    simple = 4,
+    residential = 20,
+    highrise = 100,
+}
+
 -- This event does not trigger when the player (or another entity mines a building)
 -- todo: does it trigger when the game destroys an entity via scripts?
 script.on_event(defines.events.on_entity_destroyed, function(event)
@@ -611,17 +603,23 @@ script.on_event(defines.events.on_entity_destroyed, function(event)
         -- todo: make sure that new buildings are listed here
         local building = global.tycoon_city_buildings[unit_number]
         if building ~= nil then
-            if string.find(building.entity_name, "tycoon-house-residential-", 1, true) then
+            if string.find(building.entity_name, "tycoon-house-simple-", 1, true) then
                 local cityId = building.cityId
                 local city = findCityById(cityId)
                 if city ~= nil then
-                    city.stats.citizen_count = city.stats.citizen_count - 4
+                    growCitizenCount(city, -1 * citizenCounts["simple"])
+                end
+            elseif string.find(building.entity_name, "tycoon-house-residential-", 1, true) then
+                local cityId = building.cityId
+                local city = findCityById(cityId)
+                if city ~= nil then
+                    growCitizenCount(city, -1 * citizenCounts["residential"])
                 end
             elseif string.find(building.entity_name, "tycoon-house-highrise-", 1, true) then
                 local cityId = building.cityId
                 local city = findCityById(cityId)
                 if city ~= nil then
-                    city.stats.citizen_count = city.stats.citizen_count - 40
+                    growCitizenCount(city, -1 * citizenCounts["highrise"])
                 end
             end
         end
@@ -682,7 +680,7 @@ local function areBasicNeedsMet(city)
     return true
 end
 
- -- todo: show excavation site count / show construction material supply
+ -- todo: show construction material supply
 script.on_event(defines.events.on_gui_opened, function (gui)
     if gui.entity ~= nil and gui.entity.name == "tycoon-town-hall" then
         local player = game.players[gui.player_index]
@@ -789,12 +787,6 @@ local function canUpgradeToHighrise(city)
     return highriseCount < inner10PercentCells
 end
 
-local citizenCounts = {
-    simple = 4,
-    residential = 20,
-    highrise = 100,
-}
-
 local function newCityGrowth(city)
     assert(city.grid ~= nil and #city.grid > 1, "Expected grid to be initialized and larger than 1x1.")
 
@@ -842,7 +834,7 @@ local function newCityGrowth(city)
         }},
         residential = {{
             name = "stone",
-            required = 10,
+            required = 20,
         }, {
             name = "iron-plate",
             required = 10,
@@ -854,10 +846,6 @@ local function newCityGrowth(city)
             name = "iron-plate",
             required = 1,
         }},
-        -- road = {{
-        --     name = "stone",
-        --     required = 1,
-        -- }},
     }
 
     local buildables = {}
@@ -881,9 +869,6 @@ local function newCityGrowth(city)
             })
         end
     end
-
-    -- DONE: check if the buildable array matches expectations
-    -- game.print("debug")
 
     for _, buildable in ipairs(buildables) do
         local isBuilt
@@ -916,7 +901,6 @@ local function newCityGrowth(city)
         end
         -- Keep the road construction outside the above if block,
         -- so that the roads can expand if no building has been constructed
-        -- todo: count excavation pits so that we don't have too many before further expanding roads
         -- We can't add this to the buildables check, or the iteration will never get there
         if not isBuilt then
             -- The city should not grow its road network too much if there are (valid) possibleBuildingLocations
@@ -1063,8 +1047,6 @@ script.on_init(function()
 
     global.tycoon_primary_industries = {"tycoon-apple-farm", "tycoon-wheat-farm"}
 
-    global.tycoon_dev_no_city_special_buildings = true
-
     -- global.tycoon_cities = {}
     -- for i = 1, 8, 1 do
     --     game.surfaces[1].create_entity{
@@ -1074,7 +1056,7 @@ script.on_init(function()
     --     }
     -- end
 
---    TYCOON_STORY[1]()
+   TYCOON_STORY[1]()
 
     
         -- /c game. player. insert{ name="stone", count=1000 }

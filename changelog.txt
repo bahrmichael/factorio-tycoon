@@ -1,4 +1,21 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.0.17
+Date: 06. 10. 2023
+  Major Features:
+    - BREAKING CHANGE: Savegames from 0.0.16 and previous versions probably won't work anymore
+    - New road algorithm: Roads that expand instead of random placements (e.g. no more unonnected circles)
+    - Construciton sites: When the city starts a new building, it first places a construction site. After some time the construction site turns into a building. The same applies to house upgrades.
+    - Two new house types: As your city grows, simple houses (previously residential) will be upgraded to residential and later to highrise buildings, once  your city grows large enough.
+      Simple houses cost 1 stone and 1 iron plate. They can house 4 citizens.
+      Residential houses cost 20 stone and 10 iron plates. They can house 20 citizens.
+      Highrise houses cost 100 stone, and 50 iron plates, and 25 steel plates. They can house 100 citizens.
+  Changes:
+    - Temporarily, the cost to build roads has been dropped.
+    - Cities now clear forests to grow.
+    - Town hall is now indestructible. I don't know what should happen when you destroy a town hall, let me know!
+  Bugfixes:
+    - Fixed a visual issue on the university
+---------------------------------------------------------------------------------------------------
 Version: 0.0.16
 Date: 02. 10. 2023
   Bugfixes:

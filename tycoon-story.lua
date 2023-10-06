@@ -6,11 +6,6 @@ local function think(color, title, thought)
 end
 
 local function listSpecialCityBuildings(city, name)
-    -- Support for savegames <= 0.0.14
-    if city.special_buildings.other == nil then
-        city.special_buildings.other = {}
-    end
-
     local entities = {}
     if city.special_buildings.other[name] ~= nil and #city.special_buildings.other[name] > 0 then
         entities = city.special_buildings.other[name]

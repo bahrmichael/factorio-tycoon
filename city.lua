@@ -779,6 +779,12 @@ local function growAtRandomRoadEnd(city)
                 r.coordinates.y = r.coordinates.y + 1
             end
         end
+        if city.houseLocations ~= nil then
+            for _, r in ipairs(city.houseLocations) do
+                r.x = r.x + 1
+                r.y = r.y + 1
+            end
+        end
         DEBUG.logRoadEnds(city.roadEnds)
 
         return
