@@ -1,4 +1,4 @@
-local function createHouse(name, width, height, shift, inventory_size, selection_box)
+local function createHouse(name)
   return {
     type = "container",
     name = "tycoon-" .. name,
@@ -33,5 +33,5 @@ local function createHouse(name, width, height, shift, inventory_size, selection
 end
 
 for i = 1, 14, 1 do
-  data:extend{createHouse("house-residential-" .. i)}
+  data:extend{createHouse("house-simple-" .. i)}
 end
