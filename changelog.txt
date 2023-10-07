@@ -1,4 +1,10 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.0.18
+Date: 07. 10. 2023
+  Bugfixes:
+    - Made the town hall more indestructible. Let me know if you still manage to remove it with normal gameplay mechanisms.
+    - Resolved an issue where the city would stop to receive water if you reconstruct a water tower.
+---------------------------------------------------------------------------------------------------
 Version: 0.0.17
 Date: 06. 10. 2023
   Major Features:
