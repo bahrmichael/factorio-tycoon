@@ -114,8 +114,10 @@ local function initializeCity(city)
                     local townHall = game.surfaces[1].create_entity{
                         name = "tycoon-town-hall",
                         position = {x = startCoordinates.x - 1 + SEGMENTS.segmentSize / 2, y = startCoordinates.y - 1 + SEGMENTS.segmentSize / 2},
-                        force = "player"
+                        force = "neutral",
+                        move_stuck_players = true
                     }
+                    townHall.destructible = false
                     city.special_buildings.town_hall = townHall
                     global.tycoon_city_buildings[townHall.unit_number] = {
                         cityId = city.id,
@@ -505,7 +507,8 @@ local function placePrimaryIndustryAtPosition(position, entityName)
             return game.surfaces[1].create_entity{
                 name = entityName,
                 position = {x = position.x, y = position.y},
-                force = "player"
+                force = "neutral",
+                move_stuck_players = true
             }
         end
     end
@@ -766,10 +769,14 @@ local function canUpgradeToResidential(city)
     end
 
     local residentialCount = ((city.buildingCounts or {})["residential"] or 0)
+    if simpleCount < residentialCount * 5 then
+        -- There should be 5 simple buildings for every residential building
+        return false
+    end
     local gridSize = #city.grid
-    local inner10Percent = math.ceil(gridSize * 0.1)
-    local inner10PercentCells = inner10Percent * inner10Percent
-    return residentialCount < inner10PercentCells
+    local residentialPercentage = math.ceil(gridSize * 0.1)
+    local residentialPercentageCount = residentialPercentage * residentialPercentage
+    return residentialCount < residentialPercentageCount
 end
 
 local function canUpgradeToHighrise(city)
@@ -781,10 +788,16 @@ local function canUpgradeToHighrise(city)
     -- highrise should not cover more than 50% of the houses
     -- ideally only an inner circle
     local highriseCount = ((city.buildingCounts or {})["highrise"] or 0)
+    if residentialCount < highriseCount * 5 then
+        -- There should be 5 residential buildings for every highrise building
+        return false
+    end
+
+
     local gridSize = #city.grid
-    local inner10Percent = math.ceil(gridSize * 0.1)
-    local inner10PercentCells = inner10Percent * inner10Percent
-    return highriseCount < inner10PercentCells
+    local highRisePercentage = math.ceil(gridSize * 0.01)
+    local highRisePercentageCount = highRisePercentage * highRisePercentage
+    return highriseCount < highRisePercentageCount
 end
 
 local function newCityGrowth(city)
