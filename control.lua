@@ -529,7 +529,7 @@ local function findCityById(cityId)
     return nil
 end
 
-local CITY_SUPPLY_BUILDINGS = {"tycoon-market", "tycoon-hardware-store"}
+local CITY_SUPPLY_BUILDINGS = {"tycoon-market", "tycoon-hardware-store", "tycoon-water-tower"}
 
 script.on_event(defines.events.on_built_entity, function(event)
     local entity = event.created_entity
@@ -561,7 +561,7 @@ script.on_event(defines.events.on_built_entity, function(event)
 end)
 
 -- todo: also add robots and other workers
-script.on_event(defines.events.on_player_mined_entity, function(event)
+script.on_event({defines.events.on_player_mined_entity}, function(event)
     local entity = event.entity
 
     local isCitySupplyBuilding = false

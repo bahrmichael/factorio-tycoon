@@ -4,7 +4,7 @@ data:extend{
         name = "tycoon-town-hall",
         icon = "__tycoon__/graphics/entity/town-hall/town-hall.png",
         icon_size = 64,
-        max_health = 100,
+        max_health = 10000,
         -- This has to be set in the runtime code
         -- destructible = false,
         inventory_size = 100,
