@@ -4,8 +4,9 @@ data:extend{
         name = "tycoon-town-hall",
         icon = "__tycoon__/graphics/entity/town-hall/town-hall.png",
         icon_size = 64,
-        max_health = 200,
-        destructible = false,
+        max_health = 10000,
+        -- This has to be set in the runtime code
+        -- destructible = false,
         inventory_size = 100,
         corpse = "small-remnants",
         vehicle_impact_sound = {filename = "__base__/sound/car-metal-impact.ogg", volume = 0.65},

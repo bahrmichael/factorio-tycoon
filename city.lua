@@ -705,8 +705,10 @@ local function startConstruction(city, buildingConstruction, allowedCoordinates)
             local excavationPit = game.surfaces[1].create_entity{
                 name = getIteratedExcavationPitName(),
                 position = {x = startCoordinates.x - 0.5 + CELL_SIZE / 2, y = startCoordinates.y - 0.5  + CELL_SIZE / 2},
-                force = "player"
+                force = "player",
+                move_stuck_players = true
             }
+            excavationPit.destructible = false
 
             city.grid[coordinates.y][coordinates.x] = {
                 type = "building",
@@ -915,7 +917,8 @@ local function completeConstruction(city)
         entity = game.surfaces[1].create_entity{
             name = getIteratedHouseName(entityName),
             position = {x = startCoordinates.x - 0.5 + CELL_SIZE / 2, y = startCoordinates.y - 0.5  + CELL_SIZE / 2},
-            force = "player"
+            force = "player",
+            move_stuck_players = true
         }
         -- todo: test if the script destroying this entity also fires this hook
         script.register_on_entity_destroyed(entity)
@@ -937,7 +940,8 @@ local function completeConstruction(city)
         entity = game.surfaces[1].create_entity{
             name = entityName,
             position = {x = startCoordinates.x - 0.5 + CELL_SIZE / 2, y = startCoordinates.y - 0.5  + CELL_SIZE / 2},
-            force = "player"
+            force = "player",
+            move_stuck_players = true
         }
     end
 
@@ -981,6 +985,7 @@ local function hasEmptySurroundingSpace(city, coordinates, size)
             end
         end
     end
+    return false
 end
 
 --- @param city City

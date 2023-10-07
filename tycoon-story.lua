@@ -12,7 +12,7 @@ local function listSpecialCityBuildings(city, name)
     else
         entities = game.surfaces[1].find_entities_filtered{
             name=name,
-            position=city.special_buildings.town_hall.position,
+            position={city.center.x, city.center.y},
             radius=1000
         }
         city.special_buildings.other[name] = entities
@@ -350,8 +350,8 @@ local story_table =
         end
     },
     {
-        condition = function() 
-            return global.tycoon_cities[1].special_buildings.town_hall.get_item_count("stone") == -1
+        condition = function()
+            return false
         end,
         action =
         function()
