@@ -897,7 +897,9 @@ local function completeConstruction(city)
         return nil
     end
     local coordinates = excavationPit.coordinates
-    city.grid[coordinates.y][coordinates.x].entity.destroy()
+    if city.grid[coordinates.y][coordinates.x].entity ~= nil then
+        city.grid[coordinates.y][coordinates.x].entity.destroy()
+    end
 
     local startCoordinates = {
         y = (coordinates.y + getOffsetY(city)) * CELL_SIZE,
