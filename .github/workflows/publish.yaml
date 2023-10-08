@@ -55,10 +55,6 @@ jobs:
       with:
         args: zip -r tycoon.zip tycoon
 
-    - name: Debug info file
-      if: ${{ steps.changed-files.outputs.any_modified == 'true' && steps.get-version.outputs.version != 'unreleased' }}
-      run: cat info.json
-
     - name: Set up Python
       if: ${{ steps.changed-files.outputs.any_modified == 'true' && steps.get-version.outputs.version != 'unreleased' }}
       uses: actions/setup-python@v4
@@ -74,3 +70,9 @@ jobs:
         MOD_UPLOAD_API_KEY: ${{ secrets.MOD_UPLOAD_API_KEY }}
         MOD_UPLOAD_NAME: tycoon
         MOD_UPLOAD_FILE: tycoon.zip
+
+    - name: Create tag
+      if: ${{ steps.changed-files.outputs.any_modified == 'true' && steps.get-version.outputs.version != 'unreleased' }}
+      run: git tag ${{ steps.get-version.outputs.version }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
