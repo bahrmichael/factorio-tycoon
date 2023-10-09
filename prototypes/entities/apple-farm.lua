@@ -35,10 +35,10 @@ data:extend{
             },
         },
         crafting_categories = { "tycoon-growing" },
-        crafting_speed = 10,
+        crafting_speed = 1,
         return_ingredients_on_change = true,
         -- 60KW is one solar panel, makes sense to go with "solar energy" as the crops grow
-        energy_usage = "60KW",
+        energy_usage = "30KW",
         energy_source = {
             type = "electric",
             usage_priority = "secondary-input",
