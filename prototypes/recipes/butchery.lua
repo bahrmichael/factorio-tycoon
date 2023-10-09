@@ -15,4 +15,16 @@ data:extend{
         result = "tycoon-meat",
         result_count = 100,
     },
+    {
+        type = "recipe",
+        name = "tycoon-fish-to-fish-filet",
+        category = "tycoon-butchery",
+        energy_required = 15,
+        enabled = true,
+        ingredients = {
+            { type = "item", name = "raw-fish", amount = 1 },
+        },
+        result = "tycoon-fish-filet",
+        result_count = 20,
+    },
 }

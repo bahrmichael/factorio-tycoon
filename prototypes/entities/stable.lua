@@ -13,8 +13,20 @@ data:extend{
                 height = 2,
                 base_level = -1,
                 pipe_connections = {
-                    { type = "input", position = { 7.3, 0.4 } },
+                    { type = "input", position = { 7.4, 0.5 } },
                 },
+            },
+            {
+                production_type = "output",
+                pipe_covers = pipecoverspictures(),
+                base_level = 1,
+                pipe_connections =
+                {
+                  {
+                    type = "output",
+                    position = { 7.4, -3.5 }
+                  }
+                }
             },
         },
         collision_box = { { -6.9, -6.9}, {6.9, 6.9} },
