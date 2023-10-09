@@ -3,6 +3,8 @@ Version: unreleased
 Date: 07. 10. 2023
   Major Features:
     - Rebalancing of all Tycoon supply chains.
+  Bugfixes:
+    - Fix typos in the English localization.
 ---------------------------------------------------------------------------------------------------
 Version: 0.0.19
 Date: 07. 10. 2023
