@@ -3,7 +3,7 @@ local Queue = {}
 --- Create a new queue.
 --- @return table Queue with first and last indices.
 function Queue.new ()
-    return {first = 0, last = -1}
+    return {first = 0, last = -1, size = 0}
 end
 
 --- Push an element to the left of the queue.
@@ -13,6 +13,16 @@ function Queue.pushleft (queue, value)
     local first = queue.first - 1
     queue.first = first
     queue[first] = value
+
+    Queue.increaseSize(queue, 1)
+end
+
+function Queue.increaseSize(queue, increment)
+    if queue.size == nil then
+        queue.size = Queue.count(queue) + increment
+    else
+        queue.size = queue.size + increment
+    end
 end
 
 --- Push an element to the right of the queue.
@@ -22,6 +32,8 @@ function Queue.pushright (queue, value)
     local last = queue.last + 1
     queue.last = last
     queue[last] = value
+
+    Queue.increaseSize(queue, 1)
 end
 
 --- Pop an element from the left of the queue.
@@ -34,6 +46,9 @@ function Queue.popleft (queue)
     local value = queue[first]
     queue[first] = nil        -- to allow garbage collection
     queue.first = first + 1
+
+    Queue.increaseSize(queue, -1)
+
     return value
 end
 
@@ -47,6 +62,9 @@ function Queue.popright (queue)
     local value = queue[last]
     queue[last] = nil         -- to allow garbage collection
     queue.last = last - 1
+
+    Queue.increaseSize(queue, -1)
+
     return value
 end
 
@@ -80,6 +98,8 @@ function Queue.insert(queue, value, position)
         -- Insert the value at the specified position
         queue[position] = value
         queue.last = last + 1
+
+        Queue.increaseSize(queue, 1)
     end
 end
 
@@ -99,6 +119,10 @@ function Queue.iterate(queue)
             return queue[index]
         end
     end
+end
+
+function Queue.getSize(queue)
+    return queue.size or Queue.count(queue)
 end
 
 --- Get the number of non-empty elements in the queue.

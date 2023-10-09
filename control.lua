@@ -683,6 +683,117 @@ local function areBasicNeedsMet(city)
     return true
 end
 
+-- Todo: move into initialization or on_player_joined
+script.on_event(defines.events.on_player_changed_position, function(event)
+    local player = game.players[event.player_index]
+    if player.gui.top.tycoon_city_manager_open_button == nil then
+        player.gui.top.add{
+            type = "button",
+            name = "tycoon_city_manager_open_button",
+            caption = "City\nManager"
+        }
+    end
+end)
+
+
+local cityNames = {"Smelterburg", "Foundryville", "Steelton"}
+
+script.on_event(defines.events.on_gui_click, function(event)
+    local player = game.players[event.player_index]
+    local element = event.element
+    
+    if element.name == "tycoon_city_manager_open_button" then
+        if player.gui.center.tycoon_city_manager then
+            return
+        end
+        -- Create your larger GUI here
+        local gui = player.gui.center.add{
+            type = "frame",
+            name = "tycoon_city_manager",
+            direction = "vertical",
+            caption = "Tycoon City Manager"
+        }
+
+        gui.add{type = "button", caption = "Close", name = "tycoon_city_manager_close_button"}
+        gui.add{type = "label", caption = {"", {"tycoon-gui-update-info"}}}
+        gui.add{type = "label", caption = "Your cities will grow when they have enough items for their basic needs, construction materials, and spare construction sites."}
+
+        table.insert(global.tycoon_cities, global.tycoon_cities[1])
+        for _, city in ipairs(global.tycoon_cities) do
+            city.name = table.remove(cityNames) or "Metallurgica"
+            
+            -- gui.add{type = "line"}
+            local frame = gui.add{type = "frame", direction = "horizontal", caption = city.name}
+
+            local leftFlow = frame.add{type = "flow", direction = "vertical"}
+            local rightFlow = frame.add{type = "flow", direction = "vertical"}
+
+            local stats = leftFlow.add{type = "flow", direction = "horizontal"}
+            local t1 = stats.add{type = "table", column_count = 1}
+            t1.add{type = "label", caption = {"", {"tycoon-gui-citizens"}}}
+            t1.add{type = "label", caption = {"", city.stats.citizen_count}}
+            local t15 = stats.add{type = "table", column_count = 1}
+            t15.add{type = "label", caption = "  "}
+            -- local t15 = stats.add{type = "table", column_count = 1}
+            local t2 = stats.add{type = "table", column_count = 1}
+            t2.add{type = "label", caption = {"", {"tycoon-gui-construction-sites"}}}
+            t2.add{type = "label", caption = {"", #(city.excavationPits or {}), "/", #city.grid}, name = "construction_sites_count"}
+
+            leftFlow.add{type = "line"}
+            local basicNeedsGui = leftFlow.add{type = "flow"}
+
+            local basicNeedsCount = 4 * 2
+
+            local table = basicNeedsGui.add{type = "table", column_count = basicNeedsCount}
+            for key, value in pairs(city.stats.basic_needs) do
+
+                value.provided = math.random(0, 1000)
+                value.required = math.random(500, 1000)
+
+                local itemName = key
+                if string.find(key, "tycoon-", 1, true) then
+                    itemName = "item-name." .. itemName
+                elseif key == "water" then
+                    -- Vanilla items like water are not in our localization config, and therefore have to be access differently
+                    itemName = "fluid-name." .. key
+                end
+
+                local color = "green"
+                if value.provided < value.required then
+                    color = "red"
+                end
+
+                -- local gui = basicNeedsGui.add{type = "flow", direction = "vertical", caption = {"", {itemName}}, name = key}
+                -- gui.add{type = "label", name = "supply", caption = {"", {itemName}, ": ", "[color=" .. color .. "]", value.provided, "/", value.required, "[/color]"}}
+                -- gui.supply.caption = {"", {itemName}, ": ", "[color=" .. color .. "]", value.provided, "/", value.required, "[/color]"}
+                local t = table.add{type = "table", column_count = 1}
+                t.add{type = "label", caption = {"", {itemName}}}
+                t.add{type = "label", caption = {"", "[color=" .. color .. "]", value.provided, "/", value.required, "[/color]"}}
+
+                local spacer = table.add{type = "table", column_count = 1}
+                spacer.add{type = "label", caption = "  "}
+            end
+
+            rightFlow.add{type = "minimap", entity = city.special_buildings.town_hall}
+
+            -- table.add{type = "label", caption = "Water: " .. math.random(0,100) .. "/" .. math.random(0,2000)}
+            -- table.add{type = "label", caption = "Apples: " .. math.random(0,100) .. "/" .. math.random(0,2000)}
+            -- table.add{type = "label", caption = "Milk Bottles: " .. math.random(0,100) .. "/" .. math.random(0,2000)}
+            -- table.add{type = "label", caption = "Meat: " .. math.random(0,100) .. "/" .. math.random(0,2000)}
+        end
+
+        -- local tabbed_pane = gui.add{type="tabbed-pane"}
+        -- local tab1 = tabbed_pane.add{type="tab", caption="Tab 1"}
+        -- local tab2 = tabbed_pane.add{type="tab", caption="Tab 2"}
+        -- local label1 = tabbed_pane.add{type="label", caption="Label 1"}
+        -- local label2 = tabbed_pane.add{type="label", caption="Label 2"}
+        -- tabbed_pane.add_tab(tab1, label1)
+        -- tabbed_pane.add_tab(tab2, label2)
+    elseif element.name == "tycoon_city_manager_close_button" then
+        player.gui.center.tycoon_city_manager.destroy()
+    end
+end)
+
  -- todo: show construction material supply
 script.on_event(defines.events.on_gui_opened, function (gui)
     if gui.entity ~= nil and gui.entity.name == "tycoon-town-hall" then
@@ -919,7 +1030,7 @@ local function newCityGrowth(city)
             -- The city should not grow its road network too much if there are (valid) possibleBuildingLocations
             -- todo: how do we separate out invalid ones?
             local excavationPitCount = #(city.excavationPits or {})
-            local possibleBuildingLocationsCount = Queue.count(city.buildingLocationQueue)
+            local possibleBuildingLocationsCount = Queue.getSize(city.buildingLocationQueue)
             if math.random() < (#city.grid / possibleBuildingLocationsCount) and excavationPitCount < #city.grid then
                 -- todo: add check that road resources are available
                 local coordinates = CITY.growAtRandomRoadEnd(city)
