@@ -18,21 +18,21 @@ data:extend{
     },
     {
         type = "recipe",
-        name = "tycoon-milk-cows",
+        name = "tycoon-milk-cow",
         category = "tycoon-husbandry",
-        icon = "__tycoon__/graphics/icons/milk-bottle.png",
+        icon = "__tycoon__/graphics/icons/milk.png",
         icon_size = 64,
         energy_required = 60,
         subgroup = "raw-resource",
         enabled = true,
         ingredients = {
-            { type = "fluid", name = "water", amount = 10 },
+            { type = "fluid", name = "water", amount = 200 },
             { type = "item", name = "tycoon-cow", amount = 1 },
-            { type = "item", name = "tycoon-grain", amount = 20 },
+            { type = "item", name = "tycoon-grain", amount = 10 },
         },
         results = {
             { type = "item", name = "tycoon-cow", amount = 1 },
-            { type = "item", name = "tycoon-milk", amount = 100 },
+            { type = "fluid", name = "tycoon-milk", amount = 100 },
         },
     },
 }
