@@ -3,6 +3,8 @@ Version: unreleased
 Date: 07. 10. 2023
   Major Features:
     - Rebalancing of all Tycoon supply chains.
+  Changes:
+    - Rebalance university production to be slightly more expensive than vanilla science packs.
   Bugfixes:
     - Fix typos in the English localization.
 ---------------------------------------------------------------------------------------------------
