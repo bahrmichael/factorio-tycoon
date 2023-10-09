@@ -18,7 +18,7 @@ data:extend{
         energy_required = 15,
         enabled = true,
         ingredients = {
-            { type = "item", name = "tycoon-flour", amount = 20 },
+            { type = "item", name = "tycoon-flour", amount = 30 },
             { type = "fluid", name = "tycoon-milk", amount = 20 },
         },
         result = "tycoon-dough",
@@ -87,7 +87,7 @@ data:extend{
         },
         subgroup = "raw-resource",
         results = {
-            {name = "tycoon-bottle", amount = 25},
+            {name = "tycoon-bottle", amount = 20},
             {name = "tycoon-bottle", amount = 5, probability = 0.2}
         },
     },
