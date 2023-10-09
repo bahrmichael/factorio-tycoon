@@ -34,13 +34,13 @@ data:extend{
             },
         },
         crafting_categories = { "tycoon-husbandry" },
-        crafting_speed = 10,
+        crafting_speed = 1,
         return_ingredients_on_change = true,
-        energy_usage = "144.8KW",
+        energy_usage = "300KW",
         energy_source = {
             type = "electric",
             usage_priority = "secondary-input",
-            emissions_per_minute = -5,
+            emissions_per_minute = 10,
         },
     }
 }
