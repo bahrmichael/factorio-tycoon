@@ -16,7 +16,7 @@ data:extend{
         name = "tycoon-flour-to-dough",
         category = "crafting-with-fluid",
         energy_required = 15,
-        enabled = true,
+        enabled = false,
         ingredients = {
             { type = "item", name = "tycoon-flour", amount = 30 },
             { type = "fluid", name = "tycoon-milk", amount = 20 },
@@ -29,7 +29,7 @@ data:extend{
         name = "tycoon-dough-to-bread",
         category = "smelting",
         energy_required = 10,
-        enabled = true,
+        enabled = false,
         ingredients = {
             { type = "item", name = "tycoon-dough", amount = 10 },
         },
@@ -41,7 +41,7 @@ data:extend{
         name = "tycoon-grain-to-flour",
         category = "crafting",
         energy_required = 30,
-        enabled = true,
+        enabled = false,
         ingredients = {
             { type = "item", name = "tycoon-grain", amount = 5 },
         },
