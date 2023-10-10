@@ -804,13 +804,13 @@ local function newCityGrowth(city)
     assert(city.grid ~= nil and #city.grid > 1, "Expected grid to be initialized and larger than 1x1.")
 
     -- Attempt to complete constructions first
-    local completedConsructionBuildingType = CITY.completeConstruction(city)
-    if completedConsructionBuildingType ~= nil then
-        if completedConsructionBuildingType == "simple" then
+    local completedConstructionBuildingType = CITY.completeConstruction(city)
+    if completedConstructionBuildingType ~= nil then
+        if completedConstructionBuildingType == "simple" then
             growCitizenCount(city, citizenCounts["simple"])
-        elseif completedConsructionBuildingType == "residential" then
+        elseif completedConstructionBuildingType == "residential" then
             growCitizenCount(city, citizenCounts["residential"])
-        elseif completedConsructionBuildingType == "highrise" then
+        elseif completedConstructionBuildingType == "highrise" then
             growCitizenCount(city, citizenCounts["highrise"])
         end
 
