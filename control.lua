@@ -244,44 +244,41 @@ local function updateNeeds(city)
     end
 end
 
-local function updateUnlocks(city)
-    local citizenCount = city.stats.citizen_count
-    for i, v in ipairs(city.unlockables) do
-        if citizenCount >= v.threshold then
-            if v.type == "basicNeed" and v.basicNeedCategory == "market" then
-                game.print({"", {"tycoon-city-has-reached-population", v.threshold}})
-                for _, item in ipairs(v.items) do
-                    table.insert(city.basicNeeds.market, item)
-                    game.print({"", {"tycoon-city-additional-basic-need", item.amount, {"item-name." .. item.resource}}})
-                end
-                if v.supplyChain == "wheat-cow-milk" then
-                    game.forces[1].recipes['tycoon-building-stable'].enabled = true
-                    game.forces[1].recipes['tycoon-wheat-to-grain'].enabled = true
-                    game.forces[1].recipes['tycoon-grow-cows-with-grain'].enabled = true
-                    game.forces[1].recipes['tycoon-milk-cows'].enabled = true
-                    game.print({"", {"tycoon-new-building", {"entity-name.tycoon-stable"}}})
+-- local function updateUnlocks(city)
+--     local citizenCount = city.stats.citizen_count
+--     for i, v in ipairs(city.unlockables) do
+--         if citizenCount >= v.threshold then
+--             if v.type == "basicNeed" and v.basicNeedCategory == "market" then
+--                 game.print({"", {"tycoon-city-has-reached-population", v.threshold}})
+--                 for _, item in ipairs(v.items) do
+--                     table.insert(city.basicNeeds.market, item)
+--                     game.print({"", {"tycoon-city-additional-basic-need", item.amount, {"item-name." .. item.resource}}})
+--                 end
+--                 if v.supplyChain == "wheat-cow-milk" then
+--                     game.forces[1].recipes['tycoon-building-stable'].enabled = true
+--                     game.forces[1].recipes['tycoon-wheat-to-grain'].enabled = true
+--                     game.forces[1].recipes['tycoon-grow-cows-with-grain'].enabled = true
+--                     game.forces[1].recipes['tycoon-milk-cows'].enabled = true
+--                     game.print({"", {"tycoon-new-building", {"entity-name.tycoon-stable"}}})
 
-                    table.insert(global.tycoon_primary_industries, "tycoon-wheat-farm")
-                    game.print({"", {"tycoon-exploration-discovers-primary-industries"}})
-                elseif v.supplyChain == "meat" then
-                    game.forces[1].recipes['tycoon-butchery'].enabled = true
-                    game.forces[1].recipes['tycoon-cows-to-meat'].enabled = true
-                    game.print({"", {"tycoon-new-building", {"entity-name.tycoon-butchery"}}})
-                end
-            else
-                game.print("Unhandled unlock: " .. v.type .. "#" .. v.basicNeedCategory)
-            end
-            table.remove(city.unlockables, i)
-            return
-        end
-    end
-end
+--                     table.insert(global.tycoon_primary_industries, "tycoon-wheat-farm")
+--                     game.print({"", {"tycoon-exploration-discovers-primary-industries"}})
+--                 elseif v.supplyChain == "meat" then
+--                     game.forces[1].recipes['tycoon-butchery'].enabled = true
+--                     game.forces[1].recipes['tycoon-cows-to-meat'].enabled = true
+--                     game.print({"", {"tycoon-new-building", {"entity-name.tycoon-butchery"}}})
+--                 end
+--             else
+--                 game.print("Unhandled unlock: " .. v.type .. "#" .. v.basicNeedCategory)
+--             end
+--             table.remove(city.unlockables, i)
+--             return
+--         end
+--     end
+-- end
 
 local function growCitizenCount(city, count)
     city.stats.citizen_count = city.stats.citizen_count + count
-    updateUnlocks(city)
-    -- update needs must run because updateUnlocksmay unlock new demands
-    updateNeeds(city)
 end
 
 local function invalidateSpecialBuildingsList(city, name)
@@ -712,10 +709,10 @@ script.on_event(defines.events.on_gui_opened, function (gui)
         cityGui.city_stats.citizen_count.caption = {"", {"tycoon-gui-citizens"}, ": ",  city.stats.citizen_count}
         cityGui.city_stats.construction_sites_count.caption = {"", {"tycoon-gui-construction-sites"}, ": ",  #(city.excavationPits or {}), "/", #city.grid}
 
-        if cityGui.city_stats.basic_needs_met ~= nil then
-            -- Remove surplus UI from 0.0.14 and before
-            cityGui.city_stats.basic_needs_met.destroy()
-        end
+        -- if cityGui.city_stats.basic_needs_met ~= nil then
+        --     -- Remove surplus UI from 0.0.14 and before
+        --     cityGui.city_stats.basic_needs_met.destroy()
+        -- end
 
         local basicNeedsGui = cityGui.basic_needs
         for key, value in pairs(city.stats.basic_needs) do
@@ -724,7 +721,7 @@ script.on_event(defines.events.on_gui_opened, function (gui)
             if string.find(key, "tycoon-", 1, true) then
                 itemName = "item-name." .. itemName
             elseif key == "water" then
-                -- Vanilla items like water are not in our localization config, and therefore have to be access differently
+                -- Vanilla items like water are not in our localization config, and therefore have to be accessed differently
                 itemName = "fluid-name." .. key
             end
 
@@ -1028,32 +1025,32 @@ script.on_init(function()
             basic_needs = {}
         },
         constructionProbability = 1.0,
-        unlockables = {
-            {
-                threshold = 100,
-                type = "basicNeed",
-                basicNeedCategory = "market",
-                items = {
-                    {
-                        amount = 1,
-                        resource = "tycoon-milk-bottle",
-                    },
-                },
-                supplyChain = "wheat-cow-milk"
-            },
-            {
-                threshold = 200,
-                type = "basicNeed",
-                basicNeedCategory = "market",
-                items = {
-                    {
-                        amount = 1,
-                        resource = "tycoon-meat",
-                    },
-                },
-                supplyChain = "meat"
-            }
-        }
+        -- unlockables = {
+        --     {
+        --         threshold = 100,
+        --         type = "basicNeed",
+        --         basicNeedCategory = "market",
+        --         items = {
+        --             {
+        --                 amount = 1,
+        --                 resource = "tycoon-milk-bottle",
+        --             },
+        --         },
+        --         supplyChain = "wheat-cow-milk"
+        --     },
+        --     {
+        --         threshold = 200,
+        --         type = "basicNeed",
+        --         basicNeedCategory = "market",
+        --         items = {
+        --             {
+        --                 amount = 1,
+        --                 resource = "tycoon-meat",
+        --             },
+        --         },
+        --         supplyChain = "meat"
+        --     }
+        -- }
     }}
     initializeCity(global.tycoon_cities[1])
     updateNeeds(global.tycoon_cities[1])
