@@ -376,7 +376,6 @@ local function updateProvidedAmounts(city)
     if #waterTowers >= 1 then
         for _, consumption in ipairs({city.basicNeeds.waterTower}) do
             local totalAvailable = 0
-            local waterTowersWithSupply = {}
             for _, waterTower in ipairs(waterTowers) do
                 local availableCount = waterTower.get_fluid_count(consumption.resource)
                 totalAvailable = totalAvailable + availableCount
@@ -389,6 +388,15 @@ local function updateProvidedAmounts(city)
         end
     end
 end
+
+-- See gDocs for prices (round up). This reflects the kW amount per unit produced.
+local resourcePrices = {
+    ["tycoon-apple"] = 1,
+    ["tycoon-meat"] = 2,
+    ["tycoon-milk-bottle"] = 5,
+    ["tycoon-bread"] = 4,
+    ["tycoon-fish-filet"] = 4,
+}
 
 local function cityBasicConsumption(city)
 
@@ -424,7 +432,7 @@ local function cityBasicConsumption(city)
 
             if #treasuries > 0 then
                 local randomTreasury = treasuries[math.random(#treasuries)]
-                local currencyPerUnit = 1
+                local currencyPerUnit = resourcePrices[consumption.resource] or 1
                 local reward = math.ceil(currencyPerUnit * consumedAmount)
                 if reward > 0 then
                     randomTreasury.insert{name = "tycoon-currency", count = reward}
@@ -456,15 +464,7 @@ local function cityBasicConsumption(city)
                 countNeedsMet = countNeedsMet + 1
             end
 
-            -- Let citizens pay for each piece of water
-            if #treasuries > 0 then
-                local randomTreasury = treasuries[math.random(#treasuries)]
-                local currencyPerUnit = 0.1
-                local reward = math.ceil(currencyPerUnit * requiredAmount)
-                if reward > 0 then
-                    randomTreasury.insert{name = "tycoon-currency", count = reward}
-                end
-            end
+            -- Water is a human right and should be free
         end
     end
     local needsCount = (#city.basicNeeds.market + #{city.basicNeeds.waterTower})
