@@ -1,6 +1,36 @@
 data:extend{
     {
         type = "technology",
+        name = "tycoon-husbandry",
+        mod = "Tycoon",
+        icon = "__tycoon__/graphics/icons/husbandry.png",
+        icon_size = 256,
+        effects = {
+            {
+                type = "unlock-recipe",
+                recipe = "tycoon-building-stable",
+            },
+            {
+                type = "unlock-recipe",
+                recipe = "tycoon-grow-cows-with-grain",
+            },
+            {
+                type = "unlock-recipe",
+                recipe = "tycoon-milk-cow",
+            },
+        },
+        -- prerequisites = { "kr-matter-processing" },
+        order = "g-e-e",
+        unit = {
+          count = 10,
+          ingredients = {
+            { "automation-science-pack", 1 },
+          },
+          time = 30,
+        },
+    },
+    {
+        type = "technology",
         name = "tycoon-baking",
         mod = "Tycoon",
         icon = "__tycoon__/graphics/icons/baking.png",
@@ -49,7 +79,7 @@ data:extend{
                 recipe = "tycoon-refurbish-bottle",
             },
         },
-        -- prerequisites = { "kr-matter-processing" },
+        prerequisites = { "tycoon-husbandry" },
         order = "g-e-e",
         unit = {
           count = 10,
@@ -68,6 +98,10 @@ data:extend{
         effects = {
             {
                 type = "unlock-recipe",
+                recipe = "tycoon-butchery",
+            },
+            {
+                type = "unlock-recipe",
                 recipe = "tycoon-fish-to-fish-filet",
             },
             {
@@ -75,7 +109,7 @@ data:extend{
                 recipe = "tycoon-cows-to-meat",
             },
         },
-        -- prerequisites = { "kr-matter-processing" },
+        prerequisites = { "tycoon-husbandry" },
         order = "g-e-e",
         unit = {
           count = 10,
