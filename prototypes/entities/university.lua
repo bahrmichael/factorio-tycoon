@@ -22,7 +22,7 @@ data:extend{
             },
         },
         crafting_categories = { "tycoon-university-science" },
-        crafting_speed = 60,
+        crafting_speed = 1,
         return_ingredients_on_change = false,
         energy_usage = "500KW",
         energy_source = {

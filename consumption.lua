@@ -1,0 +1,328 @@
+--- @class BasicNeed
+--- @field provided number
+--- @field required number
+
+--- @class CityStats
+--- @field basic_needs { string: BasicNeed }
+
+--- @class SpecialBuildings
+--- @field town_hall any
+--- @field other {string: any[]}
+
+--- @class City
+--- @field stats CityStats
+--- @field citizens { string: number }
+--- @field special_buildings SpecialBuildings
+
+local basicNeeds = {
+    water = 10,
+    simple = {
+        {
+            amount = 3,
+            resource = "tycoon-apple",
+        }
+    },
+    residential = {
+        {
+            amount = 2,
+            resource = "tycoon-apple",
+        },
+        {
+            amount = 2,
+            resource = "tycoon-meat",
+        },
+        {
+            amount = 4,
+            resource = "tycoon-bread",
+        }
+    },
+    highrise = {
+        {
+            amount = 1,
+            resource = "tycoon-apple",
+        },
+        {
+            amount = 2,
+            resource = "tycoon-meat",
+        },
+        {
+            amount = 3,
+            resource = "tycoon-bread",
+        },
+        {
+            amount = 2,
+            resource = "tycoon-fish-filet",
+        },
+        {
+            amount = 1,
+            resource = "tycoon-milk-bottle",
+        }
+    }
+}
+
+local basicNeedIncrements = {
+    default = {"water", "tycoon-apple"},
+    residential = {"tycoon-meat", "tycoon-bread"},
+    highrise = {"tycoon-fish-filet", "tycoon-milk-bottle"}
+}
+
+--- @param city City
+--- @param resource string
+--- @param amount number
+local function setBasicNeedsRequired(city, resource, amount)
+    if city.stats.basic_needs[resource] == nil then
+        city.stats.basic_needs[resource] = {
+            provided = 0,
+            required = 0,
+        }
+    end
+    city.stats.basic_needs[resource].required = math.floor(amount)
+end
+
+--- @param city City
+--- @param resource string
+--- @param amount number
+local function setBasicNeedsProvided(city, resource, amount)
+    if city.stats.basic_needs[resource] == nil then
+        city.stats.basic_needs[resource] = {
+            provided = 0,
+            required = 0,
+        }
+    end
+    city.stats.basic_needs[resource].provided = math.floor(amount)
+end
+
+local DAY_TO_MINUTE_FACTOR = 600 / 25000
+
+--- @param amountPerDay number
+--- @param citizenCount number
+local function getRequiredAmount(amountPerDay, citizenCount)
+    return math.ceil(amountPerDay * DAY_TO_MINUTE_FACTOR * citizenCount)
+end
+
+--- @param city City
+local function updateNeeds(city)
+    local needs = {
+        water = 0
+    }
+    for citizenTier, citizenCount in pairs(city.citizens) do
+        for _, need in ipairs(basicNeeds[citizenTier]) do
+            if needs[need.resource] == nil then
+                needs[need.resource] = 0
+            end
+            needs[need.resource] = needs[need.resource] + getRequiredAmount(need.amount, citizenCount)
+        end
+        needs.water = needs.water + basicNeeds.water * citizenCount
+    end
+
+    for resource, amount in pairs(needs) do
+        setBasicNeedsRequired(city, resource, amount)
+    end
+end
+
+--- @param city City
+---@param name string
+local function listSpecialCityBuildings(city, name)
+    local entities = {}
+    if city.special_buildings.other[name] ~= nil and #city.special_buildings.other[name] > 0 then
+        entities = city.special_buildings.other[name]
+    else
+        entities = game.surfaces[1].find_entities_filtered{
+            name=name,
+            position=city.special_buildings.town_hall.position,
+            radius=1000
+        }
+        city.special_buildings.other[name] = entities
+    end
+
+    local result = {}
+    for _, entity in ipairs(entities) do
+        if entity ~= nil and entity.valid then
+            table.insert(result, entity)
+        end
+    end
+    return result
+end
+
+local function updateProvidedAmounts(city)
+    local markets = listSpecialCityBuildings(city, "tycoon-market")
+    
+    if #markets >= 1 then
+        for resource, _ in pairs(city.stats.basic_needs) do
+            if resource ~= "water" then
+                local totalAvailable = 0
+                for _, market in ipairs(markets) do
+                    local availableCount = market.get_item_count(resource)
+                    totalAvailable = totalAvailable + availableCount
+                end
+                setBasicNeedsProvided(city, resource, totalAvailable)
+            end
+        end
+    else
+        for resource, _ in pairs(city.stats.basic_needs) do
+            if resource ~= "water" then
+                setBasicNeedsProvided(city, resource, 0)
+            end
+        end
+    end
+    
+    local waterTowers = listSpecialCityBuildings(city, "tycoon-water-tower")
+    if #waterTowers >= 1 then
+        local totalAvailable = 0
+        for _, waterTower in ipairs(waterTowers) do
+            local availableCount = waterTower.get_fluid_count("water")
+            totalAvailable = totalAvailable + availableCount
+        end
+        setBasicNeedsProvided(city, "water", totalAvailable)
+    else
+        setBasicNeedsProvided(city, "water", 0)
+    end
+end
+
+local function areBasicNeedsMet(city, needs)
+    updateProvidedAmounts(city)
+
+    local n = needs or city.stats.basic_needs
+
+    for _, amount in ipairs(n) do
+        if (amount == nil or amount.provided == nil or amount.provided == 0) then
+            return false
+        elseif amount.provided < amount.required then
+            return false
+        end
+    end
+
+    return true
+end
+
+local resourcePrices = {
+    water = 0,
+    ["tycoon-apple"] = 1,
+    ["tycoon-meat"] = 2,
+    ["tycoon-milk-bottle"] = 5,
+    ["tycoon-bread"] = 4,
+    ["tycoon-fish-filet"] = 4,
+    -- todo: balance the ones below
+    stone = 1,
+    ["iron-plate"] = 1,
+    ["steel-plate"] = 1,
+}
+
+--- @param city City
+local function countCitizens(city)
+    local total = 0
+    for _, count in pairs(city.citizens) do
+        total = total + count
+    end
+    return total
+end
+
+--- @class Item
+--- @field name string
+--- @field required number
+
+--- @param item Item
+--- @param suppliers any[]
+--- @param city City
+--- @param isConstruction boolean
+local function consumeItem(item, suppliers, city, isConstruction)
+
+    assert(item.required ~= nil and item.required >= 0, "Required amount must be a number 0 or larger.")
+
+    if item.required == 0 then
+        -- No need to consume anything if we don't need to consume anything
+        return
+    end
+
+    local entitiesWithSupply = {}
+    for _, entity in ipairs(suppliers) do
+        local availableCount = entity.get_item_count(item.name)
+        if availableCount > 0 then
+            table.insert(entitiesWithSupply, entity)
+        end
+    end
+    
+    local requiredAmount
+    if isConstruction then
+        requiredAmount = item.required
+    else
+        requiredAmount = getRequiredAmount(item.required, countCitizens(city))
+    end
+    local consumedAmount = 0
+    for _, entity in ipairs(entitiesWithSupply) do
+        local availableCount = entity.get_item_count(item.name)
+        local removed = entity.remove_item({name = item.name, count = math.min(requiredAmount, availableCount)})
+        consumedAmount = consumedAmount + removed
+        requiredAmount = requiredAmount - consumedAmount
+        if requiredAmount <= 0 then
+            break
+        end
+    end
+
+    local treasuries = listSpecialCityBuildings(city, "tycoon-treasury")
+    if #treasuries > 0 then
+        local randomTreasury = treasuries[math.random(#treasuries)]
+        local currencyPerUnit = resourcePrices[item.name]
+        assert(currencyPerUnit ~= nil, "Missing price for " .. item.name)
+        local reward = math.ceil(currencyPerUnit * consumedAmount)
+        if reward > 0 then
+            randomTreasury.insert{name = "tycoon-currency", count = reward}
+        end
+    end
+end
+
+--- @param city City
+local function consumeBasicNeeds(city)
+
+    local citizen_count = countCitizens(city)
+
+    local markets = listSpecialCityBuildings(city, "tycoon-market")
+    local waterTowers = listSpecialCityBuildings(city, "tycoon-water-tower")
+
+    local countNeedsMet = 0
+
+    if #markets >= 1 then
+        for resource, amounts in pairs(city.stats.basic_needs) do
+            if resource ~= "water" then
+                consumeItem({
+                    name = resource,
+                    required = amounts.required
+                }, markets, city, false)
+            end
+        end
+    end
+    if #waterTowers >= 1 then
+        local requiredAmount = getRequiredAmount(basicNeeds.water, citizen_count)
+        local waterTowersWithSupply = {}
+        for _, waterTower in ipairs(waterTowers) do
+            local availableCount = waterTower.get_fluid_count("water")
+            if availableCount > 0 then
+                table.insert(waterTowersWithSupply, waterTower)
+            end
+        end
+        local consumedAmount = 0
+        for _, waterTower in ipairs(waterTowersWithSupply) do
+            local availableCount = waterTower.get_fluid_count("water")
+            local removed = waterTower.remove_fluid({name = "water", amount = math.min(requiredAmount, availableCount)})
+            consumedAmount = consumedAmount + removed
+            requiredAmount = requiredAmount - consumedAmount
+            if requiredAmount <= 0 then
+                break
+            end
+        end
+        if consumedAmount >= requiredAmount then
+            countNeedsMet = countNeedsMet + 1
+        end
+
+        -- Water is a human right and should be free
+    end
+end
+
+
+return {
+    areBasicNeedsMet = areBasicNeedsMet,
+    updateNeeds = updateNeeds,
+    consumeBasicNeeds = consumeBasicNeeds,
+    consumeItem = consumeItem,
+    basicNeedIncrements = basicNeedIncrements
+}
