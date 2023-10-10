@@ -32,7 +32,7 @@ data:extend{
         name = "tycoon-university-science-black",
         category = "tycoon-university-science",
         energy_required = 5,
-        enabled = true,
+        enabled = false,
         ingredients = {
             { type = "item", name = "tycoon-currency", amount = 275 },
         },
@@ -44,7 +44,7 @@ data:extend{
         name = "tycoon-university-science-blue",
         category = "tycoon-university-science",
         energy_required = 5,
-        enabled = true,
+        enabled = false,
         ingredients = {
             { type = "item", name = "tycoon-currency", amount = 450 },
         },
@@ -56,7 +56,7 @@ data:extend{
         name = "tycoon-university-science-purple",
         category = "tycoon-university-science",
         energy_required = 5,
-        enabled = true,
+        enabled = false,
         ingredients = {
             { type = "item", name = "tycoon-currency", amount = 1200 },
         },
@@ -68,7 +68,7 @@ data:extend{
         name = "tycoon-university-science-yellow",
         category = "tycoon-university-science",
         energy_required = 5,
-        enabled = true,
+        enabled = false,
         ingredients = {
             { type = "item", name = "tycoon-currency", amount = 1500 },
         },

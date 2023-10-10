@@ -121,4 +121,59 @@ data:extend{
           time = 30,
         },
     },
+    {
+        type = "technology",
+        name = "tycoon-residential-housing",
+        mod = "Tycoon",
+        icon = "__tycoon__/graphics/icons/residential-housing.png",
+        icon_size = 256,
+        effects = {
+            {
+                type = "unlock-recipe",
+                recipe = "tycoon-university-science-black",
+            },
+            {
+                type = "unlock-recipe",
+                recipe = "tycoon-university-science-blue",
+            },
+        },
+        prerequisites = { "tycoon-meat-processing", "tycoon-bottling" },
+        order = "g-e-e",
+        unit = {
+          count = 60,
+          ingredients = {
+            { "automation-science-pack", 1 },
+            { "logistic-science-pack", 1 },
+          },
+          time = 30,
+        },
+    },
+    {
+        type = "technology",
+        name = "tycoon-highrise-housing",
+        mod = "Tycoon",
+        icon = "__tycoon__/graphics/icons/highrise-housing.png",
+        icon_size = 256,
+        effects = {
+            {
+                type = "unlock-recipe",
+                recipe = "tycoon-university-science-purple",
+            },
+            {
+                type = "unlock-recipe",
+                recipe = "tycoon-university-science-yellow",
+            },
+        },
+        prerequisites = { "steel-processing", "tycoon-baking", "tycoon-residential-housing" },
+        order = "g-e-e",
+        unit = {
+          count = 120,
+          ingredients = {
+            { "automation-science-pack", 1 },
+            { "logistic-science-pack", 1 },
+            { "chemical-science-pack", 1 },
+          },
+          time = 30,
+        },
+    },
 }
