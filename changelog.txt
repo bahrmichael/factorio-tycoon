@@ -5,6 +5,7 @@ Date: 07. 10. 2023
     - Rebalancing of all Tycoon supply chains.
     - New primary industries: Fishery
     - New items: Milk (liquid), Bottle, Used Bottle, Flour, Dough, Bread, Fish Filet
+    - New technologies that unlock supply chains: Meat Processing, Bottling, and Baking
   Changes:
     - Rebalance university production to be slightly more expensive than vanilla science packs.
   Bugfixes:
