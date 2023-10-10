@@ -10,6 +10,7 @@ Date: 07. 10. 2023
   Changes:
     - Housing tiers (residential, highrise) now have to be researched and don't unlock automatically.
     - Rebalance university production to be slightly more expensive than vanilla science packs.
+    - Rebalanced the currency you get per resource that citizens consume. They now reflect the amount of energy required to produce them.
   Bugfixes:
     - Fix typos in the English localization.
 ---------------------------------------------------------------------------------------------------
