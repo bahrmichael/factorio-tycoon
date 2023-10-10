@@ -2,7 +2,7 @@ local Queue = require "queue"
 SEGMENTS = require("segments")
 CITY = require("city")
 CONSUMPTION = require("consumption")
-TYCOON_STORY = require("tycoon-story")
+-- TYCOON_STORY = require("tycoon-story")
 
 local function getGridSize(grid)
     return #grid
@@ -467,203 +467,40 @@ local function countCitizens(city)
     return total
 end
 
- -- todo: show construction material supply
-script.on_event(defines.events.on_gui_opened, function (gui)
-    if gui.entity ~= nil and gui.entity.name == "tycoon-town-hall" then
-        local player = game.players[gui.player_index]
-        local unit_number = gui.entity.unit_number
-        local city = findCityByTownHallUnitNumber(unit_number)
-        assert(city ~= nil, "Could not find the city for town hall unit number ".. unit_number)
 
-        CONSUMPTION.updateNeeds(city)
-
-        -- todo: we don't need to do this init when we move to the city manager, because the view is created/destroyed every time
-        local cityGui = player.gui.relative["city_overview_" .. unit_number]
-        if cityGui == nil then
-            local anchor = {gui = defines.relative_gui_type.container_gui, name = "tycoon-town-hall", position = defines.relative_gui_position.right}
-            cityGui = player.gui.relative.add{type = "frame", anchor = anchor, caption = {"", {"tycoon-gui-city-overview"}}, direction = "vertical", name = "city_overview_" .. unit_number}
-            cityGui.add{type = "label", caption = {"", {"tycoon-gui-update-info"}}}
-
-            local stats = cityGui.add{type = "frame", direction = "vertical", caption = {"", {"tycoon-gui-stats"}}, name = "city_stats"}
-            stats.add{type = "label", caption = {"", {"tycoon-gui-citizens"}, ": ",  0}, name = "citizen_count"}
-            stats.add{type = "label", caption = {"", {"tycoon-gui-construction-sites"}, ": ",  0, "/", 0}, name = "construction_sites_count"}
-
-            local basicNeeds = cityGui.add{type = "frame", direction = "vertical", caption = {"", {"tycoon-gui-basic-needs"}}, name = "basic_needs"}
-            basicNeeds.add{type = "label", caption = {"", {"tycoon-gui-consumption-cycle-1"}}}
-            basicNeeds.add{type = "label", caption = {"", {"tycoon-gui-consumption-cycle-2"}}}
-            basicNeeds.add{type = "label", caption = {"", {"tycoon-gui-consumption-cycle-3"}}}
-        end
-
-        cityGui.city_stats.citizen_count.caption = {"", {"tycoon-gui-citizens"}, ": ",  countCitizens(city)}
-        cityGui.city_stats.construction_sites_count.caption = {"", {"tycoon-gui-construction-sites"}, ": ",  #(city.excavationPits or {}), "/", #city.grid}
-
-        -- if cityGui.city_stats.basic_needs_met ~= nil then
-        --     -- Remove surplus UI from 0.0.14 and before
-        --     cityGui.city_stats.basic_needs_met.destroy()
-        -- end
-
-        local unlockedBasicNeeds = {}
-        local lockedTechs = {}
-        for key, values in pairs(CONSUMPTION.basicNeedIncrements) do
-            if key == "default" then
-                for _, v in ipairs(values) do
-                    table.insert(unlockedBasicNeeds, v)
-                end
-            else
-                local tech = "tycoon-" .. key .. "-housing"
-                if (game.players[1].force.technologies[tech] or {}).researched == true then
-                    for _, v in ipairs(values) do
-                        table.insert(unlockedBasicNeeds, v)
-                    end
-                else
-                    table.insert(lockedTechs, tech)
-                end
-            end
-        end
-
-        local basicNeedsGui = cityGui.basic_needs
-        for _, resource in ipairs(unlockedBasicNeeds) do
-            local amounts = city.stats.basic_needs[resource]
-
-            local itemName = resource
-            if string.find(resource, "tycoon-", 1, true) then
-                itemName = "item-name." .. itemName
-            elseif resource == "water" then
-                -- Vanilla items like water are not in our localization config, and therefore have to be accessed differently
-                itemName = "fluid-name." .. resource
-            end
-
-            local color = "green"
-            if amounts.provided < amounts.required or (amounts.provided == 0 and amounts.required == 0) then
-                color = "red"
-            end
-
-            local gui = basicNeedsGui[resource]
-            if gui == nil then
-                gui = basicNeedsGui.add{type = "flow", direction = "vertical", caption = {"", {itemName}}, name = resource}
-                gui.add{type = "label", name = "supply", caption = {"", {itemName}, ": ", "[color=" .. color .. "]", amounts.provided, "/", amounts.required, "[/color]"}}
-            else
-                gui.supply.caption = {"", {itemName}, ": ", "[color=" .. color .. "]", amounts.provided, "/", amounts.required, "[/color]"}
-            end
-        end
-
-        if cityGui.locked_techs ~= nil then
-            cityGui.locked_techs.destroy()
-        end
-        if #lockedTechs > 0 then
-            local lockedTechsGui = cityGui.add{type = "frame", direction = "vertical", caption = {"", {"tycoon-gui-unresearched-housing-technology"}}, name = "locked_techs"}
-            for _, tech in ipairs(lockedTechs) do
-                lockedTechsGui.add{type = "label", caption = {"", {"technology-name." .. tech}}, name = "locked_techs_" .. tech}
-            end
-        end
+local function getNeeds(city, tier)
+    if tier == "simple" then
+        return {
+            water = city.stats.basic_needs.water,
+            ["tycoon-apple"] = city.stats.basic_needs["tycoon-apple"],
+        }
+    elseif tier == "residential" then
+        return {
+            water = city.stats.basic_needs.water,
+            ["tycoon-apple"] = city.stats.basic_needs["tycoon-apple"],
+            ["tycoon-meat"] = city.stats.basic_needs["tycoon-meat"],
+            ["tycoon-bread"] = city.stats.basic_needs["tycoon-bread"],
+        }
+    elseif tier == "highrise" then
+        return {
+            water = city.stats.basic_needs.water,
+            ["tycoon-apple"] = city.stats.basic_needs["tycoon-apple"],
+            ["tycoon-meat"] = city.stats.basic_needs["tycoon-meat"],
+            ["tycoon-bread"] = city.stats.basic_needs["tycoon-bread"],
+            ["tycoon-fish-filet"] = city.stats.basic_needs["tycoon-fish-filet"],
+            ["tycoon-milk-bottle"] = city.stats.basic_needs["tycoon-milk-bottle"],
+        }
+    else
+        assert(false, "Unknown tier for getNeeds: " .. tier)
     end
-end)
-
-script.on_nth_tick(600, function()
-    for _, city in ipairs(global.tycoon_cities) do
-        if city.special_buildings.town_hall ~= nil and city.special_buildings.town_hall.valid then
-            CONSUMPTION.consumeBasicNeeds(city)
-        end
-    end
-end)
-
-local CITY_GROWTH_TICKS = 60
-
-local function canBuildSimpleHouse(city)
-    local simpleCount = ((city.buildingCounts or {})["simple"] or 0)
-    -- Todo: come up with a good function that slows down growth if there are too many
-        -- low tier houses.
-    local excavationPitCount = #(city.excavationPits or {})
-    return simpleCount < (#city.grid * 10)
-        and excavationPitCount <= #city.grid
 end
 
-local function canUpgradeToResidential(city)
-    local simpleCount = ((city.buildingCounts or {})["simple"] or 0)
-    if simpleCount < 20 then
-        return false
-    end
-
-    local residentialCount = ((city.buildingCounts or {})["residential"] or 0)
-    if simpleCount < residentialCount * 5 then
-        -- There should be 5 simple buildings for every residential building
-        return false
-    end
-
-    local needsMet = CONSUMPTION.areBasicNeedsMet(city, {
-        -- These are the requirements from the previous tier + the current tier
-        -- Citizens only want to upgrade if they see that they can get new stuff
-        water = city.stats.basic_needs.water,
-        ["tycoon-apple"] = city.stats.basic_needs["tycoon-apple"],
-        ["tycoon-meat"] = city.stats.basic_needs["tycoon-meat"],
-        ["tycoon-bread"] = city.stats.basic_needs["tycoon-bread"],
-    })
-    if not needsMet then
-        return false
-    end
-
-    local gridSize = #city.grid
-    local residentialPercentage = math.ceil(gridSize * 0.1)
-    local residentialPercentageCount = residentialPercentage * residentialPercentage
-    return residentialCount < residentialPercentageCount
-end
-
-local function canUpgradeToHighrise(city)
-    local residentialCount = ((city.buildingCounts or {})["residential"] or 0)
-    if residentialCount < 20 then
-        return false
-    end
-
-    -- highrise should not cover more than 50% of the houses
-    -- ideally only an inner circle
-    local highriseCount = ((city.buildingCounts or {})["highrise"] or 0)
-    if residentialCount < highriseCount * 5 then
-        -- There should be 5 residential buildings for every highrise building
-        return false
-    end
-
-    local needsMet = CONSUMPTION.areBasicNeedsMet(city, {
-        -- These are the requirements from the previous tier + the current tier
-        -- Citizens only want to upgrade if they see that they can get new stuff
-        water = city.stats.basic_needs.water,
-        ["tycoon-apple"] = city.stats.basic_needs["tycoon-apple"],
-        ["tycoon-meat"] = city.stats.basic_needs["tycoon-meat"],
-        ["tycoon-bread"] = city.stats.basic_needs["tycoon-bread"],
-        ["tycoon-fish-filet"] = city.stats.basic_needs["tycoon-fish-filet"],
-        ["tycoon-milk-bottle"] = city.stats.basic_needs["tycoon-milk-bottle"],
-    })
-    if not needsMet then
-        return false
-    end
-
-    local gridSize = #city.grid
-    local highRisePercentage = math.ceil(gridSize * 0.01)
-    local highRisePercentageCount = highRisePercentage * highRisePercentage
-    return highriseCount < highRisePercentageCount
-end
-
-local function newCityGrowth(city)
-    assert(city.grid ~= nil and #city.grid > 1, "Expected grid to be initialized and larger than 1x1.")
-
-    -- Attempt to complete constructions first
-    local completedConstructionBuildingType = CITY.completeConstruction(city)
-    if completedConstructionBuildingType ~= nil then
-        if completedConstructionBuildingType == "simple" then
-            growCitizenCount(city, citizenCounts["simple"], "simple")
-        elseif completedConstructionBuildingType == "residential" then
-            growCitizenCount(city, citizenCounts["residential"], "residential")
-        elseif completedConstructionBuildingType == "highrise" then
-            growCitizenCount(city, citizenCounts["highrise"], "highrise")
-        end
-
-        return
-    end
-
+local function getBuildables(city, stores)
     -- Check if resources are available. Without resources no growth is possible.
-    local hardwareStores = listSpecialCityBuildings(city, "tycoon-hardware-store")
+    local hardwareStores = stores or listSpecialCityBuildings(city, "tycoon-hardware-store")
     if #hardwareStores == 0 then
         -- If there are no hardware stores, then no construction resources are available.
-        return
+        return {}
     end
 
     -- This array is ordered from most expensive to cheapest, so that
@@ -718,18 +555,229 @@ local function newCityGrowth(city)
         end
 
         if not anyResourceMissing then
-            table.insert(buildables, {
-                key = key,
-                resources = resources,
-            })
+            buildables[key] = resources
         end
     end
 
-    -- todo: record if construction material needs are met
+    return buildables
+end
 
-    for _, buildable in ipairs(buildables) do
+ -- todo: show construction material supply
+script.on_event(defines.events.on_gui_opened, function (gui)
+    if gui.entity ~= nil and gui.entity.name == "tycoon-town-hall" then
+        local player = game.players[gui.player_index]
+        local unit_number = gui.entity.unit_number
+        local city = findCityByTownHallUnitNumber(unit_number)
+        assert(city ~= nil, "Could not find the city for town hall unit number ".. unit_number)
+
+        CONSUMPTION.updateNeeds(city)
+
+        -- todo: we don't need to do this init when we move to the city manager, because the view is created/destroyed every time
+        local cityGui = player.gui.relative["city_overview_" .. unit_number]
+        if cityGui == nil then
+            local anchor = {gui = defines.relative_gui_type.container_gui, name = "tycoon-town-hall", position = defines.relative_gui_position.right}
+            cityGui = player.gui.relative.add{type = "frame", anchor = anchor, caption = {"", {"tycoon-gui-city-overview"}}, direction = "vertical", name = "city_overview_" .. unit_number}
+            cityGui.add{type = "label", caption = {"", {"tycoon-gui-update-info"}}}
+
+            local stats = cityGui.add{type = "frame", direction = "vertical", caption = {"", {"tycoon-gui-stats"}}, name = "city_stats"}
+            stats.add{type = "label", caption = {"", {"tycoon-gui-citizens"}, ": ",  0}, name = "citizen_count"}
+
+            local basicNeeds = cityGui.add{type = "frame", direction = "vertical", caption = {"", {"tycoon-gui-basic-needs"}}, name = "basic_needs"}
+            basicNeeds.add{type = "label", caption = {"", {"tycoon-gui-consumption-cycle-1"}}}
+            basicNeeds.add{type = "label", caption = {"", {"tycoon-gui-consumption-cycle-2"}}}
+            basicNeeds.add{type = "label", caption = {"", {"tycoon-gui-consumption-cycle-3"}}}
+        end
+
+        cityGui.city_stats.citizen_count.caption = {"", {"tycoon-gui-citizens"}, ": ",  countCitizens(city)}
+
+        local unlockedBasicNeeds = {}
+        for key, values in pairs(CONSUMPTION.basicNeedIncrements) do
+            if key == "default" or (game.players[1].force.technologies[ "tycoon-" .. key .. "-housing"] or {}).researched == true then
+                for _, v in ipairs(values) do
+                    table.insert(unlockedBasicNeeds, v)
+                end
+            end
+        end
+
+        local basicNeedsGui = cityGui.basic_needs
+        for _, resource in ipairs(unlockedBasicNeeds) do
+            local amounts = city.stats.basic_needs[resource]
+
+            local itemName = resource
+            if string.find(resource, "tycoon-", 1, true) then
+                itemName = "item-name." .. itemName
+            elseif resource == "water" then
+                -- Vanilla items like water are not in our localization config, and therefore have to be accessed differently
+                itemName = "fluid-name." .. resource
+            end
+
+            local color = "green"
+            if amounts.provided < amounts.required or (amounts.provided == 0 and amounts.required == 0) then
+                color = "red"
+            end
+
+            local gui = basicNeedsGui[resource]
+            if gui == nil then
+                gui = basicNeedsGui.add{type = "flow", direction = "vertical", caption = {"", {itemName}}, name = resource}
+                gui.add{type = "label", name = "supply", caption = {"", {itemName}, ": ", "[color=" .. color .. "]", amounts.provided, "/", amounts.required, "[/color]"}}
+            else
+                gui.supply.caption = {"", {itemName}, ": ", "[color=" .. color .. "]", amounts.provided, "/", amounts.required, "[/color]"}
+            end
+        end
+
+        if cityGui.upgrades ~= nil then
+            cityGui.upgrades.destroy()
+        end
+
+        local upgradesGui = cityGui.add{type = "frame", direction = "vertical", caption = {"", {"tycoon-gui-upgrades"}}, name = "upgrades"}
+        local upgradesGuiTable = upgradesGui.add{type = "table", column_count = 3}
+        local constructionSiteColoring = "green"
+        if #(city.excavationPits or {}) >= #city.grid then
+            constructionSiteColoring = "red"
+        end
+        upgradesGuiTable.add{type = "label", caption = {"", {"tycoon-gui-construction-sites"}}}
+        upgradesGuiTable.add{type = "label", caption = {"", "[color=" .. constructionSiteColoring .. "]",  #(city.excavationPits or {}), "/", #city.grid, "[/color]"}}
+        upgradesGuiTable.add{type = "label", caption = ""}
+
+        local housingTiers = {"residential", "highrise"}
+        local buildables = getBuildables(city)
+        for _, tier in ipairs(housingTiers) do
+            if (game.players[1].force.technologies["tycoon-" .. tier .. "-housing"] or {}).researched == true then
+                local text, coloring
+                if not CONSUMPTION.areBasicNeedsMet(city, getNeeds(tier)) then
+                    text = {"tycoon-gui-growth-no-basic-needs"}
+                    coloring = "red"
+                elseif buildables[tier] == nil then
+                    text = {"tycoon-gui-growth-no-construction-material"}
+                    coloring = "red"
+                else
+                    coloring = "green"
+                    text = {"tycoon-gui-growing"}
+                end
+
+                upgradesGuiTable.add{type = "label", caption = {"", {"technology-name.tycoon-" .. tier .. "-housing"}, ": "}}
+                upgradesGuiTable.add{type = "label", caption = {"", "[color=" .. coloring .. "]", text, "[/color]"}}
+                upgradesGuiTable.add{type = "label", caption = ""}
+            else
+                upgradesGuiTable.add{type = "label", caption = {"", {"technology-name.tycoon-" .. tier .. "-housing"}, ": "}}
+                upgradesGuiTable.add{type = "label", caption = {"", "[color=red]", {"tycoon-gui-not-researched"}, "[/color]"}}
+                upgradesGuiTable.add{type = "button", caption = "Open Technology", name = "tycoon_open_tech:" .. tier .. "-housing"}
+            end
+        end
+    end
+end)
+
+
+script.on_event(defines.events.on_gui_click, function(event)
+    local player = game.players[event.player_index]
+    local element = event.element
+
+    if string.find(element.name, "tycoon_open_tech:", 1, true) then
+        local delimiter = ":"
+        local parts = {} -- To store the split parts
+        for substring in element.name:gmatch("[^" .. delimiter .. "]+") do
+            table.insert(parts, substring)
+        end
+        player.open_technology_gui("tycoon-" .. parts[2])
+    end
+end)
+
+script.on_nth_tick(600, function()
+    for _, city in ipairs(global.tycoon_cities) do
+        if city.special_buildings.town_hall ~= nil and city.special_buildings.town_hall.valid then
+            CONSUMPTION.consumeBasicNeeds(city)
+        end
+    end
+end)
+
+local CITY_GROWTH_TICKS = 60
+
+local function canBuildSimpleHouse(city)
+    local simpleCount = ((city.buildingCounts or {})["simple"] or 0)
+    -- Todo: come up with a good function that slows down growth if there are too many
+        -- low tier houses.
+    local excavationPitCount = #(city.excavationPits or {})
+    return simpleCount < (#city.grid * 10)
+        and excavationPitCount <= #city.grid
+end
+
+local function canUpgradeToResidential(city)
+    local simpleCount = ((city.buildingCounts or {})["simple"] or 0)
+    if simpleCount < 20 then
+        return false
+    end
+
+    local residentialCount = ((city.buildingCounts or {})["residential"] or 0)
+    if simpleCount < residentialCount * 5 then
+        -- There should be 5 simple buildings for every residential building
+        return false
+    end
+
+    local needsMet = CONSUMPTION.areBasicNeedsMet(city, getNeeds(city, "residential"))
+    if not needsMet then
+        return false
+    end
+
+    local gridSize = #city.grid
+    local residentialPercentage = math.ceil(gridSize * 0.1)
+    local residentialPercentageCount = residentialPercentage * residentialPercentage
+    return residentialCount < residentialPercentageCount
+end
+
+local function canUpgradeToHighrise(city)
+    local residentialCount = ((city.buildingCounts or {})["residential"] or 0)
+    if residentialCount < 20 then
+        return false
+    end
+
+    -- highrise should not cover more than 50% of the houses
+    -- ideally only an inner circle
+    local highriseCount = ((city.buildingCounts or {})["highrise"] or 0)
+    if residentialCount < highriseCount * 5 then
+        -- There should be 5 residential buildings for every highrise building
+        return false
+    end
+
+    local needsMet = CONSUMPTION.areBasicNeedsMet(city, getNeeds(city, "highrise"))
+    if not needsMet then
+        return false
+    end
+
+    local gridSize = #city.grid
+    local highRisePercentage = math.ceil(gridSize * 0.01)
+    local highRisePercentageCount = highRisePercentage * highRisePercentage
+    return highriseCount < highRisePercentageCount
+end
+
+local function newCityGrowth(city)
+    assert(city.grid ~= nil and #city.grid > 1, "Expected grid to be initialized and larger than 1x1.")
+
+    -- Attempt to complete constructions first
+    local completedConstructionBuildingType = CITY.completeConstruction(city)
+    if completedConstructionBuildingType ~= nil then
+        if completedConstructionBuildingType == "simple" then
+            growCitizenCount(city, citizenCounts["simple"], "simple")
+        elseif completedConstructionBuildingType == "residential" then
+            growCitizenCount(city, citizenCounts["residential"], "residential")
+        elseif completedConstructionBuildingType == "highrise" then
+            growCitizenCount(city, citizenCounts["highrise"], "highrise")
+        end
+
+        return
+    end
+
+    -- Check if resources are available. Without resources no growth is possible.
+    local hardwareStores = listSpecialCityBuildings(city, "tycoon-hardware-store")
+    if #hardwareStores == 0 then
+        -- If there are no hardware stores, then no construction resources are available.
+        return {}
+    end
+
+    local buildables = getBuildables(city, hardwareStores)
+
+    for key, resources in pairs(buildables) do
         local isBuilt
-        if buildable.key == "specialBuildings" and #(city.priority_buildings or {}) > 0 then
+        if key == "specialBuildings" and #(city.priority_buildings or {}) > 0 then
             local prioBuilding = table.remove(city.priority_buildings, 1)
             isBuilt = CITY.startConstruction(city, {
                 buildingType = prioBuilding.name,
@@ -740,17 +788,17 @@ local function newCityGrowth(city)
             if not isBuilt then
                 table.insert(city.priority_buildings, 1, prioBuilding)
             end
-        elseif buildable.key == "highrise" and canUpgradeToHighrise(city) then
+        elseif key == "highrise" and canUpgradeToHighrise(city) then
             isBuilt = CITY.upgradeHouse(city, "highrise")
             if isBuilt then
                 growCitizenCount(city, -1 * citizenCounts["residential"], "residential")
             end
-        elseif buildable.key == "residential" and canUpgradeToResidential(city) then
+        elseif key == "residential" and canUpgradeToResidential(city) then
             isBuilt = CITY.upgradeHouse(city, "residential")
             if isBuilt then
                 growCitizenCount(city, -1 * citizenCounts["simple"], "simple")
             end
-        elseif buildable.key == "simple" and canBuildSimpleHouse(city) then
+        elseif key == "simple" and canBuildSimpleHouse(city) then
             isBuilt = CITY.startConstruction(city, {
                 buildingType = "simple",
                 constructionTimeInTicks = math.random(600, 1200)
@@ -773,7 +821,7 @@ local function newCityGrowth(city)
                 end
             end
         else
-            for _, item in ipairs(buildable.resources) do
+            for _, item in ipairs(resources) do
                 CONSUMPTION.consumeItem(item, hardwareStores, city, true)
             end
             break
@@ -874,7 +922,7 @@ script.on_init(function()
     --     }
     -- end
 
-   TYCOON_STORY[1]()
+--    TYCOON_STORY[1]()
 
     
         -- /c game. player. insert{ name="stone", count=1000 }
