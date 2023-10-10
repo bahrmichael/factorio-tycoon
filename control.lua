@@ -373,7 +373,6 @@ local function updateProvidedAmounts(city)
     if #waterTowers >= 1 then
         for _, consumption in ipairs({city.basicNeeds.waterTower}) do
             local totalAvailable = 0
-            local waterTowersWithSupply = {}
             for _, waterTower in ipairs(waterTowers) do
                 local availableCount = waterTower.get_fluid_count(consumption.resource)
                 totalAvailable = totalAvailable + availableCount
@@ -386,6 +385,15 @@ local function updateProvidedAmounts(city)
         end
     end
 end
+
+-- See gDocs for prices (round up). This reflects the kW amount per unit produced.
+local resourcePrices = {
+    ["tycoon-apple"] = 1,
+    ["tycoon-meat"] = 2,
+    ["tycoon-milk-bottle"] = 5,
+    ["tycoon-bread"] = 4,
+    ["tycoon-fish-filet"] = 4,
+}
 
 local function cityBasicConsumption(city)
 
@@ -421,7 +429,7 @@ local function cityBasicConsumption(city)
 
             if #treasuries > 0 then
                 local randomTreasury = treasuries[math.random(#treasuries)]
-                local currencyPerUnit = 1
+                local currencyPerUnit = resourcePrices[consumption.resource] or 1
                 local reward = math.ceil(currencyPerUnit * consumedAmount)
                 if reward > 0 then
                     randomTreasury.insert{name = "tycoon-currency", count = reward}
@@ -453,15 +461,7 @@ local function cityBasicConsumption(city)
                 countNeedsMet = countNeedsMet + 1
             end
 
-            -- Let citizens pay for each piece of water
-            if #treasuries > 0 then
-                local randomTreasury = treasuries[math.random(#treasuries)]
-                local currencyPerUnit = 0.1
-                local reward = math.ceil(currencyPerUnit * requiredAmount)
-                if reward > 0 then
-                    randomTreasury.insert{name = "tycoon-currency", count = reward}
-                end
-            end
+            -- Water is a human right and should be free
         end
     end
     local needsCount = (#city.basicNeeds.market + #{city.basicNeeds.waterTower})
@@ -473,6 +473,8 @@ local function getItemForPrimaryProduction(name)
         return "tycoon-apple"
     elseif name == "tycoon-wheat-farm" then
         return "tycoon-wheat"
+    elseif name == "tycoon-fishery" then
+        return "raw-fish"
     else
         return "Unknown"
     end
@@ -483,6 +485,8 @@ local function localizePrimaryProductionName(name)
         return "Apple Farm"
     elseif name == "tycoon-wheat-farm" then
         return "Wheat Farm"
+    elseif name == "tycoon-fishery" then
+        return "Fishery"
     else
         return "Primary Production"
     end
@@ -632,10 +636,44 @@ script.on_event(defines.events.on_chunk_charted, function (chunk)
     end
     if math.random() < 0.25 then
         local industryName = randomPrimaryIndustry()
-        local position = game.surfaces[1].find_non_colliding_position_in_box(industryName, chunk.area, 2, true)
-        local nearbySameProduction = game.surfaces[1].find_entities_filtered{position=position, radius=1000, name=industryName, limit=1}
-        if #nearbySameProduction == 0 then
-            placePrimaryIndustryAtPosition(position, industryName)
+        local position
+        if industryName == "tycoon-fishery" then
+            -- To make it look prettier, we place fisheries near water
+            local waterTiles = game.surfaces[1].find_tiles_filtered{
+                area = chunk.area,
+                name = {"water", "deepwater"},
+                limit = 20
+            }
+            local hasWater = #waterTiles >= 20
+            if not hasWater then
+                return
+            end
+            local nonWaterTiles = game.surfaces[1].find_tiles_filtered{
+                area = chunk.area,
+                name = {"water", "deepwater"},
+                invert = true,
+                limit = 1
+            }
+            local hasLand = #nonWaterTiles > 0
+            if not hasLand then
+                return
+            end
+
+            position = game.surfaces[1].find_non_colliding_position(industryName, {x = chunk.position.x * 32, y = chunk.position.y * 32}, 64, 1, true)
+        else
+            position = game.surfaces[1].find_non_colliding_position_in_box(industryName, chunk.area, 2, true)
+        end
+        if position ~= nil then
+            local minDistance = 500
+            if industryName == "tycoon-fishery" then
+                -- map_gen_settings.water is a percentage value. As the amount of water on the map decreases, we want to spawn more fisheries per given area.
+                -- Don't go below 50 though
+                minDistance = math.max(200 * game.surfaces[1].map_gen_settings.water, 50)
+            end
+            local nearbySameProduction = game.surfaces[1].find_entities_filtered{position=position, radius=minDistance, name=industryName, limit=1}
+            if #nearbySameProduction == 0 then
+                placePrimaryIndustryAtPosition(position, industryName)
+            end
         end
     end
 end)
@@ -1055,7 +1093,7 @@ script.on_init(function()
     initializeCity(global.tycoon_cities[1])
     updateNeeds(global.tycoon_cities[1])
 
-    global.tycoon_primary_industries = {"tycoon-apple-farm", "tycoon-wheat-farm"}
+    global.tycoon_primary_industries = {"tycoon-apple-farm", "tycoon-wheat-farm", "tycoon-fishery"}
 
     -- global.tycoon_cities = {}
     -- for i = 1, 8, 1 do

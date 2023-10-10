@@ -3,13 +3,14 @@ Version: unreleased
 Date: 07. 10. 2023
   Major Features:
     - Rebalancing of all Tycoon supply chains.
-    - New primary industries: Fishery
+    - New primary industries: Fishery (spawns next to bodies of water)
     - New items: Milk (liquid), Bottle, Used Bottle, Flour, Dough, Bread, Fish Filet
     - New technologies that unlock supply chains: Meat Processing, Bottling, and Baking
     - New technologies that unlock housing tiers: Residential Housing, and Highrise Housing
   Changes:
     - Housing tiers (residential, highrise) now have to be researched and don't unlock automatically.
     - Rebalance university production to be slightly more expensive than vanilla science packs.
+    - Rebalanced the currency you get per resource that citizens consume. They now reflect the amount of energy required to produce them.
   Bugfixes:
     - Fix typos in the English localization.
 ---------------------------------------------------------------------------------------------------
