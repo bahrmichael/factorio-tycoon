@@ -756,7 +756,6 @@ script.on_event(defines.events.on_gui_opened, function (gui)
 
         CONSUMPTION.updateNeeds(city)
 
-        -- todo: we don't need to do this init when we move to the city manager, because the view is created/destroyed every time
         local guiKey = "city_overview_" .. city.id
         local cityGui = player.gui.relative[guiKey]
         if cityGui ~= nil then
