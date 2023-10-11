@@ -28,13 +28,13 @@ data:extend{
         type = "recipe",
         name = "tycoon-dough-to-bread",
         category = "smelting",
-        energy_required = 10,
+        energy_required = 1,
         enabled = false,
         ingredients = {
-            { type = "item", name = "tycoon-dough", amount = 10 },
+            { type = "item", name = "tycoon-dough", amount = 1 },
         },
         result = "tycoon-bread",
-        result_count = 10,
+        result_count = 1,
     },
     {
         type = "recipe",
