@@ -618,12 +618,17 @@ script.on_event(defines.events.on_gui_opened, function (gui)
                 color = "red"
             end
 
+            local captionElements = {"", {itemName}, ": ", "[color=" .. color .. "]", amounts.provided, "/", amounts.required, "[/color]"}
+            if resource == "water" and (amounts.provided == 0 or (amounts.required / amounts.provided) > 0.75) then
+                table.insert(captionElements, " ")
+                table.insert(captionElements, {"tycoon-gui-add-more-water-towers"})
+            end
             local gui = basicNeedsGui[resource]
             if gui == nil then
                 gui = basicNeedsGui.add{type = "flow", direction = "vertical", caption = {"", {itemName}}, name = resource}
-                gui.add{type = "label", name = "supply", caption = {"", {itemName}, ": ", "[color=" .. color .. "]", amounts.provided, "/", amounts.required, "[/color]"}}
+                gui.add{type = "label", name = "supply", caption = captionElements}
             else
-                gui.supply.caption = {"", {itemName}, ": ", "[color=" .. color .. "]", amounts.provided, "/", amounts.required, "[/color]"}
+                gui.supply.caption = captionElements
             end
         end
 
