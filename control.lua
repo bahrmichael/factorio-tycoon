@@ -606,46 +606,39 @@ local constructionIncrements = {
     highrise = {"pump", "concrete"}
 }
 
- -- todo: show construction material supply
-script.on_event(defines.events.on_gui_opened, function (gui)
-    if gui.entity ~= nil and gui.entity.name == "tycoon-town-hall" then
-        local player = game.players[gui.player_index]
-        local unit_number = gui.entity.unit_number
-        local city = findCityByTownHallUnitNumber(unit_number)
-        assert(city ~= nil, "Could not find the city for town hall unit number ".. unit_number)
+local function addBasicNeedsGui(city, cityGui)
 
-        CONSUMPTION.updateNeeds(city)
-
-        -- todo: we don't need to do this init when we move to the city manager, because the view is created/destroyed every time
-        local cityGui = player.gui.relative["city_overview_" .. unit_number]
-        if cityGui ~= nil then
-            -- clear any previous gui so that we can fully reconstruct it
-            cityGui.destroy()
+    local unlockedBasicNeeds = {}
+    for key, values in pairs(CONSUMPTION.basicNeedIncrements) do
+        if key == "default" or (game.players[1].force.technologies[ "tycoon-" .. key .. "-housing"] or {}).researched == true then
+            for _, v in ipairs(values) do
+                table.insert(unlockedBasicNeeds, v)
+            end
         end
+    end
 
-        local anchor = {gui = defines.relative_gui_type.container_gui, name = "tycoon-town-hall", position = defines.relative_gui_position.right}
-        cityGui = player.gui.relative.add{type = "frame", anchor = anchor, caption = {"", {"tycoon-gui-city-overview"}}, direction = "vertical", name = "city_overview_" .. city.id}
-        cityGui.add{type = "label", caption = {"", {"tycoon-gui-update-info"}}}
+    local basicNeedsGui = cityGui.add{type = "frame", direction = "vertical", caption = {"", {"tycoon-gui-basic-needs"}}, name = "basic_needs"}
+    basicNeedsGui.add{type = "label", caption = {"", {"tycoon-gui-consumption-cycle-1"}}}
+    basicNeedsGui.add{type = "label", caption = {"", {"tycoon-gui-consumption-cycle-2"}}}
+    basicNeedsGui.add{type = "label", caption = {"", {"tycoon-gui-consumption-cycle-3"}}}
+    for _, resource in ipairs(unlockedBasicNeeds) do
 
-        local stats = cityGui.add{type = "frame", direction = "vertical", caption = {"", {"tycoon-gui-stats"}}, name = "city_stats"}
-        stats.add{type = "label", caption = {"", {"tycoon-gui-citizens"}, ": ",  countCitizens(city)}}
-
-        local basicNeeds = cityGui.add{type = "frame", direction = "vertical", caption = {"", {"tycoon-gui-basic-needs"}}, name = "basic_needs"}
-        basicNeeds.add{type = "label", caption = {"", {"tycoon-gui-consumption-cycle-1"}}}
-        basicNeeds.add{type = "label", caption = {"", {"tycoon-gui-consumption-cycle-2"}}}
-        basicNeeds.add{type = "label", caption = {"", {"tycoon-gui-consumption-cycle-3"}}}
-
-        local unlockedBasicNeeds = {}
-        for key, values in pairs(CONSUMPTION.basicNeedIncrements) do
-            if key == "default" or (game.players[1].force.technologies[ "tycoon-" .. key .. "-housing"] or {}).researched == true then
-                for _, v in ipairs(values) do
-                    table.insert(unlockedBasicNeeds, v)
-                end
+        local missingSupplier = nil
+        if resource == "water" then
+            local waterTowers = listSpecialCityBuildings(city, "tycoon-water-tower")
+            if #waterTowers == 0 then
+                missingSupplier = "tycoon-water-tower"
+            end
+        else
+            local markets = listSpecialCityBuildings(city, "tycoon-market")
+            if #markets == 0 then
+                missingSupplier = "tycoon-market"
             end
         end
 
-        local basicNeedsGui = cityGui.basic_needs
-        for _, resource in ipairs(unlockedBasicNeeds) do
+        if missingSupplier ~= nil then
+            basicNeedsGui.add{type = "label", caption = {"", "[color=red]", {"tycoon-gui-missing", {"entity-name." .. missingSupplier}}, "[/color]"}}
+        else
             local amounts = city.stats.basic_needs[resource]
 
             local itemName = resource
@@ -666,69 +659,68 @@ script.on_event(defines.events.on_gui_opened, function (gui)
                 table.insert(captionElements, " ")
                 table.insert(captionElements, {"tycoon-gui-add-more-water-towers"})
             end
-            local resourceBasicNeedsGui = basicNeedsGui[resource]
-            if resourceBasicNeedsGui == nil then
-                resourceBasicNeedsGui = basicNeedsGui.add{type = "flow", direction = "vertical", caption = {"", {itemName}}, name = resource}
-                resourceBasicNeedsGui.add{type = "label", name = "supply", caption = captionElements}
+            basicNeedsGui.add{type = "label", caption = captionElements}
+        end
+    end
+end
+
+local function addConstructionGui(city, cityGui)
+    local unlockedConstructionNeeds = {}
+    for key, values in pairs(constructionIncrements) do
+        if key == "default" or (game.players[1].force.technologies[ "tycoon-" .. key .. "-housing"] or {}).researched == true then
+            for _, v in ipairs(values) do
+                table.insert(unlockedConstructionNeeds, v)
+            end
+        end
+    end
+
+    local constructionGui = cityGui.add{type = "frame", direction = "vertical", caption = {"", {"tycoon-gui-construction"}}}
+    local constructionGuiTable = constructionGui.add{type = "table", column_count = 3}
+    local constructionSiteColoring = "green"
+    if #(city.excavationPits or {}) >= #city.grid then
+        constructionSiteColoring = "red"
+    end
+    constructionGuiTable.add{type = "label", caption = {"", {"tycoon-gui-construction-sites"}, ":"}}
+    constructionGuiTable.add{type = "label", caption = {"", "[color=" .. constructionSiteColoring .. "]",  #(city.excavationPits or {}), "/", #city.grid, "[/color]"}}
+    constructionGuiTable.add{type = "label", caption = ""}
+
+    local housingTiers = {"simple", "residential", "highrise"}
+    local buildables = getBuildables(city)
+    for _, tier in ipairs(housingTiers) do
+        if tier == "simple" or (game.players[1].force.technologies["tycoon-" .. tier .. "-housing"] or {}).researched == true then
+            local text, coloring
+            local tooManyConstructionSites = #(city.excavationPits or {}) >= #city.grid
+            if not CONSUMPTION.areBasicNeedsMet(city, getNeeds(city, tier)) then
+                text = {"tycoon-gui-growth-no-basic-needs"}
+                coloring = "red"
+            elseif buildables[tier] == nil then
+                text = {"tycoon-gui-growth-no-construction-material"}
+                coloring = "red"
+            elseif tooManyConstructionSites then
+                text = {"tycoon-gui-growth-pending-construction-sites"}
+                coloring = "orange"
             else
-                resourceBasicNeedsGui.supply.caption = captionElements
+                coloring = "green"
+                text = {"tycoon-gui-growing"}
             end
+
+            constructionGuiTable.add{type = "label", caption = {"", {"technology-name.tycoon-" .. tier .. "-housing"}, ": "}}
+            constructionGuiTable.add{type = "label", caption = {"", "[color=" .. coloring .. "]", text, "[/color]"}}
+            constructionGuiTable.add{type = "label", caption = ""}
+        else
+            constructionGuiTable.add{type = "label", caption = {"", {"technology-name.tycoon-" .. tier .. "-housing"}, ": "}}
+            constructionGuiTable.add{type = "label", caption = {"", "[color=red]", {"tycoon-gui-not-researched"}, "[/color]"}}
+            constructionGuiTable.add{type = "button", caption = "Open Technology", name = "tycoon_open_tech:" .. tier .. "-housing"}
         end
+    end
 
-        local unlockedConstructionNeeds = {}
-        for key, values in pairs(constructionIncrements) do
-            if key == "default" or (game.players[1].force.technologies[ "tycoon-" .. key .. "-housing"] or {}).researched == true then
-                for _, v in ipairs(values) do
-                    table.insert(unlockedConstructionNeeds, v)
-                end
-            end
-        end
-
-        local constructionGui = cityGui.add{type = "frame", direction = "vertical", caption = {"", {"tycoon-gui-construction"}}}
-        local upgradesGuiTable = constructionGui.add{type = "table", column_count = 3}
-        local constructionSiteColoring = "green"
-        if #(city.excavationPits or {}) >= #city.grid then
-            constructionSiteColoring = "red"
-        end
-        upgradesGuiTable.add{type = "label", caption = {"", {"tycoon-gui-construction-sites"}}}
-        upgradesGuiTable.add{type = "label", caption = {"", "[color=" .. constructionSiteColoring .. "]",  #(city.excavationPits or {}), "/", #city.grid, "[/color]"}}
-        upgradesGuiTable.add{type = "label", caption = ""}
-
-        local housingTiers = {"simple", "residential", "highrise"}
-        local buildables = getBuildables(city)
-        for _, tier in ipairs(housingTiers) do
-            if tier == "simple" or (game.players[1].force.technologies["tycoon-" .. tier .. "-housing"] or {}).researched == true then
-                local text, coloring
-                local tooManyConstructionSites = #(city.excavationPits or {}) >= #city.grid
-                if not CONSUMPTION.areBasicNeedsMet(city, getNeeds(city, tier)) then
-                    text = {"tycoon-gui-growth-no-basic-needs"}
-                    coloring = "red"
-                elseif buildables[tier] == nil then
-                    text = {"tycoon-gui-growth-no-construction-material"}
-                    coloring = "red"
-                elseif tooManyConstructionSites then
-                    text = {"tycoon-gui-growth-pending-construction-sites"}
-                    coloring = "orange"
-                else
-                    coloring = "green"
-                    text = {"tycoon-gui-growing"}
-                end
-
-                upgradesGuiTable.add{type = "label", caption = {"", {"technology-name.tycoon-" .. tier .. "-housing"}, ": "}}
-                upgradesGuiTable.add{type = "label", caption = {"", "[color=" .. coloring .. "]", text, "[/color]"}}
-                upgradesGuiTable.add{type = "label", caption = ""}
-            else
-                upgradesGuiTable.add{type = "label", caption = {"", {"technology-name.tycoon-" .. tier .. "-housing"}, ": "}}
-                upgradesGuiTable.add{type = "label", caption = {"", "[color=red]", {"tycoon-gui-not-researched"}, "[/color]"}}
-                upgradesGuiTable.add{type = "button", caption = "Open Technology", name = "tycoon_open_tech:" .. tier .. "-housing"}
-            end
-        end
-
-        constructionGui.add{type = "line"}
-
-        local hardwareStores = listSpecialCityBuildings(city, "tycoon-hardware-store")
-
-        local constructionNeedsGui = constructionGui.add{type = "flow", direction = "vertical"}
+    constructionGui.add{type = "line"}
+    
+    local constructionNeedsGui = constructionGui.add{type = "flow", direction = "vertical"}
+    local hardwareStores = listSpecialCityBuildings(city, "tycoon-hardware-store")
+    if #hardwareStores == 0 then
+        constructionNeedsGui.add{type = "label", caption = {"", "[color=red]", {"tycoon-gui-missing", {"entity-name.tycoon-hardware-store"}}, "[/color]"}}
+    else
         for _, resource in ipairs(unlockedConstructionNeeds) do
 
             local totalResourceCount = 0
@@ -750,6 +742,36 @@ script.on_event(defines.events.on_gui_opened, function (gui)
             local captionElements = {"", {itemName}, ": ", "[color=" .. color .. "]", amounts.provided, "[/color]"}
             constructionNeedsGui.add{type = "label", caption = captionElements}
         end
+    end
+
+end
+
+ -- todo: show construction material supply
+script.on_event(defines.events.on_gui_opened, function (gui)
+    if gui.entity ~= nil and gui.entity.name == "tycoon-town-hall" then
+        local player = game.players[gui.player_index]
+        local unit_number = gui.entity.unit_number
+        local city = findCityByTownHallUnitNumber(unit_number)
+        assert(city ~= nil, "Could not find the city for town hall unit number ".. unit_number)
+
+        CONSUMPTION.updateNeeds(city)
+
+        local guiKey = "city_overview_" .. city.id
+        local cityGui = player.gui.relative[guiKey]
+        if cityGui ~= nil then
+            -- clear any previous gui so that we can fully reconstruct it
+            cityGui.destroy()
+        end
+
+        local anchor = {gui = defines.relative_gui_type.container_gui, name = "tycoon-town-hall", position = defines.relative_gui_position.right}
+        cityGui = player.gui.relative.add{type = "frame", anchor = anchor, caption = {"", {"tycoon-gui-city-overview"}}, direction = "vertical", name = guiKey}
+        cityGui.add{type = "label", caption = {"", {"tycoon-gui-update-info"}}}
+
+        local stats = cityGui.add{type = "frame", direction = "vertical", caption = {"", {"tycoon-gui-stats"}}, name = "city_stats"}
+        stats.add{type = "label", caption = {"", {"tycoon-gui-citizens"}, ": ",  countCitizens(city)}}
+
+        addBasicNeedsGui(city, cityGui)
+        addConstructionGui(city, cityGui)
     end
 end)
 

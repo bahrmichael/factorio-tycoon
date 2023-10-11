@@ -4,7 +4,7 @@ data:extend{
         name = "tycoon-wheat-to-grain",
         category = "crafting",
         energy_required = 15,
-        enabled = true,
+        enabled = false,
         ingredients = {
             { type = "item", name = "tycoon-wheat", amount = 25 },
         },
