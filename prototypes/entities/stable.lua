@@ -18,7 +18,6 @@ data:extend{
             },
             {
                 production_type = "output",
-                pipe_covers = pipecoverspictures(),
                 base_level = 1,
                 pipe_connections =
                 {

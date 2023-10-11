@@ -13,7 +13,7 @@ data:extend{
                 height = 2,
                 base_level = -1,
                 pipe_connections = {
-                    { type = "input", position = { 7.3, 0 } },
+                    { type = "input", position = { 7.3, 0.4 } },
                 },
             },
             off_when_no_fluid_recipe = false,
