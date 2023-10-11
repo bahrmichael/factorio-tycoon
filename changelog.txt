@@ -8,6 +8,7 @@ Date: 07. 10. 2023
     - New technologies that unlock supply chains: Farming, Husbandry, Meat Processing, Bottling, and Baking
     - New technologies that unlock housing tiers: Residential Housing, and Highrise Housing
   Changes:
+    - Increasded currency value to reduce the amount of inserters needed: Each currency item is now worth 20x as much as it was before, but you get fewer of them.
     - Housing tiers (residential, highrise) now have to be researched and don't unlock automatically.
     - Rebalance university production to be slightly more expensive than vanilla science packs.
     - Rebalanced the currency you get per resource that citizens consume. They now reflect the amount of energy required to produce them.
