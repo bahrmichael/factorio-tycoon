@@ -412,27 +412,25 @@ script.on_event(defines.events.on_chunk_charted, function (chunk)
         local position
         if industryName == "tycoon-fishery" then
             -- To make it look prettier, we place fisheries near water
-            local waterTiles = game.surfaces[1].find_tiles_filtered{
+            local tiles = game.surfaces[1].find_tiles_filtered{
                 area = chunk.area,
-                name = {"water", "deepwater"},
-                limit = 20
             }
-            local hasWater = #waterTiles >= 20
-            if not hasWater then
-                return
+            local countWater = 0
+            local aWaterTile
+            for _, t in ipairs(tiles) do
+                if t.name == "water" or t.name == "deepwater" then
+                    countWater = countWater + 1
+                    if aWaterTile == nil then
+                        aWaterTile = t
+                    end
+                end
             end
-            local nonWaterTiles = game.surfaces[1].find_tiles_filtered{
-                area = chunk.area,
-                name = {"water", "deepwater"},
-                invert = true,
-                limit = 1
-            }
-            local hasLand = #nonWaterTiles > 0
-            if not hasLand then
+            local hasEnoughWater = (countWater / #tiles) > 0.25
+            if not hasEnoughWater then
                 return
             end
 
-            position = game.surfaces[1].find_non_colliding_position(industryName, {x = chunk.position.x * 32, y = chunk.position.y * 32}, 64, 1, true)
+            position = game.surfaces[1].find_non_colliding_position(industryName, aWaterTile.position, 100, 1, true)
         else
             position = game.surfaces[1].find_non_colliding_position_in_box(industryName, chunk.area, 2, true)
         end
