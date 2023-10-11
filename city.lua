@@ -144,19 +144,25 @@ local function indexOf(array, value)
     return nil
 end
 
-local removableEntities = {
+local defaultRemovableEntities = {
     "rock-",
     "sand-rock-",
     "dead-grey-trunk",
     "tree-"
 }
 
-local function removeColldingEntities(area) 
+--- @param area any
+--- @param ignorables string[] | nil
+local function removeColldingEntities(area, ignorables)
     local printEntities = game.surfaces[1].find_entities_filtered({area=area})
     for _, entity in pairs(printEntities) do
-        for _, removable in pairs(removableEntities) do
+        for _, removable in pairs(defaultRemovableEntities) do
             if entity.valid and string.find(entity.name, removable, 1, true) then
-                entity.destroy()
+                if ignorables ~= nil and #ignorables > 0 and indexOf(ignorables, entity.name) ~= nil then
+                    -- noop, skip ignorables
+                else
+                    entity.destroy()
+                end
             end
         end
     end
@@ -171,17 +177,26 @@ local function hasCliffsOrWater(area)
     return #tiles > 0
 end
 
-local function isAreaFree(area)
+--- @param area any
+--- @param additionalIgnorables string[] | nil
+local function isAreaFree(area, additionalIgnorables)
     -- Water / Cliffs
     if hasCliffsOrWater(area) then
         return false
+    end
+
+    local ignorables = {"rock-huge", "rock-big", "sand-rock-big", "dead-grey-trunk"}
+    if additionalIgnorables ~= nil and #additionalIgnorables >0 then
+        for _, value in ipairs(additionalIgnorables) do
+            table.insert(ignorables, value)
+        end
     end
 
     -- Too many trees / Other entities
     local entities = game.surfaces[1].find_entities_filtered({
         area=area,
         type={"tree"},
-        name={"rock-huge", "rock-big", "sand-rock-big", "dead-grey-trunk"},
+        name=ignorables,
         invert=true,
         limit = 1,
     })
@@ -190,8 +205,9 @@ end
 
 --- @param city City
 --- @param coordinates Coordinates
+--- @param ignorables string[]
 --- @return boolean hasCollidables If there are colldiables such as the player, water, cliffs or other entities in that cell.
-local function doesCellHaveCollidables(city, coordinates)
+local function doesCellHaveCollidables(city, coordinates, ignorables)
     local startCoordinates = {
         y = (coordinates.y + getOffsetY(city)) * CELL_SIZE,
         x = (coordinates.x + getOffsetX(city)) * CELL_SIZE,
@@ -200,7 +216,7 @@ local function doesCellHaveCollidables(city, coordinates)
         {startCoordinates.x, startCoordinates.y},
         {startCoordinates.x + CELL_SIZE, startCoordinates.y + CELL_SIZE}
     }
-    return not isAreaFree(area)
+    return not isAreaFree(area, ignorables)
 end
 
  --- @param city City
@@ -268,11 +284,13 @@ local function invertDirection(direction)
     return invertedDirection
 end
 
+local streetIgnorables = {"big-electric-pole", "medium-electric-pole", "small-electric-pole", "small-lamp", "pipe-to-ground"}
+
 --- @param city City
 --- @param roadEnd RoadEnd
 --- @param lookoutDirections Direction[]
 --- @return boolean canBuild
-local function testDirections(city, roadEnd, lookoutDirections)
+local function testRoadDirection(city, roadEnd, lookoutDirections)
     DEBUG.log("Testing directions: " .. table.concat(lookoutDirections, ","))
 
     -- Test the compatibility of the directions
@@ -280,7 +298,7 @@ local function testDirections(city, roadEnd, lookoutDirections)
         DEBUG.log("Testing direction: " .. direction)
         local neighbourPosition = continueInDirection(roadEnd.coordinates, direction, 1)
 
-        if doesCellHaveCollidables(city, neighbourPosition) then
+        if doesCellHaveCollidables(city, neighbourPosition, streetIgnorables) then
             DEBUG.log("Test result: False, because collidables")
             return false
         end
@@ -474,7 +492,7 @@ local function pickRoadExpansion(city, roadEnd)
             assert(false, "pickRoadExpansion doesn't yet handle the new roadConnection: " .. option)
         end
 
-        if testDirections(city, roadEnd, picked) then
+        if testRoadDirection(city, roadEnd, picked) then
             return picked
         end
     end
@@ -806,7 +824,7 @@ local function growAtRandomRoadEnd(city)
                 {currentCellStartCoordinates.x, currentCellStartCoordinates.y},
                 {currentCellStartCoordinates.x + CELL_SIZE, currentCellStartCoordinates.y + CELL_SIZE}
             }
-            removeColldingEntities(currentArea)
+            removeColldingEntities(currentArea, streetIgnorables)
 
             printTiles(currentCellStartCoordinates, getMap(direction), "concrete")
             local currentCell = city.grid[roadEnd.coordinates.y][roadEnd.coordinates.x]
@@ -836,7 +854,7 @@ local function growAtRandomRoadEnd(city)
                 {neighbourCellStartCoordinates.x, neighbourCellStartCoordinates.y},
                 {neighbourCellStartCoordinates.x + CELL_SIZE, neighbourCellStartCoordinates.y + CELL_SIZE}
             }
-            removeColldingEntities(neighourArea)
+            removeColldingEntities(neighourArea, streetIgnorables)
             
             local neighourSocket = invertDirection(direction)
             printTiles(neighbourCellStartCoordinates, getMap(neighourSocket), "concrete")
