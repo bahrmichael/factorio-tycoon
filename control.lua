@@ -751,11 +751,12 @@ local function canUpgradeToHighrise(city)
     return highriseCount < highRisePercentageCount
 end
 
-local function newCityGrowth(city)
+--- @param suppliedTiers string[] | nil
+local function newCityGrowth(city, suppliedTiers)
     assert(city.grid ~= nil and #city.grid > 1, "Expected grid to be initialized and larger than 1x1.")
 
     -- Attempt to complete constructions first
-    local completedConstructionBuildingType = CITY.completeConstruction(city)
+    local completedConstructionBuildingType = CITY.completeConstruction(city, suppliedTiers)
     if completedConstructionBuildingType ~= nil then
         if completedConstructionBuildingType == "simple" then
             growCitizenCount(city, citizenCounts["simple"], "simple")
@@ -860,8 +861,19 @@ script.on_nth_tick(CITY_GROWTH_TICKS, function(event)
     end
     for _, city in ipairs(global.tycoon_cities) do
         if city.special_buildings.town_hall ~= nil and city.special_buildings.town_hall.valid then
-            if false or CONSUMPTION.areBasicNeedsMet(city) then
-                newCityGrowth(city)
+
+            local suppliedTiers = {}
+            if CONSUMPTION.areBasicNeedsMet(city, getNeeds(city, "simple")) then
+                table.insert(suppliedTiers, "simple")
+            end
+            if CONSUMPTION.areBasicNeedsMet(city, getNeeds(city, "residential")) then
+                table.insert(suppliedTiers, "residential")
+            end
+            if CONSUMPTION.areBasicNeedsMet(city, getNeeds(city, "highrise")) then
+                table.insert(suppliedTiers, "highrise")
+            end
+            if #suppliedTiers > 0 then
+                newCityGrowth(city, suppliedTiers)
             end
 
             -- We need to initialize the tag here, because tags can only be placed on charted chunks.
