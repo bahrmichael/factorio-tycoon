@@ -197,9 +197,9 @@ local function initializeCity(city)
     -- We're adding some randomness here
     -- Instead of adding 8 road connections to the town center, we pick between 4 and 8.
     -- This makes individual towns feel a bit more diverse.
-    local roadEndCount = math.random(4, 8)
+    local roadEndCount = city.generator(4, 8)
     for i = 1, roadEndCount, 1 do
-        Queue.pushright(city.roadEnds, table.remove(possibleRoadEnds, math.random(#possibleRoadEnds)))
+        Queue.pushright(city.roadEnds, table.remove(possibleRoadEnds, city.generator(#possibleRoadEnds)))
     end
 
     table.insert(city.priority_buildings, {name = "tycoon-treasury", priority = 10})
@@ -315,7 +315,7 @@ local function placePrimaryIndustryAtPosition(position, entityName)
 end
 
 local function randomPrimaryIndustry()
-    return primary_industry_names[math.random(#primary_industry_names)]
+    return primary_industry_names[global.tycoon_global_generator(#primary_industry_names)]
 end
 
 local function findCityById(cityId)
@@ -431,7 +431,7 @@ script.on_event(defines.events.on_chunk_charted, function (chunk)
     if math.abs(chunk.position.x) < 5 and math.abs(chunk.position.y) < 5 then
         return
     end
-    if math.random() < 0.25 then
+    if global.tycoon_global_generator() < 0.25 then
         local industryName = randomPrimaryIndustry()
         local position
         if industryName == "tycoon-fishery" then
@@ -831,7 +831,7 @@ local function newCityGrowth(city, suppliedTiers)
         elseif key == "simple" and canBuildSimpleHouse(city) then
             isBuilt = CITY.startConstruction(city, {
                 buildingType = "simple",
-                constructionTimeInTicks = math.random(600, 1200)
+                constructionTimeInTicks = city.generator(600, 1200)
             })
         end
         -- Keep the road construction outside the above if block,
@@ -842,7 +842,7 @@ local function newCityGrowth(city, suppliedTiers)
             -- todo: how do we separate out invalid ones?
             local excavationPitCount = #(city.excavationPits or {})
             local possibleBuildingLocationsCount = Queue.count(city.buildingLocationQueue)
-            if math.random() < (#city.grid / possibleBuildingLocationsCount) and excavationPitCount < #city.grid then
+            if city.generator() < (#city.grid / possibleBuildingLocationsCount) and excavationPitCount < #city.grid then
                 -- todo: add check that road resources are available
                 local coordinates = CITY.growAtRandomRoadEnd(city)
                 if coordinates ~= nil then
@@ -969,10 +969,15 @@ end)
 
 script.on_init(function()
 
+    global.tycoon_global_generator = game.create_random_generator()
+
     global.tycoon_city_buildings = {}
 
+    local cityId = 1
+    local generatorSalt = cityId * 1337
     global.tycoon_cities = {{
-        id = 1,
+        id = cityId,
+        generator = game.create_random_generator(game.surfaces[1].map_gen_settings.seed + generatorSalt),
         grid = {},
         pending_cells = {},
         priority_buildings = {},

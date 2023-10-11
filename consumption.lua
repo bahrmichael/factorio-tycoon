@@ -13,6 +13,7 @@
 --- @field stats CityStats
 --- @field citizens { string: number }
 --- @field special_buildings SpecialBuildings
+--- @field generator any
 
 local basicNeeds = {
     water = 10,
@@ -267,7 +268,7 @@ local function consumeItem(item, suppliers, city, isConstruction)
 
     local treasuries = listSpecialCityBuildings(city, "tycoon-treasury")
     if #treasuries > 0 then
-        local randomTreasury = treasuries[math.random(#treasuries)]
+        local randomTreasury = treasuries[city.generator(#treasuries)]
         local currencyPerUnit = resourcePrices[item.name]
         assert(currencyPerUnit ~= nil, "Missing price for " .. item.name)
         local reward = math.ceil(currencyPerUnit * consumedAmount)
