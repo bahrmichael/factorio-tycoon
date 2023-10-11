@@ -1014,7 +1014,10 @@ script.on_nth_tick(CITY_GROWTH_TICKS, function(event)
     end
 
     if not global.tycoon_intro_message_displayed then
-        game.print("[color=orange]Factorio Tycoon:[/color] Welcome to your new city! There is a town hall nearby. Open it to see what the city needs so that it can grow.")
+        game.print({"", "[color=orange]Factorio Tycoon:[/color] ", {"tycooon-intro-message-welcome"}})
+        if game.surfaces[1].map_gen_settings.autoplace_controls["enemy-base"].size > 0 then
+            game.print({"", "[color=orange]Factorio Tycoon:[/color] ", {"tycooon-intro-message-peaceful-warning"}})
+        end
         global.tycoon_intro_message_displayed = true
     end
 

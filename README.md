@@ -9,6 +9,10 @@ Feel free to open pull requests and technical issues. For game design discussion
 ## Nice Starter Map
 
 ```
+Seed: 1536559542
+```
+
+```
 >>>eNpjZGBkiGYAgwZ7EOZgSc5PzIHxQJgrOb+gILVIN78oFVmYM7mo
 NCVVNz8TVXFqXmpupW5SYjGKYo7Movw8dBNYi0vy81BFSopSU4uRRbh
 LixLzMktz0fUyMG7jnBbd0CLHAML/6xkU/v8HYSDrAdAvIMzA2ABRCR
