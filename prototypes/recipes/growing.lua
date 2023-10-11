@@ -10,10 +10,10 @@ data:extend{
         energy_required = 30,
         enabled = true,
         ingredients = {
-            { type = "fluid", name = "water", amount = 100 },
+            { type = "fluid", name = "water", amount = 300 },
         },
         result = "tycoon-apple",
-        result_count = 15,
+        result_count = 150,
     },
     {
         type = "recipe",
