@@ -1,7 +1,8 @@
 ---------------------------------------------------------------------------------------------------
-Version: unreleased
-Date: 07. 10. 2023
+Version: 0.0.20
+Date: 11. 10. 2023
   Major Features:
+    - BREAKING CHANGE! So much changed! tl;dr: Story has been replaced with technologies.
     - Rebalancing of all Tycoon supply chains.
     - New primary industries: Fishery (spawns next to bodies of water)
     - New items: Milk (liquid), Bottle, Used Bottle, Flour, Dough, Bread, Fish Filet
