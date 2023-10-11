@@ -13,6 +13,7 @@ Date: 07. 10. 2023
     - Rebalance university production to be slightly more expensive than vanilla science packs.
     - Rebalanced the currency you get per resource that citizens consume. They now reflect the amount of energy required to produce them.
     - Use a predictable randomizer based on the map seed. If you run a map with the same seed, the cities should be equal across savegames. Each city will still be random.
+    - Roads will now extend through power poles, lamps, and ground pipes (not above ground pipes).
   Bugfixes:
     - Fix typos in the English localization.
     - Fixed an issue where primary industries could spawn with their pipe connections right next to water or cliffs, which made them unusable.
