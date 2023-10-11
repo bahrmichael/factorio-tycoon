@@ -644,7 +644,7 @@ script.on_event(defines.events.on_gui_opened, function (gui)
         for _, tier in ipairs(housingTiers) do
             if (game.players[1].force.technologies["tycoon-" .. tier .. "-housing"] or {}).researched == true then
                 local text, coloring
-                if not CONSUMPTION.areBasicNeedsMet(city, getNeeds(tier)) then
+                if not CONSUMPTION.areBasicNeedsMet(city, getNeeds(city, tier)) then
                     text = {"tycoon-gui-growth-no-basic-needs"}
                     coloring = "red"
                 elseif buildables[tier] == nil then
@@ -690,7 +690,7 @@ script.on_nth_tick(600, function()
     end
 end)
 
-local CITY_GROWTH_TICKS = 60
+local CITY_GROWTH_TICKS = 300
 
 local function canBuildSimpleHouse(city)
     local simpleCount = ((city.buildingCounts or {})["simple"] or 0)

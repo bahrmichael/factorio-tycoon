@@ -8,7 +8,7 @@ data:extend{
         name = "tycoon-grow-cows-with-grain",
         category = "tycoon-husbandry",
         energy_required = 60,
-        enabled = true,
+        enabled = false,
         ingredients = {
             { type = "fluid", name = "water", amount = 200 },
             { type = "item", name = "tycoon-grain", amount = 50 },
@@ -24,7 +24,7 @@ data:extend{
         icon_size = 64,
         energy_required = 60,
         subgroup = "raw-resource",
-        enabled = true,
+        enabled = false,
         ingredients = {
             { type = "fluid", name = "water", amount = 200 },
             { type = "item", name = "tycoon-cow", amount = 1 },

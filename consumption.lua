@@ -121,7 +121,7 @@ local function updateNeeds(city)
 end
 
 --- @param city City
----@param name string
+--- @param name string
 local function listSpecialCityBuildings(city, name)
     local entities = {}
     if city.special_buildings.other[name] ~= nil and #city.special_buildings.other[name] > 0 then
@@ -144,6 +144,7 @@ local function listSpecialCityBuildings(city, name)
     return result
 end
 
+--- @param city City
 local function updateProvidedAmounts(city)
     local markets = listSpecialCityBuildings(city, "tycoon-market")
     
@@ -179,6 +180,8 @@ local function updateProvidedAmounts(city)
     end
 end
 
+--- @param city City
+--- @param needs any | nil
 local function areBasicNeedsMet(city, needs)
     updateProvidedAmounts(city)
 
@@ -317,7 +320,6 @@ local function consumeBasicNeeds(city)
         -- Water is a human right and should be free
     end
 end
-
 
 return {
     areBasicNeedsMet = areBasicNeedsMet,
