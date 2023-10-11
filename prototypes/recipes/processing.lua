@@ -53,7 +53,7 @@ data:extend{
         name = "tycoon-iron-plate-to-bottle",
         category = "crafting",
         energy_required = 30,
-        enabled = true,
+        enabled = false,
         ingredients = {
             { type = "item", name = "iron-plate", amount = 5 },
         },
@@ -65,7 +65,7 @@ data:extend{
         name = "tycoon-bottle-to-milk-bottle",
         category = "crafting-with-fluid",
         energy_required = 15,
-        enabled = true,
+        enabled = false,
         ingredients = {
             { type = "item", name = "tycoon-bottle", amount = 25 },
             { type = "fluid", name = "tycoon-milk", amount = 25 },
@@ -78,7 +78,7 @@ data:extend{
         name = "tycoon-refurbish-bottle",
         category = "crafting-with-fluid",
         energy_required = 15,
-        enabled = true,
+        enabled = false,
         icon = "__tycoon__/graphics/icons/used-bottle.png",
         icon_size = 64,
         ingredients = {

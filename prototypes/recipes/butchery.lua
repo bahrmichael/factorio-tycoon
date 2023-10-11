@@ -8,7 +8,7 @@ data:extend{
         name = "tycoon-cows-to-meat",
         category = "tycoon-butchery",
         energy_required = 30,
-        enabled = true,
+        enabled = false,
         ingredients = {
             { type = "item", name = "tycoon-cow", amount = 1 },
         },
@@ -20,7 +20,7 @@ data:extend{
         name = "tycoon-fish-to-fish-filet",
         category = "tycoon-butchery",
         energy_required = 15,
-        enabled = true,
+        enabled = false,
         ingredients = {
             { type = "item", name = "raw-fish", amount = 1 },
         },
