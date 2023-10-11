@@ -4,6 +4,8 @@ CITY = require("city")
 CONSUMPTION = require("consumption")
 -- TYCOON_STORY = require("tycoon-story")
 
+local primary_industry_names = {"tycoon-apple-farm", "tycoon-wheat-farm", "tycoon-fishery"}
+
 local function getGridSize(grid)
     return #grid
 end
@@ -267,6 +269,29 @@ end
 
 local function placePrimaryIndustryAtPosition(position, entityName)
     if position ~= nil then
+        -- This is mainly here to avoid two industries being right next to each other, blocking each others pipes
+        local nearbyPrimaryIndustries = game.surfaces[1].find_entities_filtered{
+            position = position,
+            radius = 20,
+            name = primary_industry_names,
+            limit = 1
+        }
+        if #nearbyPrimaryIndustries > 0 then
+            return nil
+        end
+        -- fisheries don't have a pipe input and therfore don't need this condition
+        -- they are also placed near water, so this would lead to no fisheries being placed anywhere
+        if entityName ~= "tycoon-fishery" then
+            local nearbyCliffOrWater = game.surfaces[1].find_tiles_filtered{
+                position = position,
+                radius = 10,
+                name = {"cliff", "water", "deepwater"},
+                limit = 1
+            }
+            if #nearbyCliffOrWater > 0 then
+                return nil
+            end
+        end
         local tag = game.forces.player.add_chart_tag(game.surfaces[1],
             {
                 position = {x = position.x, y = position.y},
@@ -290,8 +315,7 @@ local function placePrimaryIndustryAtPosition(position, entityName)
 end
 
 local function randomPrimaryIndustry()
-    local industries = global.tycoon_primary_industries
-    return industries[math.random(#industries)]
+    return primary_industry_names[math.random(#primary_industry_names)]
 end
 
 local function findCityById(cityId)
@@ -855,7 +879,7 @@ end
 local function placeInitialAppleFarm(city)
     local waterTiles = game.surfaces[1].find_tiles_filtered{
         position = city.center,
-        radius = 200,
+        radius = math.min(global.tycoon_initial_apple_farm_radius or 100, 1000),
         name={"water", "deepwater"},
         limit = 1,
     }
@@ -873,8 +897,10 @@ local function spawnPrimaryIndustries()
 
     if not global.tycoon_has_initial_apple_farm then
         local p = placeInitialAppleFarm(global.tycoon_cities[1])
-        if p ~= nil then
+        if p ~= nil or (global.tycoon_initial_apple_farm_radius or 100) > 1000 then
             global.tycoon_has_initial_apple_farm = true
+        else
+            global.tycoon_initial_apple_farm_radius = (global.tycoon_initial_apple_farm_radius or 100) + 100
         end
     end
 
@@ -972,8 +998,6 @@ script.on_init(function()
     }}
     initializeCity(global.tycoon_cities[1])
     CONSUMPTION.updateNeeds(global.tycoon_cities[1])
-
-    global.tycoon_primary_industries = {"tycoon-apple-farm", "tycoon-wheat-farm", "tycoon-fishery"}
 
     -- global.tycoon_cities = {}
     -- for i = 1, 8, 1 do
