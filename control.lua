@@ -745,13 +745,14 @@ local function addConstructionGui(city, cityGui)
             local amounts = city.stats.construction_materials[resource] or {provided =  0}
 
             local itemName = "item-name." .. resource
+            local fallbackName = "entity-name." .. resource
 
             local color = "green"
             if amounts.provided == 0 then
                 color = "red"
             end
 
-            local captionElements = {"", {itemName}, ": ", "[color=" .. color .. "]", amounts.provided, "[/color]"}
+            local captionElements = {"", {"?", {itemName}, {fallbackName}}, ": ", "[color=" .. color .. "]", amounts.provided, "[/color]"}
             constructionNeedsGui.add{type = "label", caption = captionElements}
         end
     end

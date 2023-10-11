@@ -70,7 +70,7 @@ data:extend{
                 recipe = "tycoon-dough-to-bread",
             },
         },
-        prerequisites = { "tycoon-farming", "tycoon-husbandry" },
+        prerequisites = { "tycoon-farming", "tycoon-husbandry", "automation-2" },
         order = "g-e-e",
         unit = {
           count = 60,
