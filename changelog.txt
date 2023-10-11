@@ -7,6 +7,7 @@ Date: 07. 10. 2023
     - New items: Milk (liquid), Bottle, Used Bottle, Flour, Dough, Bread, Fish Filet
     - New technologies that unlock supply chains: Farming, Husbandry, Meat Processing, Bottling, and Baking
     - New technologies that unlock housing tiers: Residential Housing, and Highrise Housing
+    - Improve the town hall GUI with much more information
   Changes:
     - Increasded currency value to reduce the amount of inserters needed: Each currency item is now worth 20x as much as it was before, but you get fewer of them.
     - Housing tiers (residential, highrise) now have to be researched and don't unlock automatically.
