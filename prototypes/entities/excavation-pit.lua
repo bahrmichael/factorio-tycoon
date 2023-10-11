@@ -11,8 +11,8 @@ local function createExcavationPit(name, spriteSize)
     repair_sound = {filename = "__base__/sound/manual-repair-simple.ogg"},
     open_sound = {filename = "__base__/sound/machine-open.ogg", volume = 0.85},
     close_sound = {filename = "__base__/sound/machine-close.ogg", volume = 0.75},
-    collision_box = { { -2, -2}, {2.5, 2.5} },
-    selection_box = { { -2, -2}, {3, 3} },
+    collision_box = { { -2.4, -2.4}, {2.4, 2.4} },
+    selection_box = { { -2.4, -2.4}, {2.4, 2.4} },
     picture = {
         layers = {
             {
@@ -21,7 +21,7 @@ local function createExcavationPit(name, spriteSize)
                 width = spriteSize.width,
                 height = spriteSize.height,
                 scale = 1,
-                shift = {0.5, 0.5}
+                shift = {0, 0}
             },
         }
     },

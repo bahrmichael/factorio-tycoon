@@ -15,6 +15,7 @@ local Queue = require("queue")
 ---| "simple"
 ---| "residential"
 ---| "highrise"
+---| "tycoon-treasury"
 
 --- @class BuildingConstruction
 --- @field buildingType BuildingType
@@ -675,8 +676,8 @@ local function startConstruction(city, buildingConstruction, allowedCoordinates)
             x = (coordinates.x + getOffsetX(city)) * CELL_SIZE,
         }
         local area = {
-            {startCoordinates.x, startCoordinates.y},
-            {startCoordinates.x + CELL_SIZE, startCoordinates.y + CELL_SIZE}
+            {x = startCoordinates.x, y = startCoordinates.y},
+            {x = startCoordinates.x + CELL_SIZE, y = startCoordinates.y + CELL_SIZE}
         }
 
         if (city.grid[coordinates.y] or {})[coordinates.x] == nil then
@@ -874,25 +875,29 @@ local function growAtRandomRoadEnd(city)
 end
 
 --- @param excavationPits ExcavationPit[]
+--- @param buildingTypes BuildingType[] | nil
 --- @return ExcavationPit | nil excavationPit
-local function findReadyExcavationPit(excavationPits)
+local function findReadyExcavationPit(excavationPits, buildingTypes)
     for i, e in ipairs(excavationPits) do
         if e.createdAtTick + e.buildingConstruction.constructionTimeInTicks < game.tick then
-            return table.remove(excavationPits, i)
+            if e.buildingConstruction.buildingType == "tycoon-treasury" or buildingTypes == nil or indexOf(buildingTypes, e.buildingConstruction.buildingType) then
+                return table.remove(excavationPits, i)
+            end
         end
     end
     return nil
 end
 
 --- @param city City
+--- @param buildingTypes BuildingType[] | nil
 --- @return BuildingType | nil completedConstruction
-local function completeConstruction(city)
+local function completeConstruction(city, buildingTypes)
 
     if city.excavationPits == nil or #city.excavationPits == 0 then
         return nil
     end
 
-    local excavationPit = findReadyExcavationPit(city.excavationPits)
+    local excavationPit = findReadyExcavationPit(city.excavationPits, buildingTypes)
     if excavationPit == nil then
         return nil
     end
