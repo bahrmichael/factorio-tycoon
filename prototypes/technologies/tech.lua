@@ -17,7 +17,7 @@ data:extend{
           ingredients = {
             { "automation-science-pack", 1 },
           },
-          time = 15,
+          time = 10,
         },
     },
     {
@@ -101,7 +101,7 @@ data:extend{
                 recipe = "tycoon-refurbish-bottle",
             },
         },
-        prerequisites = { "tycoon-husbandry" },
+        prerequisites = { "tycoon-husbandry", "automation-2" },
         order = "g-e-e",
         unit = {
           count = 30,
