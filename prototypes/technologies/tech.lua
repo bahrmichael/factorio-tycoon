@@ -159,7 +159,7 @@ data:extend{
                 recipe = "tycoon-university-science-blue",
             },
         },
-        prerequisites = { "tycoon-meat-processing", "tycoon-baking" },
+        prerequisites = { "steel-processing", "optics", "tycoon-meat-processing", "tycoon-baking" },
         order = "g-e-e",
         unit = {
           count = 60,
@@ -186,7 +186,7 @@ data:extend{
                 recipe = "tycoon-university-science-yellow",
             },
         },
-        prerequisites = { "steel-processing", "tycoon-residential-housing", "tycoon-bottling" },
+        prerequisites = { "fluid-handling", "concrete", "tycoon-residential-housing", "tycoon-bottling" },
         order = "g-e-e",
         unit = {
           count = 120,
