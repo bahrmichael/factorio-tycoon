@@ -546,35 +546,47 @@ local function getBuildables(city, stores)
     -- Sepcial buildings (like the treasury) are an exception that should ideally come first.
     local constructionResources = {
         specialBuildings = {{
-            name = "stone",
+            name = "stone-brick",
             required = 1,
         }, {
             name = "iron-plate",
             required = 1,
         }},
         highrise = {{
-            name = "stone",
-            required = 100,
-        }, {
-            name = "iron-plate",
+            name = "concrete",
             required = 50,
         }, {
             name = "steel-plate",
             required = 25,
-        }},
-        residential = {{
-            name = "stone",
-            required = 20,
         }, {
-            name = "iron-plate",
+            name = "small-lamp",
+            required = 5,
+        }, {
+            name = "pump",
+            required = 2,
+        }, {
+            name = "pipe",
             required = 10,
         }},
-        simple = {{
-            name = "stone",
-            required = 1,
+        residential = {{
+            name = "stone-brick",
+            required = 30,
         }, {
             name = "iron-plate",
-            required = 1,
+            required = 20,
+        }, {
+            name = "steel-plate",
+            required = 10,
+        }, {
+            name = "small-lamp",
+            required = 2,
+        }},
+        simple = {{
+            name = "stone-brick",
+            required = 10,
+        }, {
+            name = "iron-plate",
+            required = 5,
         }},
     }
 
@@ -602,8 +614,8 @@ end
 
 local constructionIncrements = {
     default = {"stone-brick", "iron-plate"},
-    residential = {"steel", "small-lamp"},
-    highrise = {"pump", "concrete"}
+    residential = {"steel-plate", "small-lamp"},
+    highrise = {"pump", "concrete", "pipe"}
 }
 
 local function addBasicNeedsGui(city, cityGui)
