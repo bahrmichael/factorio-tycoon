@@ -1,3 +1,5 @@
+local kwPerCurrency = 20
+
 data:extend{
     {
         type = "recipe-category",
@@ -10,7 +12,7 @@ data:extend{
         energy_required = 5,
         enabled = true,
         ingredients = {
-            { type = "item", name = "tycoon-currency", amount = 70 },
+            { type = "item", name = "tycoon-currency", amount = math.floor(70 / kwPerCurrency) },
         },
         result = "automation-science-pack",
         result_count = 1,
@@ -22,7 +24,7 @@ data:extend{
         energy_required = 5,
         enabled = true,
         ingredients = {
-            { type = "item", name = "tycoon-currency", amount = 130 },
+            { type = "item", name = "tycoon-currency", amount = math.floor(130 / kwPerCurrency) },
         },
         result = "logistic-science-pack",
         result_count = 1,
@@ -34,7 +36,7 @@ data:extend{
         energy_required = 5,
         enabled = false,
         ingredients = {
-            { type = "item", name = "tycoon-currency", amount = 275 },
+            { type = "item", name = "tycoon-currency", amount = math.floor(275 / kwPerCurrency) },
         },
         result = "military-science-pack",
         result_count = 1,
@@ -46,7 +48,7 @@ data:extend{
         energy_required = 5,
         enabled = false,
         ingredients = {
-            { type = "item", name = "tycoon-currency", amount = 450 },
+            { type = "item", name = "tycoon-currency", amount = math.floor(450 / kwPerCurrency) },
         },
         result = "chemical-science-pack",
         result_count = 1,
@@ -58,7 +60,7 @@ data:extend{
         energy_required = 5,
         enabled = false,
         ingredients = {
-            { type = "item", name = "tycoon-currency", amount = 1200 },
+            { type = "item", name = "tycoon-currency", amount = math.floor(1200 / kwPerCurrency) },
         },
         result = "production-science-pack",
         result_count = 1,
@@ -70,7 +72,7 @@ data:extend{
         energy_required = 5,
         enabled = false,
         ingredients = {
-            { type = "item", name = "tycoon-currency", amount = 1500 },
+            { type = "item", name = "tycoon-currency", amount = math.floor(1500 / kwPerCurrency) },
         },
         result = "utility-science-pack",
         result_count = 1,

@@ -198,13 +198,16 @@ local function areBasicNeedsMet(city, needs)
     return true
 end
 
+-- This value should match the one in university-science.lua
+local kwPerCurrency = 20
+
 local resourcePrices = {
     water = 0,
-    ["tycoon-apple"] = 1,
-    ["tycoon-meat"] = 2,
-    ["tycoon-milk-bottle"] = 5,
-    ["tycoon-bread"] = 4,
-    ["tycoon-fish-filet"] = 4,
+    ["tycoon-apple"] = 1 / kwPerCurrency,
+    ["tycoon-meat"] = 2 / kwPerCurrency,
+    ["tycoon-milk-bottle"] = 5 / kwPerCurrency,
+    ["tycoon-bread"] = 4 / kwPerCurrency,
+    ["tycoon-fish-filet"] = 4 / kwPerCurrency,
     -- todo: balance the ones below
     stone = 1,
     ["iron-plate"] = 1,
