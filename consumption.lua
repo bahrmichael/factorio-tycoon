@@ -213,6 +213,11 @@ local resourcePrices = {
     stone = 1,
     ["iron-plate"] = 1,
     ["steel-plate"] = 1,
+    ["stone-brick"] = 1,
+    ["concrete"] = 1,
+    ["small-lamp"] = 1,
+    ["pump"] = 1,
+    ["pipe"] = 1,
 }
 
 --- @param city City
