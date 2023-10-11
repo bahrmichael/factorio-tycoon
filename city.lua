@@ -976,6 +976,11 @@ local function completeConstruction(city, buildingTypes)
         entity = entity,
     }
 
+    if entityName == "tycoon-treasury" and not global.tycoon_intro_message_treasury_displayed then
+        game.print({"", "[color=orange]Factorio Tycoon:[/color] ", {"tycooon-info-message-treasury"}})
+        global.tycoon_intro_message_treasury_displayed = true
+    end
+
     return entityName
 end
 
