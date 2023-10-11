@@ -199,6 +199,8 @@ local function initializeCity(city)
     for i = 1, roadEndCount, 1 do
         Queue.pushright(city.roadEnds, table.remove(possibleRoadEnds, math.random(#possibleRoadEnds)))
     end
+
+    table.insert(city.priority_buildings, {name = "tycoon-treasury", priority = 10})
 end
 
 local function growCitizenCount(city, count, tier)
