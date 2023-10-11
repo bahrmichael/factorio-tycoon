@@ -1008,10 +1008,14 @@ script.on_nth_tick(10, function()
 end)
 
 script.on_nth_tick(CITY_GROWTH_TICKS, function(event)
-    
     -- global.tycoon_enable_debug_logging = true
-    if event.tick < 60 then
+    if event.tick < 120 then
         return
+    end
+
+    if not global.tycoon_intro_message_displayed then
+        game.print("[color=orange]Factorio Tycoon:[/color] Welcome to your new city! There is a town hall nearby. Open it to see what the city needs so that it can grow.")
+        global.tycoon_intro_message_displayed = true
     end
 
     for _, city in ipairs(global.tycoon_cities) do
