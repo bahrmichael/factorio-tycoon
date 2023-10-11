@@ -9,7 +9,7 @@ data:extend{
             { type = "item", name = "tycoon-wheat", amount = 25 },
         },
         result = "tycoon-grain",
-        result_count = 25,
+        result_count = 100,
     },
     {
         type = "recipe",
