@@ -416,12 +416,11 @@ end
 
 local function shuffle(tbl)
     for i = #tbl, 2, -1 do
-      local j = math.random(i)
+      local j = global.tycoon_global_generator(i)
       tbl[i], tbl[j] = tbl[j], tbl[i]
     end
     return tbl
-  end
-
+end
 
 --- @param city City
 --- @param roadEnd RoadEnd
@@ -443,8 +442,8 @@ local function pickRoadExpansion(city, roadEnd)
         elseif option == "2" then
             local sides = {roadEnd.direction, left, right}
             picked = {
-                table.remove(sides, math.random(#sides)),
-                table.remove(sides, math.random(#sides)),
+                table.remove(sides, city.generator(#sides)),
+                table.remove(sides, city.generator(#sides)),
             }
             -- If the test doesn't succeed, then continue trying the other options
         elseif option == "1" then
@@ -461,13 +460,13 @@ local function pickRoadExpansion(city, roadEnd)
                     break
                 end
             end
-            local shouldBuildStraight = math.random() > (straightStreetLength / 10)
+            local shouldBuildStraight = city.generator() > (straightStreetLength / 10)
             DEBUG.log("Should build straight: " .. tostring(shouldBuildStraight) .. " (straight length: " .. straightStreetLength .. ")")
             if shouldBuildStraight then
                 picked = {roadEnd.direction}
             else
                 local sides = {left, right}
-                picked = {sides[math.random(#sides)]}
+                picked = {sides[city.generator(#sides)]}
             end
         elseif option == "0" then
             picked = {}
@@ -1075,7 +1074,7 @@ local function upgradeHouse(city, newStage)
 
     startConstruction(city, {
         buildingType = upgradePath.nextStage,
-        constructionTimeInTicks = math.random(upgradePath.upgradeDurationInSeconds[1] * 60, upgradePath.upgradeDurationInSeconds[2] * 60),
+        constructionTimeInTicks = city.generator(upgradePath.upgradeDurationInSeconds[1] * 60, upgradePath.upgradeDurationInSeconds[2] * 60),
     }, {upgradeCell.coordinates})
 
     return true
