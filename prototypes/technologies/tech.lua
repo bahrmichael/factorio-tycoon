@@ -1,11 +1,36 @@
 data:extend{
     {
         type = "technology",
+        name = "tycoon-farming",
+        mod = "Tycoon",
+        icon = "__tycoon__/graphics/icons/farming.png",
+        icon_size = 256,
+        effects = {
+            {
+                type = "unlock-recipe",
+                recipe = "tycoon-wheat-to-grain",
+            }
+        },
+        order = "g-e-e",
+        unit = {
+          count = 10,
+          ingredients = {
+            { "automation-science-pack", 1 },
+          },
+          time = 15,
+        },
+    },
+    {
+        type = "technology",
         name = "tycoon-husbandry",
         mod = "Tycoon",
         icon = "__tycoon__/graphics/icons/husbandry.png",
         icon_size = 256,
         effects = {
+            {
+                type = "unlock-recipe",
+                recipe = "tycoon-milk-cow",
+            },
             {
                 type = "unlock-recipe",
                 recipe = "tycoon-building-stable",
@@ -15,6 +40,7 @@ data:extend{
                 recipe = "tycoon-grow-cows-with-grain",
             },
         },
+        prerequisites = { "tycoon-farming" },
         order = "g-e-e",
         unit = {
           count = 15,
@@ -44,7 +70,7 @@ data:extend{
                 recipe = "tycoon-dough-to-bread",
             },
         },
-        -- prerequisites = { "kr-matter-processing" },
+        prerequisites = { "tycoon-farming", "tycoon-husbandry" },
         order = "g-e-e",
         unit = {
           count = 60,
@@ -62,10 +88,6 @@ data:extend{
         icon = "__tycoon__/graphics/icons/bottling.png",
         icon_size = 256,
         effects = {
-            {
-                type = "unlock-recipe",
-                recipe = "tycoon-milk-cow",
-            },
             {
                 type = "unlock-recipe",
                 recipe = "tycoon-bottle-to-milk-bottle",
