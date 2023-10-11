@@ -837,7 +837,49 @@ local function newCityGrowth(city, suppliedTiers)
     end
 end
 
+ -- Function to calculate a point at a certain percentage distance along a line
+ local function interpolateCoordinates(coord1, coord2, percentage)
+    local x1, y1 = coord1.x, coord1.y
+    local x2, y2 = coord2.x, coord2.y
+
+    if percentage < 0 then
+        percentage = 0
+    elseif percentage > 1 then
+        percentage = 1
+    end
+
+    local newX = x1 + (x2 - x1) * percentage
+    local newY = y1 + (y2 - y1) * percentage
+
+    return { x = newX, y = newY }
+end
+
+local function placeInitialAppleFarm(city)
+    local waterTiles = game.surfaces[1].find_tiles_filtered{
+        position = city.center,
+        radius = 200,
+        name={"water", "deepwater"},
+        limit = 1,
+    }
+    if #waterTiles == 0 then
+        return
+    end
+
+    local waterPosition = waterTiles[1].position
+    local coordinates = interpolateCoordinates(city.center, waterPosition, 0.5)
+    local position = game.surfaces[1].find_non_colliding_position("tycoon-apple-farm", coordinates, 200, 5, true)
+    return placePrimaryIndustryAtPosition(position, "tycoon-apple-farm")
+end
+
 local function spawnPrimaryIndustries()
+
+    if not global.tycoon_has_initial_apple_farm then
+        local p = placeInitialAppleFarm(global.tycoon_cities[1])
+        if p ~= nil then
+            global.tycoon_has_initial_apple_farm = true
+        end
+    end
+
     if global.tycoon_new_primary_industries ~= nil and #global.tycoon_new_primary_industries > 0 then
         for i, primaryIndustry in ipairs(global.tycoon_new_primary_industries) do
             local x, y
@@ -858,12 +900,17 @@ local function spawnPrimaryIndustries()
     end
 end
 
+script.on_nth_tick(10, function()
+    spawnPrimaryIndustries()
+end)
+
 script.on_nth_tick(CITY_GROWTH_TICKS, function(event)
     
     -- global.tycoon_enable_debug_logging = true
-    if event.tick < 200 then
+    if event.tick < 60 then
         return
     end
+
     for _, city in ipairs(global.tycoon_cities) do
         if city.special_buildings.town_hall ~= nil and city.special_buildings.town_hall.valid then
 
@@ -894,8 +941,6 @@ script.on_nth_tick(CITY_GROWTH_TICKS, function(event)
             end
         end
     end
-
-    spawnPrimaryIndustries()
 end)
 
 script.on_init(function()
