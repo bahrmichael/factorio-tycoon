@@ -5,6 +5,7 @@ data:extend{
         icon = "__tycoon__/graphics/entity/apple-farm/apple-farm.png",
         icon_size = 64,
         max_health = 200,
+        rotatable = false,
         fixed_recipe = "tycoon-grow-apples-with-water",
         fluid_boxes = {
             {

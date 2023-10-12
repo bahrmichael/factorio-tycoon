@@ -8,6 +8,7 @@ data:extend{
         -- This has to be set in the runtime code
         -- destructible = false,
         inventory_size = 100,
+        rotatable = false,
         corpse = "small-remnants",
         vehicle_impact_sound = {filename = "__base__/sound/car-metal-impact.ogg", volume = 0.65},
         repair_sound = {filename = "__base__/sound/manual-repair-simple.ogg"},
