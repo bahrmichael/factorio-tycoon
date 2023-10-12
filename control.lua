@@ -6,6 +6,27 @@ CONSUMPTION = require("consumption")
 
 local primary_industry_names = {"tycoon-apple-farm", "tycoon-wheat-farm", "tycoon-fishery"}
 
+--- @param coordinates Coordinates
+--- @param sendWarningForMethod string | nil
+--- @return any | nil cell
+local function safeGridAccess(city, coordinates, sendWarningForMethod)
+    local row = city.grid[coordinates.y]
+    if row == nil then
+        if sendWarningForMethod ~= nil then
+            game.print({"", {"tycoon-grid-access-warning-row", {"tycoon-grid-access-row"}, sendWarningForMethod}})
+        end
+        return nil
+    end
+    local cell = row[coordinates.x]
+    if cell == nil then
+        if sendWarningForMethod ~= nil then
+            game.print({"", {"tycoon-grid-access-warning-cell", {"tycoon-grid-access-row"}, sendWarningForMethod}})
+        end
+        return nil
+    end
+    return cell
+end
+
 local function getGridSize(grid)
     return #grid
 end
@@ -94,7 +115,7 @@ local function initializeCity(city)
 
     for y = 1, getGridSize(city.grid) do
         for x = 1, getGridSize(city.grid) do
-            local cell = city.grid[y][x]
+            local cell = safeGridAccess(city, {x=x, y=y}, "initializeCity")
             if cell ~= nil then
                 local map = SEGMENTS.getMapForKey(cell[1])
                 local startCoordinates = {
@@ -126,7 +147,10 @@ local function initializeCity(city)
 
     for i = 1, #city.grid, 1 do
         for j = 1, #city.grid, 1 do
-            city.grid[i][j] = translateStarterCell(city.grid[i][j][1])
+            local c = safeGridAccess(city, {y=i, x=j})
+            -- todo: rather replace this with a proper initial grid (no need for translation then)
+            assert(c ~= nil or #c == 0, "Failed to translate starter cells of city.")
+            city.grid[i][j] = translateStarterCell(c[1])
         end
     end
 

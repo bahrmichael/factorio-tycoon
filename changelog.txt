@@ -1,4 +1,9 @@
 ---------------------------------------------------------------------------------------------------
+Version: unreleased
+Date: 12. 10. 2023
+  Bugfixes:
+    - Instead of crashing the game on invalid grid access, the mod now logs an error and tries to let the game continue.
+---------------------------------------------------------------------------------------------------
 Version: 0.0.22
 Date: 11. 10. 2023
   Bugfixes:
