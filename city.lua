@@ -219,16 +219,21 @@ local function isAreaFree(area, additionalIgnorables)
         type={"tree"},
         name=ignorables,
         invert=true,
-        limit = 1,
+        limit = 100,
     })
     return #entities == 0
 end
 
+--- @alias Collidable
+---| "free"
+---| "only-straight-rail"
+---| "blocked"
+
 --- @param city City
 --- @param coordinates Coordinates
---- @param ignorables string[]
---- @return boolean hasCollidables If there are colldiables such as the player, water, cliffs or other entities in that cell.
-local function doesCellHaveCollidables(city, coordinates, ignorables)
+--- @param additionalIgnorables string[] | nil
+--- @return Collidable
+local function checkForCollidables(city, coordinates, additionalIgnorables)
     local startCoordinates = {
         y = (coordinates.y + getOffsetY(city)) * CELL_SIZE,
         x = (coordinates.x + getOffsetX(city)) * CELL_SIZE,
@@ -237,7 +242,42 @@ local function doesCellHaveCollidables(city, coordinates, ignorables)
         {startCoordinates.x, startCoordinates.y},
         {startCoordinates.x + CELL_SIZE, startCoordinates.y + CELL_SIZE}
     }
-    return not isAreaFree(area, ignorables)
+    -- Water / Cliffs
+    if hasCliffsOrWater(area) then
+        return "blocked"
+    end
+
+    local ignorables = {"rock-huge", "rock-big", "sand-rock-big", "dead-grey-trunk"}
+    if additionalIgnorables ~= nil and #additionalIgnorables >0 then
+        for _, value in ipairs(additionalIgnorables) do
+            table.insert(ignorables, value)
+        end
+    end
+
+    -- Too many trees / Other entities
+    local entities = game.surfaces[1].find_entities_filtered({
+        area=area,
+        type={"tree"},
+        name=ignorables,
+        invert=true,
+        limit = 100,
+    })
+    if #entities == 0 then
+        return "free"
+    end
+
+    local straightRailCount = 0
+    for _, entity in ipairs(entities) do
+        if entity.name == "straight-rail" then
+            straightRailCount = straightRailCount + 1
+        end
+    end
+
+    if #entities == straightRailCount then
+        return "only-straight-rail"
+    else
+        return "blocked"
+    end
 end
 
  --- @param city City
@@ -305,6 +345,78 @@ local function invertDirection(direction)
     return invertedDirection
 end
 
+--- @param originalDirection Direction
+--- @return Direction rightDirection
+local function getRightDirection(originalDirection)
+    local rightDirection
+    if originalDirection == "north" then
+        rightDirection = "east"
+    elseif originalDirection == "south" then
+        rightDirection = "west"
+    elseif originalDirection == "east" then
+        rightDirection = "south"
+    elseif originalDirection == "west" then
+        rightDirection = "north"
+    else
+        assert(false, "Invalid direction")
+    end
+    return rightDirection
+end
+
+--- @param originalDirection Direction
+--- @return Direction leftDirection
+local function getLeftDirection(originalDirection)
+    local leftDirection
+    if originalDirection == "north" then
+        leftDirection = "west"
+    elseif originalDirection == "south" then
+        leftDirection = "east"
+    elseif originalDirection == "east" then
+        leftDirection = "north"
+    elseif originalDirection == "west" then
+        leftDirection = "south"
+    else
+        assert(false, "Invalid direction")
+    end
+    return leftDirection
+end
+
+--- @param city City
+--- @param coordinates Coordinates
+--- @param direction Direction
+--- @return boolean
+local function areStraightRailsOrthogonal(city, coordinates, direction)
+    local startCoordinates = {
+        y = (coordinates.y + getOffsetY(city)) * CELL_SIZE,
+        x = (coordinates.x + getOffsetX(city)) * CELL_SIZE,
+    }
+    local area = {
+        {startCoordinates.x, startCoordinates.y},
+        {startCoordinates.x + CELL_SIZE, startCoordinates.y + CELL_SIZE}
+    }
+
+    -- Too many trees / Other entities
+    local entities = game.surfaces[1].find_entities_filtered({
+        area=area,
+        name={"straight-rail"},
+        -- Only test 10 rail pieces, that should give us enough info
+        -- todo: how many straight rail pieces fit into 6x6 tiles?
+        limit = 10,
+    })
+
+    local left = getLeftDirection(direction)
+    local right = getRightDirection(direction)
+
+    for _, entity in ipairs(entities) do
+        if entity.name == "straight-rail" then
+            if entity.direction ~= defines.direction[left] and entity.direction ~= defines.direction[right] then
+                return false
+            end
+        end
+    end
+    return true
+end
+
 local streetIgnorables = {"big-electric-pole", "medium-electric-pole", "small-electric-pole", "small-lamp", "pipe-to-ground"}
 
 --- @param city City
@@ -319,9 +431,17 @@ local function testRoadDirection(city, roadEnd, lookoutDirections)
         DEBUG.log("Testing direction: " .. direction)
         local neighbourPosition = continueInDirection(roadEnd.coordinates, direction, 1)
 
-        if doesCellHaveCollidables(city, neighbourPosition, streetIgnorables) then
+        local collidables = checkForCollidables(city, neighbourPosition, streetIgnorables)
+
+        if collidables == "blocked" then
             DEBUG.log("Test result: False, because collidables")
             return false
+        elseif collidables == "only-straight-rail" then
+             local isCrossing = areStraightRailsOrthogonal(city, neighbourPosition, direction)
+             if not isCrossing then
+                DEBUG.log("Test result: False, because not a rail crossing")
+                return false
+             end
         end
 
         -- This should never be fail, because the upstream function is supposed to expand the grid if the position is on the outsides
@@ -386,42 +506,6 @@ local function testRoadDirection(city, roadEnd, lookoutDirections)
 
     DEBUG.log("Test result: True")
     return true
-end
-
---- @param originalDirection Direction
---- @return Direction rightDirection
-local function getRightDirection(originalDirection)
-    local rightDirection
-    if originalDirection == "north" then
-        rightDirection = "east"
-    elseif originalDirection == "south" then
-        rightDirection = "west"
-    elseif originalDirection == "east" then
-        rightDirection = "south"
-    elseif originalDirection == "west" then
-        rightDirection = "north"
-    else
-        assert(false, "Invalid direction")
-    end
-    return rightDirection
-end
-
---- @param originalDirection Direction
---- @return Direction leftDirection
-local function getLeftDirection(originalDirection)
-    local leftDirection
-    if originalDirection == "north" then
-        leftDirection = "west"
-    elseif originalDirection == "south" then
-        leftDirection = "east"
-    elseif originalDirection == "east" then
-        leftDirection = "north"
-    elseif originalDirection == "west" then
-        leftDirection = "south"
-    else
-        assert(false, "Invalid direction")
-    end
-    return leftDirection
 end
 
 local weightedRoadConnections
