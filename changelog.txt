@@ -1,9 +1,4 @@
 ---------------------------------------------------------------------------------------------------
-Version: 0.0.21
-Date: 11. 10. 2023
-  Balancing:
-    - 10x the apple farm production (and energy consumption).
----------------------------------------------------------------------------------------------------
 Version: 0.0.22
 Date: 11. 10. 2023
   Bugfixes:
@@ -25,9 +20,9 @@ Date: 11. 10. 2023
     - New technologies that unlock housing tiers: Residential Housing, and Highrise Housing
     - Improve the town hall GUI with much more information
   Changes:
-    - Increasded currency value to reduce the amount of inserters needed: Each currency item is now worth 20x as much as it was before, but you get fewer of them.
+    - Increased currency value to reduce the amount of inserters needed: Each currency item is now worth 20x as much as it was before, but you get fewer of them.
     - Housing tiers (residential, highrise) now have to be researched and don't unlock automatically.
-    - Rebalance university production to be slightly more expensive than vanilla science packs.
+    - Rebalanced university production to be slightly more expensive than vanilla science packs.
     - Rebalanced the currency you get per resource that citizens consume. They now reflect the amount of energy required to produce them.
     - Use a predictable randomizer based on the map seed. If you run a map with the same seed, the cities should be equal across savegames. Each city will still be random.
     - Roads will now extend through power poles, lamps, and ground pipes (not above ground pipes).
@@ -51,7 +46,7 @@ Date: 06. 10. 2023
   Major Features:
     - BREAKING CHANGE: Savegames from 0.0.16 and previous versions probably won't work anymore
     - New road algorithm: Roads that expand instead of random placements (e.g. no more unonnected circles)
-    - Construciton sites: When the city starts a new building, it first places a construction site. After some time the construction site turns into a building. The same applies to house upgrades.
+    - Construction sites: When the city starts a new building, it first places a construction site. After some time the construction site turns into a building. The same applies to house upgrades.
     - Two new house types: As your city grows, simple houses (previously residential) will be upgraded to residential and later to highrise buildings, once  your city grows large enough.
       Simple houses cost 1 stone and 1 iron plate. They can house 4 citizens.
       Residential houses cost 20 stone and 10 iron plates. They can house 20 citizens.
