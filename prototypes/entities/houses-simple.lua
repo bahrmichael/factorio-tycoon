@@ -16,8 +16,8 @@ local function createHouse(name)
     repair_sound = {filename = "__base__/sound/manual-repair-simple.ogg"},
     open_sound = {filename = "__base__/sound/machine-open.ogg", volume = 0.85},
     close_sound = {filename = "__base__/sound/machine-close.ogg", volume = 0.75},
-    collision_box = { { -2.4, -2.4}, {2.4, 2.4} },
-    selection_box = { { -2.4, -2.4}, {2.4, 2.4} },
+    collision_box = { { -1.9, -1.9}, {1.9, 1.9} },
+    selection_box = { { -1.9, -1.9}, {1.9, 1.9} },
     picture = {
         layers = {
             {
@@ -25,7 +25,7 @@ local function createHouse(name)
                 priority = "high",
                 width = 200,
                 height = 200,
-                scale = 1,
+                scale = 0.8,
                 shift = {0, 0}
             },
         }

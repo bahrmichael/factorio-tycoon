@@ -74,14 +74,14 @@ local function safeGridAccess(city, coordinates, sendWarningForMethod)
     local row = city.grid[coordinates.y]
     if row == nil then
         if sendWarningForMethod ~= nil then
-            game.print({"", {"tycoon-grid-access-warning-row", {"tycoon-grid-access-row"}, sendWarningForMethod}})
+            game.print({"", {"tycoon-grid-access-warning", {"tycoon-grid-access-row"}, sendWarningForMethod}})
         end
         return nil
     end
     local cell = row[coordinates.x]
     if cell == nil then
         if sendWarningForMethod ~= nil then
-            game.print({"", {"tycoon-grid-access-warning-cell", {"tycoon-grid-access-row"}, sendWarningForMethod}})
+            game.print({"", {"tycoon-grid-access-warning", {"tycoon-grid-access-row"}, sendWarningForMethod}})
         end
         return nil
     end
@@ -770,6 +770,13 @@ local function startConstruction(city, buildingConstruction, allowedCoordinates)
     return false
 end
 
+--- @param coordinates Coordinates
+local function incraseCoordinates(coordinates, city)
+    -- Debugged a case where the new value would be above the current grid size --> coordinates.x > #city.grid
+    coordinates.x = coordinates.x + 1
+    coordinates.y = coordinates.y + 1
+end
+
 --- @param city City
 --- @return Coordinates | nil coordinates
 local function growAtRandomRoadEnd(city)
@@ -806,26 +813,22 @@ local function growAtRandomRoadEnd(city)
         -- Since we extended the grid (and inserted a top/left row/colum) all roadEnd coordinates need to shift one
         if city.roadEnds ~= nil then
             for value in Queue.iterate(city.roadEnds) do
-                value.coordinates.x = value.coordinates.x + 1
-                value.coordinates.y = value.coordinates.y + 1
+                incraseCoordinates(value.coordinates, city)
             end
         end
         if city.buildingLocationQueue ~= nil then
             for value in Queue.iterate(city.buildingLocationQueue) do
-                value.x = value.x + 1
-                value.y = value.y + 1
+                incraseCoordinates(value, city)
             end
         end
         if city.excavationPits ~= nil then
             for _, r in ipairs(city.excavationPits) do
-                r.coordinates.x = r.coordinates.x + 1
-                r.coordinates.y = r.coordinates.y + 1
+                incraseCoordinates(r.coordinates, city)
             end
         end
         if city.houseLocations ~= nil then
             for _, r in ipairs(city.houseLocations) do
-                r.x = r.x + 1
-                r.y = r.y + 1
+                incraseCoordinates(r, city)
             end
         end
         DEBUG.logRoadEnds(city.roadEnds)
@@ -970,9 +973,14 @@ local function completeConstruction(city, buildingTypes)
     local entityName = excavationPit.buildingConstruction.buildingType
     local entity
     if entityName == "simple" or entityName == "residential" or entityName == "highrise" then
+        local xModifier, yModifier = 0, 0
+        if entityName == "residential" then
+            xModifier = 0
+            yModifier = -0.5
+        end
         entity = game.surfaces[1].create_entity{
             name = getIteratedHouseName(entityName),
-            position = {x = startCoordinates.x - 0.5 + CELL_SIZE / 2, y = startCoordinates.y - 0.5  + CELL_SIZE / 2},
+            position = {x = startCoordinates.x + CELL_SIZE / 2 + xModifier, y = startCoordinates.y + CELL_SIZE / 2 + yModifier},
             force = "player",
             move_stuck_players = true
         }
@@ -995,7 +1003,7 @@ local function completeConstruction(city, buildingTypes)
     else
         entity = game.surfaces[1].create_entity{
             name = entityName,
-            position = {x = startCoordinates.x - 0.5 + CELL_SIZE / 2, y = startCoordinates.y - 0.5  + CELL_SIZE / 2},
+            position = {x = startCoordinates.x + CELL_SIZE / 2, y = startCoordinates.y  + CELL_SIZE / 2},
             force = "player",
             move_stuck_players = true
         }

@@ -13,14 +13,14 @@ local function safeGridAccess(city, coordinates, sendWarningForMethod)
     local row = city.grid[coordinates.y]
     if row == nil then
         if sendWarningForMethod ~= nil then
-            game.print({"", {"tycoon-grid-access-warning-row", {"tycoon-grid-access-row"}, sendWarningForMethod}})
+            game.print({"", {"tycoon-grid-access-warning", {"tycoon-grid-access-row"}, sendWarningForMethod}})
         end
         return nil
     end
     local cell = row[coordinates.x]
     if cell == nil then
         if sendWarningForMethod ~= nil then
-            game.print({"", {"tycoon-grid-access-warning-cell", {"tycoon-grid-access-row"}, sendWarningForMethod}})
+            game.print({"", {"tycoon-grid-access-warning", {"tycoon-grid-access-row"}, sendWarningForMethod}})
         end
         return nil
     end
@@ -835,7 +835,7 @@ script.on_nth_tick(600, function()
     end
 end)
 
-local CITY_GROWTH_TICKS = 300
+local CITY_GROWTH_TICKS = 60
 
 local function canBuildSimpleHouse(city)
     local simpleCount = ((city.buildingCounts or {})["simple"] or 0)
