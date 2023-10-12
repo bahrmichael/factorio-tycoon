@@ -854,6 +854,16 @@ local function startConstruction(city, buildingConstruction, allowedCoordinates)
     return false
 end
 
+
+--- @param coordinates Coordinates
+local function isCharted(city, coordinates)
+    local chunkPosition = {
+        y = math.floor((coordinates.y + getOffsetY(city)) * CELL_SIZE / 32),
+        x = math.floor((coordinates.x + getOffsetX(city)) * CELL_SIZE / 32),
+    }
+    return game.players[1].force.is_chunk_charted(game.surfaces[1], chunkPosition)
+end
+
 --- @param coordinates Coordinates
 local function incraseCoordinates(coordinates, city)
     -- Debugged a case where the new value would be above the current grid size --> coordinates.x > #city.grid
@@ -879,7 +889,6 @@ local function growAtRandomRoadEnd(city)
     end
 
     DEBUG.log('Coordinates: y=' .. roadEnd.coordinates.y .. " x=" .. roadEnd.coordinates.x)
-
 
     if roadEnd.coordinates.x <= 1
      or roadEnd.coordinates.x >= getGridSize(city.grid)
@@ -917,6 +926,11 @@ local function growAtRandomRoadEnd(city)
         end
         DEBUG.logRoadEnds(city.roadEnds)
 
+        return
+    end
+
+    if not isCharted(city, roadEnd.coordinates) then
+        DEBUG.log("RoadEnd is not charted: x=" .. roadEnd.coordinates.x .. " y=" .. roadEnd.coordinates.y)
         return
     end
 
