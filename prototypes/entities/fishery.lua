@@ -5,6 +5,7 @@ data:extend{
         icon = "__tycoon__/graphics/entity/fishery/fishery.png",
         icon_size = 64,
         max_health = 200,
+        rotatable = false,
         fixed_recipe = "tycoon-fishing",
         collision_box = { { -3.9, -3.4}, {3.9, 3.9} },
         selection_box = { { -3.9, -3.9}, {3.9, 3.9} },

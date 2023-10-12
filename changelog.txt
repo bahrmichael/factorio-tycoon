@@ -4,6 +4,16 @@ Date: 11. 10. 2023
   Balancing:
     - 10x the apple farm production (and energy consumption).
 ---------------------------------------------------------------------------------------------------
+Version: 0.0.22
+Date: 11. 10. 2023
+  Bugfixes:
+    - Fixed an issue where the butchery's picture wouldn't match its collision/selection box.
+---------------------------------------------------------------------------------------------------
+Version: 0.0.21
+Date: 11. 10. 2023
+  Balancing:
+    - 10x the apple farm production (and energy consumption).
+---------------------------------------------------------------------------------------------------
 Version: 0.0.20
 Date: 11. 10. 2023
   Major Features:

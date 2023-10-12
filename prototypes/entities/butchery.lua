@@ -9,6 +9,7 @@ data:extend{
         selection_box = { { -8.5, -2.5}, {8.5, 2.5} },
         flags = {"placeable-player", "player-creation"},
         minable = {mining_time = 1, result = "tycoon-butchery"},
+        rotatable = false,
         animation = {
             layers = {
                 {
