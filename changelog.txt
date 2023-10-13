@@ -1,6 +1,8 @@
 ---------------------------------------------------------------------------------------------------
 Version: unreleased
 Date: 12. 10. 2023
+  Features:
+    - Gardens now spawn where in gaps where any other buildings/roads are unlikely to spawn.
   Changes:
     - Rail crossings: Streets can now build across orthogonal rails.
   Bugfixes:
