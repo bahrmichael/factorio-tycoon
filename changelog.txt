@@ -4,6 +4,7 @@ Date: 12. 10. 2023
   Features:
     - Gardens now spawn where in gaps where any other buildings/roads are unlikely to spawn.
   Changes:
+    - When producing milk, the cow now has a 2% chance to die (98% success rate). On average each could should yield 5,000 milk and last 50 minutes.
     - Rail crossings: Streets can now build across orthogonal rails.
   Bugfixes:
     - Instead of crashing the game on invalid grid access, the mod now logs an error and tries to let the game continue.

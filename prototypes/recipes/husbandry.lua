@@ -31,7 +31,7 @@ data:extend{
             { type = "item", name = "tycoon-grain", amount = 10 },
         },
         results = {
-            { type = "item", name = "tycoon-cow", amount = 1 },
+            { type = "item", name = "tycoon-cow", amount = 1, probability = 0.98 },
             { type = "fluid", name = "tycoon-milk", amount = 100 },
         },
     },
