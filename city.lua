@@ -16,6 +16,7 @@ local Queue = require("queue")
 ---| "residential"
 ---| "highrise"
 ---| "tycoon-treasury"
+---| "garden"
 
 --- @class BuildingConstruction
 --- @field buildingType BuildingType
@@ -54,6 +55,7 @@ local Queue = require("queue")
 --- @field grid (Cell)[][]
 --- @field center Coordinates
 --- @field buildingLocationQueue Queue
+--- @field gardenLocationQueue Queue
 --- @field excavationPits ExcavationPit[]
 --- @field buildingCounts { BuildingType: number }
 --- @field houseLocations Coordinates[]
@@ -671,6 +673,14 @@ local function getMap(direction)
     return result
 end
 
+local totalGardenSprites = 16
+local gardenSpriteIterator = 0
+
+local function getIteratedGardenName()
+    gardenSpriteIterator = gardenSpriteIterator + 1
+    return "tycoon-garden-" .. (gardenSpriteIterator % totalGardenSprites) + 1
+end
+
 local totalExcavationPitSprites = 20
 local excavationPitSpriteIterator = 0
 
@@ -722,6 +732,9 @@ local function addBuildingLocations(city, recentCoordinates)
     if city.buildingLocationQueue == nil then
         city.buildingLocationQueue = Queue.new()
     end
+    if city.gardenLocationQueue == nil then
+        city.gardenLocationQueue = Queue.new()
+    end
 
     if recentCoordinates ~= nil then
         local surrounds = getSurroundingCoordinates(recentCoordinates.y, recentCoordinates.x, 1, false)
@@ -746,7 +759,8 @@ local function addBuildingLocations(city, recentCoordinates)
                     if not hasSurroundingRoadEnd then
                         local hasSurroundingRoad = false
                         for _, s in ipairs(surroundsOfUnused) do
-                            if city.grid[s.y][s.x].type == "road" then
+                            local surroundingCell = safeGridAccess(city, s, "addBuildingLocations")
+                            if surroundingCell ~= nil and surroundingCell.type == "road" then
                                 DEBUG.log("y=" .. value.y .. " x=" .. value.x .. " has road neighbour: y=" .. s.y .. " x=" .. s.x)
                                 hasSurroundingRoad = true
                                 break
@@ -761,7 +775,24 @@ local function addBuildingLocations(city, recentCoordinates)
                             }
                             local distanceA = getCachedDistance(value, offsetY, offsetX, cityCenter)
                             Queue.insert(city.buildingLocationQueue, value, math.ceil(distanceA))
+                        else
+                            -- Test if this cell is surrounded by houses, if yes then place a garden
+                            -- Because we use getSurroundingCoordinates with allowDiagonal=false above, we only need to count 4 houses or roads
+                            local surroundCount = 0
+                            for _, s in ipairs(surroundsOfUnused) do
+                                local surroundingCell = safeGridAccess(city, s)
+                                if surroundingCell ~= nil and surroundingCell.type == "building" then
+                                    surroundCount = surroundCount + 1
+                                end
+                            end
+                            -- Sometimes there are also 2 unused cells within a housing group. We probably need a better check, but for now we'll just build gardens when there are 3 houses.
+                            if surroundCount >= 3 then
+                                Queue.pushright(city.gardenLocationQueue, value)
+                            end
+                            -- noop, wait until there's a house and let it reattempt later
                         end
+                    else
+                        -- if there's a surrounding roadEnd, then we'll wait so that the houses don't block road expansion
                     end
                 end
             end
@@ -773,9 +804,9 @@ end
 --- @param buildingConstruction BuildingConstruction
 --- @param allowedCoordinates Coordinates[] | nil
 --- @return boolean started
-local function startConstruction(city, buildingConstruction, allowedCoordinates)
-    if city.buildingLocationQueue == nil then
-        city.buildingLocationQueue = Queue.new()
+local function startConstruction(city, buildingConstruction, queue, allowedCoordinates)
+    if queue == nil then
+        queue = Queue.new()
     end
 
     -- Make up to 10 attempts to find a location where we can start a construction site
@@ -788,7 +819,7 @@ local function startConstruction(city, buildingConstruction, allowedCoordinates)
         if allowedCoordinates ~= nil then
             coordinates = table.remove(allowedCoordinates)
         else
-            coordinates = Queue.popleft(city.buildingLocationQueue)
+            coordinates = Queue.popleft(queue)
             if coordinates == nil then
                 -- If there are no more entries left in the queue, then abort
                 return false
@@ -806,12 +837,15 @@ local function startConstruction(city, buildingConstruction, allowedCoordinates)
 
         local cell = safeGridAccess(city, coordinates)
 
-        if cell == nil then
+        if coordinates.x <= 1 or coordinates.y <= 1 or coordinates.y >= #city.grid or coordinates.x > #city.grid then
+            -- If it's at the edge of the grid, then put it back
+            Queue.pushright(queue, coordinates)
+        elseif cell == nil then
             -- noop, if the grid has not been expanded this far, then don't try to build a building here
             -- this should insert the coordinates at the end of the list, so that
             -- the next iteration will pick a different element from the beginning of the list
-            Queue.pushright(city.buildingLocationQueue, coordinates)
-        elseif cell.type == "road" or cell.type == "building" then
+            Queue.pushright(queue, coordinates)
+        elseif cell.type ~= "unused" then
             -- If this location already has a road or building, then don't attempt to build
             -- here again.
             -- noop
@@ -819,7 +853,7 @@ local function startConstruction(city, buildingConstruction, allowedCoordinates)
             -- noop, if there are collidables than retry later
             -- this should insert the coordinates at the end of the list, so that
             -- the next iteration will pick a different element from the beginning of the list
-            Queue.pushright(city.buildingLocationQueue, coordinates)
+            Queue.pushright(queue, coordinates)
         else
             -- We can start a construction site here
             -- Resource consumption is done outside of this function
@@ -907,6 +941,11 @@ local function growAtRandomRoadEnd(city)
         if city.roadEnds ~= nil then
             for value in Queue.iterate(city.roadEnds) do
                 incraseCoordinates(value.coordinates, city)
+            end
+        end
+        if city.gardenLocationQueue ~= nil then
+            for value in Queue.iterate(city.gardenLocationQueue) do
+                incraseCoordinates(value, city)
             end
         end
         if city.buildingLocationQueue ~= nil then
@@ -1027,9 +1066,16 @@ end
 --- @param buildingTypes BuildingType[] | nil
 --- @return ExcavationPit | nil excavationPit
 local function findReadyExcavationPit(excavationPits, buildingTypes)
+    local completableBuildingTypes = {"tycoon-treasury", "garden"}
+    if buildingTypes ~= nil then
+        for _, value in ipairs(buildingTypes) do
+            table.insert(completableBuildingTypes, value)
+        end
+    end
+
     for i, e in ipairs(excavationPits) do
         if e.createdAtTick + e.buildingConstruction.constructionTimeInTicks < game.tick then
-            if e.buildingConstruction.buildingType == "tycoon-treasury" or buildingTypes == nil or indexOf(buildingTypes, e.buildingConstruction.buildingType) then
+            if indexOf(completableBuildingTypes, e.buildingConstruction.buildingType) ~= nil then
                 return table.remove(excavationPits, i)
             end
         end
@@ -1098,6 +1144,34 @@ local function completeConstruction(city, buildingTypes)
             city.houseLocations = {}
         end
         table.insert(city.houseLocations, coordinates)
+
+        local neighboursOfCompletedHouse = getSurroundingCoordinates(coordinates.y, coordinates.x, 1, false)
+        for _, n in ipairs(neighboursOfCompletedHouse) do
+            local neighbourCell = safeGridAccess(city, n)
+            if neighbourCell ~= nil and neighbourCell.type == "unused" then
+                local surroundsOfUnused = getSurroundingCoordinates(n.y, n.x, 1, false)
+                -- Test if this cell is surrounded by houses, if yes then place a garden
+                -- Because we use getSurroundingCoordinates with allowDiagonal=false above, we only need to count 4 houses or roads
+                local surroundCount = 0
+                for _, s in ipairs(surroundsOfUnused) do
+                    local surroundingCell = safeGridAccess(city, s)
+                    if surroundingCell ~= nil and surroundingCell.type == "building" then
+                        surroundCount = surroundCount + 1
+                    end
+                end
+                -- Sometimes there are also 2 unused cells within a housing group. We probably need a better check, but for now we'll just build gardens when there are 3 houses.
+                if surroundCount >= 3 then
+                    Queue.pushright(city.gardenLocationQueue, n)
+                end
+            end
+        end
+    elseif entityName == "garden" then
+        entity = game.surfaces[1].create_entity{
+            name = getIteratedGardenName(),
+            position = {x = startCoordinates.x + CELL_SIZE / 2, y = startCoordinates.y  + CELL_SIZE / 2},
+            force = "player",
+            move_stuck_players = true
+        }
     else
         entity = game.surfaces[1].create_entity{
             name = entityName,
@@ -1237,7 +1311,7 @@ local function upgradeHouse(city, newStage)
     startConstruction(city, {
         buildingType = upgradePath.nextStage,
         constructionTimeInTicks = city.generator(upgradePath.upgradeDurationInSeconds[1] * 60, upgradePath.upgradeDurationInSeconds[2] * 60),
-    }, {upgradeCell.coordinates})
+    }, city.buildingLocationQueue, {upgradeCell.coordinates})
 
     return true
 end

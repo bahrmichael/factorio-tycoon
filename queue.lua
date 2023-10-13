@@ -103,14 +103,19 @@ end
 
 --- Get the number of non-empty elements in the queue.
 --- @param queue table The queue to count non-empty elements in.
+--- @param fast boolean | nil
 --- @return number The number of non-empty elements in the queue.
-function Queue.count(queue)
+function Queue.count(queue, fast)
 
     if queue == nil then
         return 0
     end
 
     local count = 0
+
+    if fast then
+        return queue.last - queue.first + 1
+    end
 
     for i = queue.first, queue.last do
         if queue[i] ~= nil then
