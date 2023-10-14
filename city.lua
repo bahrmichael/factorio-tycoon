@@ -926,7 +926,7 @@ local function isCharted(city, coordinates)
         y = math.floor((coordinates.y + getOffsetY(city)) * CELL_SIZE / 32),
         x = math.floor((coordinates.x + getOffsetX(city)) * CELL_SIZE / 32),
     }
-    return game.players[1].force.is_chunk_charted(game.surfaces[1], chunkPosition)
+    return game.forces.player.is_chunk_charted(game.surfaces[1], chunkPosition)
 end
 
 --- @param coordinates Coordinates
