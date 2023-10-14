@@ -781,6 +781,10 @@ local function addConstructionGui(city, cityGui)
         end
     end
 
+    constructionGui.add{type = "line"}
+    constructionGui.add{type = "label", caption = {"", "tycoon-gui-ubanization-requirement-1"}}
+    constructionGui.add{type = "label", caption = {"", "tycoon-gui-ubanization-requirement-2"}}
+
 end
 
  -- todo: show construction material supply
@@ -835,7 +839,7 @@ script.on_nth_tick(600, function()
     end
 end)
 
-local CITY_GROWTH_TICKS = 60
+local CITY_GROWTH_TICKS = 300
 
 local function canBuildSimpleHouse(city)
     local simpleCount = ((city.buildingCounts or {})["simple"] or 0)
