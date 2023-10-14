@@ -12,6 +12,7 @@ Date: 15. 10. 2023
     - Fixed placement and scaling of houses.
     - Prevent city from expanding into uncharted territory (and breaking subsequently).
     - Fixed an issue where roads would continue to build straight indefinitely.
+    - Fixed an issue where houses would build far away from roads.
 ---------------------------------------------------------------------------------------------------
 Version: 0.0.22
 Date: 11. 10. 2023
