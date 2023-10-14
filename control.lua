@@ -1047,6 +1047,77 @@ local function spawnPrimaryIndustries()
     end
 end
 
+--- @param y number
+--- @param x number
+--- @param size number
+--- @param allowDiagonal boolean
+--- @return Coordinates[] coordinates
+local function getSurroundingCoordinates(y, x, size, allowDiagonal)
+    local c = {}
+    for i = -1 * size, size, 1 do
+     for j = -1 * size, size, 1 do
+         if (allowDiagonal or (math.abs(i) ~= math.abs(j))) then
+             if not(i == 0 and j == 0) then
+                 table.insert(c, {
+                     y = i + y,
+                     x = j + x
+                 })
+             end
+         end
+     end
+    end
+    return c
+ end
+
+--- @param city City
+local function rediscoverUnusedFields(city)
+    local gridSize = getGridSize(city.grid)
+    if gridSize < 10 then
+        return
+    end
+    local counter = 0
+    -- Dividing by 4 gives us a radius of 2 on each side
+    local innerRadius = math.ceil(gridSize / 2 / 2)
+    local outerRadius = gridSize - innerRadius
+    for y = innerRadius, innerRadius * 2, 1 do
+        for x = innerRadius, innerRadius * 2, 1 do
+            local cell = safeGridAccess(city, {x=x, y=y})
+            if cell ~= nil and cell.type == "unused" and CITY.isCellFree(city, {x=x, y=y}) then
+                local surroundsOfUnused = getSurroundingCoordinates(y, x, 1, false)
+                -- Test if this cell is surrounded by houses, if yes then place a garden
+                -- Because we use getSurroundingCoordinates with allowDiagonal=false above, we only need to count 4 houses or roads
+                local surroundCount = 0
+                for _, s in ipairs(surroundsOfUnused) do
+                    local surroundingCell = safeGridAccess(city, s)
+                    if surroundingCell ~= nil and surroundingCell.type == "building" then
+                        surroundCount = surroundCount + 1
+                    end
+                end
+                -- Sometimes there are also 2 unused cells within a housing group. We probably need a better check, but for now we'll just build gardens when there are 3 houses.
+                if surroundCount >= 3 then
+                    Queue.pushright(city.gardenLocationQueue, {x=x, y=y})
+                else
+                    Queue.pushright(city.buildingLocationQueue, {x=x, y=y})
+                end
+
+                counter = counter +1
+                if counter > 5 then
+                    -- Just add one entry per 10 minutes
+                    -- Abort if we added enough records
+                    -- This hopefully keeps other functions performant enough
+                    return
+                end
+            end
+        end
+    end
+end
+
+script.on_nth_tick(1200, function()
+    for _, city in ipairs(global.tycoon_cities) do
+        rediscoverUnusedFields(city)
+    end
+end)
+
 script.on_nth_tick(10, function()
     spawnPrimaryIndustries()
 end)

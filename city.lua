@@ -800,6 +800,33 @@ local function addBuildingLocations(city, recentCoordinates)
     end
 end
 
+--- @param cellCoordinates Coordinates
+local function isCellFree(city, cellCoordinates)
+    local startCoordinates = {
+        y = (cellCoordinates.y + getOffsetY(city)) * CELL_SIZE,
+        x = (cellCoordinates.x + getOffsetX(city)) * CELL_SIZE,
+    }
+    local area = {
+        {x = startCoordinates.x, y = startCoordinates.y},
+        {x = startCoordinates.x + CELL_SIZE, y = startCoordinates.y + CELL_SIZE}
+    }
+    return isAreaFree(area)
+end
+
+--- @param city City
+--- @param coordinates Coordinates
+--- @return boolean
+local function isConnectedToRoad(city, coordinates)
+    local surrounds = getSurroundingCoordinates(coordinates.y, coordinates.x, 1, false)
+    for _, s in ipairs(surrounds) do
+        local c = safeGridAccess(city, s)
+        if c ~= nil and c.type == "road" then
+            return true
+        end
+    end
+    return false
+end
+
 --- @param city City
 --- @param buildingConstruction BuildingConstruction
 --- @param allowedCoordinates Coordinates[] | nil
@@ -853,6 +880,9 @@ local function startConstruction(city, buildingConstruction, queue, allowedCoord
             -- noop, if there are collidables than retry later
             -- this should insert the coordinates at the end of the list, so that
             -- the next iteration will pick a different element from the beginning of the list
+            Queue.pushright(queue, coordinates)
+        elseif buildingConstruction.buildingType == "simple" and not isConnectedToRoad(city, coordinates) then
+            -- Don't build buildings without road conenction
             Queue.pushright(queue, coordinates)
         else
             -- We can start a construction site here
@@ -1322,6 +1352,7 @@ local CITY = {
     completeConstruction = completeConstruction,
     upgradeHouse = upgradeHouse,
     startConstruction = startConstruction,
+    isCellFree = isCellFree
 }
 
 return CITY
