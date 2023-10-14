@@ -11,6 +11,7 @@ Date: 12. 10. 2023
     - Instead of crashing the game on invalid grid access, the mod now logs an error and tries to let the game continue.
     - Fixed placement and scaling of houses.
     - Prevent city from expanding into uncharted territory (and breaking subsequently).
+    - Fixed an issue where roads would continue to build straight indefinitely.
 ---------------------------------------------------------------------------------------------------
 Version: 0.0.22
 Date: 11. 10. 2023
