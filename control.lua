@@ -847,6 +847,10 @@ local function canBuildSimpleHouse(city)
 end
 
 local function canUpgradeToResidential(city)
+    if not game.forces.player.technologies["tycoon-residential-housing"].researched then
+        return false
+    end
+
     local simpleCount = ((city.buildingCounts or {})["simple"] or 0)
     if simpleCount < 20 then
         return false
@@ -870,6 +874,10 @@ local function canUpgradeToResidential(city)
 end
 
 local function canUpgradeToHighrise(city)
+    if not game.forces.player.technologies["tycoon-highrise-housing"].researched then
+        return false
+    end
+
     local residentialCount = ((city.buildingCounts or {})["residential"] or 0)
     if residentialCount < 20 then
         return false
