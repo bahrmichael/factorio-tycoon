@@ -572,8 +572,9 @@ local function pickRoadExpansion(city, roadEnd)
             }
             -- If the test doesn't succeed, then continue trying the other options
         elseif option == "1" then
-            local straightStreetLength = 0
-            for i = 1, 10, 1 do
+            -- Start with the default maximum length. The for loop will not update it if the street is longer than 10.
+            local straightStreetLength = 10
+            for i = 1, straightStreetLength, 1 do
                 local previousCell = continueInDirection(roadEnd.coordinates, invertDirection(roadEnd.direction), i)
                 local cell = safeGridAccess(city, previousCell)
                 if cell == nil then
