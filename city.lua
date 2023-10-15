@@ -308,6 +308,20 @@ end
     end
 end
 
+--- @param city City
+--- @param coordinates Coordinates
+local function hasSurroundingRoad(city, coordinates)
+    local surroundsOfUnused = getSurroundingCoordinates(coordinates.y, coordinates.x, 1, false)
+    for _, s in ipairs(surroundsOfUnused) do
+        local surroundingCell = safeGridAccess(city, s)
+        if surroundingCell ~= nil and surroundingCell.type == "road" then
+            DEBUG.log("y=" .. coordinates.y .. " x=" .. coordinates.x .. " has road neighbour: y=" .. s.y .. " x=" .. s.x)
+            return true
+        end
+    end
+    return false
+end
+
 --- @param coordinates Coordinates
 --- @param direction Direction
 --- @param distance number
@@ -758,16 +772,7 @@ local function addBuildingLocations(city, recentCoordinates)
                         end
                     end
                     if not hasSurroundingRoadEnd then
-                        local hasSurroundingRoad = false
-                        for _, s in ipairs(surroundsOfUnused) do
-                            local surroundingCell = safeGridAccess(city, s, "addBuildingLocations")
-                            if surroundingCell ~= nil and surroundingCell.type == "road" then
-                                DEBUG.log("y=" .. value.y .. " x=" .. value.x .. " has road neighbour: y=" .. s.y .. " x=" .. s.x)
-                                hasSurroundingRoad = true
-                                break
-                            end
-                        end
-                        if hasSurroundingRoad then
+                        if hasSurroundingRoad(city, value) then
                             local offsetY = getOffsetY(city)
                             local offsetX = getOffsetX(city)
                             local cityCenter = {
@@ -883,8 +888,10 @@ local function startConstruction(city, buildingConstruction, queue, allowedCoord
             -- the next iteration will pick a different element from the beginning of the list
             Queue.pushright(queue, coordinates)
         elseif buildingConstruction.buildingType == "simple" and not isConnectedToRoad(city, coordinates) then
-            -- Don't build buildings without road conenction
+            -- Don't build buildings if there is no road connection yet
             Queue.pushright(queue, coordinates)
+        elseif buildingConstruction.buildingType == "garden" and isConnectedToRoad(city, coordinates) then
+            -- Don't build gardens if there's a road right next to it
         else
             -- We can start a construction site here
             -- Resource consumption is done outside of this function
