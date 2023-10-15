@@ -33,6 +33,6 @@ local function createGarden(i)
   }
 end
 
-for i = 1, 16, 1 do
+for i = 1, 13, 1 do
   data:extend{createGarden(i)}
 end
