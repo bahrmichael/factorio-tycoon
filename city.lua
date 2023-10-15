@@ -1093,6 +1093,14 @@ local function growAtRandomRoadEnd(city)
     return roadEnd.coordinates
 end
 
+local function setHouseLight(houseUnitNumber, lightEntity)
+    if global.tycoon_house_lights == nil then
+        global.tycoon_house_lights = {}
+    end
+
+    global.tycoon_house_lights[houseUnitNumber] = lightEntity
+end
+
 --- @param excavationPits ExcavationPit[]
 --- @param buildingTypes BuildingType[] | nil
 --- @return ExcavationPit | nil excavationPit
@@ -1112,6 +1120,29 @@ local function findReadyExcavationPit(excavationPits, buildingTypes)
         end
     end
     return nil
+end
+
+--- @param houseUnitNumber number
+--- @param mapPosition Coordinates
+--- @param buildingType BuildingType
+local function createLight(houseUnitNumber, mapPosition, buildingType)
+    local light
+    if buildingType == "residential" then
+        light = game.surfaces[1].create_entity{
+            name = "hiddenlight-40",
+            position = mapPosition,
+            force = "neutral",
+        }
+    elseif buildingType == "highrise" then
+        light = game.surfaces[1].create_entity{
+            name = "hiddenlight-60",
+            position = mapPosition,
+            force = "neutral",
+        }
+    end
+    if light ~= nil then
+        setHouseLight(houseUnitNumber, light)
+    end
 end
 
 --- @param city City
@@ -1153,12 +1184,14 @@ local function completeConstruction(city, buildingTypes)
             xModifier = 0
             yModifier = -0.5
         end
+        local position = {x = startCoordinates.x + CELL_SIZE / 2 + xModifier, y = startCoordinates.y + CELL_SIZE / 2 + yModifier}
         entity = game.surfaces[1].create_entity{
             name = getIteratedHouseName(entityName),
-            position = {x = startCoordinates.x + CELL_SIZE / 2 + xModifier, y = startCoordinates.y + CELL_SIZE / 2 + yModifier},
+            position = position,
             force = "player",
             move_stuck_players = true
         }
+        createLight(entity.unit_number, position, entityName)
         -- todo: test if the script destroying this entity also fires this hook
         script.register_on_entity_destroyed(entity)
 

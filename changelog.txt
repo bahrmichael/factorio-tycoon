@@ -4,6 +4,7 @@ Date: 15. 10. 2023
   Features:
     - Gardens now spawn where in gaps where any other buildings/roads are unlikely to spawn.
   Changes:
+    - Residential and highrise houses emit light.
     - When producing milk, the cow now has a 2% chance to die (98% success rate). On average each should yield 5,000 milk and last 50 minutes.
     - Rail crossings: Streets can now build across orthogonal rails.
     - When a house or road couldn't be built earlier due to blocking entities, it will now reattempt construction there after a while.
@@ -14,6 +15,7 @@ Date: 15. 10. 2023
     - Prevent city from expanding into uncharted territory (and breaking subsequently).
     - Fixed an issue where roads would continue to build straight indefinitely.
     - Fixed an issue where houses would build far away from roads.
+    - Fixed an issue where destroying/mining houses would not update the citizen count.
 ---------------------------------------------------------------------------------------------------
 Version: 0.0.22
 Date: 11. 10. 2023
