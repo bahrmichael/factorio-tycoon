@@ -4,8 +4,8 @@ data:extend{
       name = "tycoon-apple",
       icon = "__tycoon__/graphics/icons/apple.png",
       icon_size = 64,
-      subgroup = "raw-resource",
-      order = "a[tycoon-apple]",
+      subgroup = "tycoon-primary-resources",
+      order = "a[tycoon]-a[apple]",
       stack_size = 200
     }
   }

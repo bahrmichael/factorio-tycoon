@@ -2,7 +2,7 @@ local function createExcavationPit(name, spriteSize)
   return {
     type = "container",
     name = "tycoon-" .. name,
-    icon = "__tycoon__/graphics/entity/" .. name .. "/" .. name .. ".png",
+    icon = "__tycoon__/graphics/icons/excavation-pit.png",
     icon_size = 64,
     max_health = 200,
     rotatable = false,

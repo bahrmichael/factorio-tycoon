@@ -1,12 +1,13 @@
 data:extend{
     {
         type = "recipe-category",
-        name = "tycoon-growing"
+        name = "tycoon-growing-apples"
     },
     {
         type = "recipe",
         name = "tycoon-grow-apples-with-water",
-        category = "tycoon-growing",
+        category = "tycoon-growing-apples",
+        order = "a[tycoon]-a[apples]",
         energy_required = 30,
         enabled = true,
         ingredients = {
@@ -16,9 +17,14 @@ data:extend{
         result_count = 150,
     },
     {
+        type = "recipe-category",
+        name = "tycoon-growing-wheat"
+    },
+    {
         type = "recipe",
         name = "tycoon-grow-wheat-with-water",
-        category = "tycoon-growing",
+        category = "tycoon-growing-wheat",
+        order = "a[tycoon]-b[wheat]",
         energy_required = 30,
         enabled = true,
         ingredients = {

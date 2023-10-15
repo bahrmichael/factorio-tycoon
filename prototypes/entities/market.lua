@@ -2,7 +2,7 @@ data:extend{
     {
         type = "container",
         name = "tycoon-market",
-        icon = "__tycoon__/graphics/entity/market/market.png",
+        icon = "__tycoon__/graphics/icons/market.png",
         icon_size = 64,
         max_health = 200,
         inventory_size = 50,

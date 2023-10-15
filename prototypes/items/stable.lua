@@ -4,8 +4,8 @@ data:extend{
     name = "tycoon-stable",
     icon = "__tycoon__/graphics/icons/stable.png",
     icon_size = 64,
-    subgroup = "production-machine",
-    order = "a[tycoon-stable]",
+    subgroup = "tycoon-buildings",
+    order = "a[tycoon]-f[stable]",
     stack_size = 1,
     place_result = "tycoon-stable"
   }

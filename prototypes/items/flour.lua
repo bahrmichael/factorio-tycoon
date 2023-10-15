@@ -4,8 +4,8 @@ data:extend{
       name = "tycoon-flour",
       icon = "__tycoon__/graphics/icons/flour.png",
       icon_size = 64,
-      subgroup = "raw-resource",
-      order = "a[tycoon-flour]",
+      subgroup = "tycoon-intermediate-products",
+      order = "a[tycoon]-b[flour]",
       stack_size = 200
     }
   }

@@ -4,8 +4,8 @@ data:extend{
     name = "tycoon-hardware-store",
     icon = "__tycoon__/graphics/icons/hardware-store.png",
     icon_size = 64,
-    subgroup = "production-machine",
-    order = "a[hardware-store]",
+    subgroup = "tycoon-buildings",
+    order = "a[tycoon]-c[hardware-store]",
     stack_size = 1,
     place_result = "tycoon-hardware-store"
   }

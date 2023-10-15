@@ -2,7 +2,7 @@ local function createHouse(name)
   return {
     type = "container",
     name = "tycoon-" .. name,
-    icon = "__tycoon__/graphics/entity/" .. name .. "/" .. name .. ".png",
+    icon = "__tycoon__/graphics/icons/house-highrise.png",
     icon_size = 64,
     max_health = 2000,
     rotatable = false,

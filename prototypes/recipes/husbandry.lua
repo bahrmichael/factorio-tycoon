@@ -7,6 +7,8 @@ data:extend{
         type = "recipe",
         name = "tycoon-grow-cows-with-grain",
         category = "tycoon-husbandry",
+        subgroup = "tycoon-intermediate-products",
+        order = "a[tycoon]-d[cow]",
         energy_required = 60,
         enabled = false,
         ingredients = {
@@ -23,7 +25,8 @@ data:extend{
         icon = "__tycoon__/graphics/icons/milk.png",
         icon_size = 64,
         energy_required = 60,
-        subgroup = "raw-resource",
+        subgroup = "tycoon-intermediate-products",
+        order = "a[tycoon]-e[milk]",
         enabled = false,
         ingredients = {
             { type = "fluid", name = "water", amount = 200 },

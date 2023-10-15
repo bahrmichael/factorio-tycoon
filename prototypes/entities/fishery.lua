@@ -2,7 +2,7 @@ data:extend{
     {
         type = "assembling-machine",
         name = "tycoon-fishery",
-        icon = "__tycoon__/graphics/entity/fishery/fishery.png",
+        icon = "__tycoon__/graphics/icons/fishery.png",
         icon_size = 64,
         max_health = 200,
         rotatable = false,

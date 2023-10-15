@@ -77,6 +77,8 @@ data:extend{
         type = "recipe",
         name = "tycoon-refurbish-bottle",
         category = "crafting-with-fluid",
+        subgroup = "tycoon-intermediate-products",
+        order = "a[tycoon]-g[used-bottle]",
         energy_required = 15,
         enabled = false,
         icon = "__tycoon__/graphics/icons/used-bottle.png",
@@ -85,7 +87,6 @@ data:extend{
             { type = "item", name = "tycoon-used-bottle", amount = 25 },
             { type = "fluid", name = "water", amount = 100 },
         },
-        subgroup = "raw-resource",
         results = {
             {name = "tycoon-bottle", amount = 20},
             {name = "tycoon-bottle", amount = 5, probability = 0.2}
