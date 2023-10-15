@@ -1,6 +1,27 @@
 data:extend{
     {
         type = "technology",
+        name = "tycoon-wind-power",
+        mod = "Tycoon",
+        icon = "__tycoon__/graphics/icons/wind-turbine.png",
+        icon_size = 256,
+        effects = {
+            {
+                type = "unlock-recipe",
+                recipe = "tycoon-wind-turbine",
+            }
+        },
+        order = "g-e-e",
+        unit = {
+          count = 10,
+          ingredients = {
+            { "automation-science-pack", 1 },
+          },
+          time = 10,
+        },
+    },
+    {
+        type = "technology",
         name = "tycoon-farming",
         mod = "Tycoon",
         icon = "__tycoon__/graphics/icons/farming.png",
