@@ -2,7 +2,7 @@ data:extend{
     {
         type = "container",
         name = "tycoon-hardware-store",
-        icon = "__tycoon__/graphics/entity/hardware-store/hardware-store.png",
+        icon = "__tycoon__/graphics/icons/hardware-store.png",
         icon_size = 64,
         max_health = 200,
         inventory_size = 50,

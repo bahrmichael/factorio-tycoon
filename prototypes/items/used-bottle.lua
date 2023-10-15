@@ -4,8 +4,8 @@ data:extend{
     name = "tycoon-used-bottle",
     icon = "__tycoon__/graphics/icons/used-bottle.png",
     icon_size = 64,
-    subgroup = "raw-resource",
-    order = "a[used-bottle]",
+    subgroup = "tycoon-intermediate-products",
+    order = "a[tycoon]-g[used-bottle]",
     stack_size = 50,
   }
 }

@@ -1,3 +1,4 @@
+require("prototypes.items.groups")
 require("prototypes.items.apple")
 require("prototypes.items.currency")
 require("prototypes.items.university")

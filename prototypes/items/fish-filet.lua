@@ -4,8 +4,8 @@ data:extend{
     name = "tycoon-fish-filet",
     icon = "__tycoon__/graphics/icons/fish-filet.png",
     icon_size = 64,
-    subgroup = "raw-resource",
-    order = "a[fish-filet]",
+    subgroup = "tycoon-food",
+    order = "a[tycoon]-a[fish-filet]",
     stack_size = 100,
   }
 }

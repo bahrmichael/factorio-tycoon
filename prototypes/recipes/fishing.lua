@@ -7,6 +7,8 @@ data:extend{
         type = "recipe",
         name = "tycoon-fishing",
         category = "tycoon-fishing",
+        order = "a[tycoon]-a[fish]",
+        subgroup = "tycoon-primary-resources",
         energy_required = 30,
         enabled = true,
         ingredients = {},

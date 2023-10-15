@@ -2,7 +2,7 @@ data:extend{
     {
         type = "assembling-machine",
         name = "tycoon-wheat-farm",
-        icon = "__tycoon__/graphics/entity/wheat-farm/wheat-farm.png",
+        icon = "__tycoon__/graphics/icons/wheat-farm.png",
         icon_size = 64,
         max_health = 200,
         rotatable = false,
@@ -35,7 +35,7 @@ data:extend{
                 }
             },
         },
-        crafting_categories = { "tycoon-growing" },
+        crafting_categories = { "tycoon-growing-wheat" },
         crafting_speed = 1,
         return_ingredients_on_change = true,
         -- 60KW is one solar panel, makes sense to go with "solar energy" as the crops grow

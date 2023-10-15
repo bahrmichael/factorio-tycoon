@@ -789,8 +789,8 @@ local function addConstructionGui(city, cityGui)
     end
 
     constructionGui.add{type = "line"}
-    constructionGui.add{type = "label", caption = {"", "tycoon-gui-urbanization-requirement-1"}}
-    constructionGui.add{type = "label", caption = {"", "tycoon-gui-urbanization-requirement-2"}}
+    constructionGui.add{type = "label", caption = {"", {"tycoon-gui-urbanization-requirement-1"}}}
+    constructionGui.add{type = "label", caption = {"", {"tycoon-gui-urbanization-requirement-2"}}}
 
 end
 

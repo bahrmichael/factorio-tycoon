@@ -4,8 +4,8 @@ data:extend{
     name = "tycoon-water-tower",
     icon = "__tycoon__/graphics/icons/water-tower.png",
     icon_size = 64,
-    subgroup = "production-machine",
-    order = "a[water-tower]",
+    subgroup = "tycoon-buildings",
+    order = "a[tycoon]-a[water-tower]",
     stack_size = 1,
     place_result = "tycoon-water-tower"
   }

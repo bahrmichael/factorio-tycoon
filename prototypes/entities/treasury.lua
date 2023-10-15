@@ -2,7 +2,7 @@ data:extend{
     {
         type = "container",
         name = "tycoon-treasury",
-        icon = "__tycoon__/graphics/entity/treasury/treasury.png",
+        icon = "__tycoon__/graphics/icons/treasury.png",
         icon_size = 64,
         max_health = 200,
         inventory_size = 200,

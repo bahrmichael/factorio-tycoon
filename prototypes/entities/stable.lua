@@ -2,7 +2,7 @@ data:extend{
     {
         type = "assembling-machine",
         name = "tycoon-stable",
-        icon = "__tycoon__/graphics/entity/stable/stable.png",
+        icon = "__tycoon__/graphics/icons/stable.png",
         icon_size = 64,
         max_health = 200,
         minable = {mining_time = 1, result = "tycoon-stable"},
