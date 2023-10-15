@@ -219,4 +219,53 @@ data:extend{
           time = 30,
         },
     },
+    {
+        type = "technology",
+        name = "tycoon-apple-farm-productivity-1",
+        mod = "Tycoon",
+        level = 1,
+        icon = "__tycoon__/graphics/icons/apple-farm.png",
+        icon_size = 256,
+        effects = {
+            {
+                type = "unlock-recipe",
+                recipe = "tycoon-grow-apples-with-water-2",
+            },
+        },
+        prerequisites = { "tycoon-farming" },
+        unit = {
+            count = 20,
+            ingredients = {
+                { "automation-science-pack", 1 },
+            },
+            time = 30,
+        },
+    },
 }
+
+for i = 2, 10, 1 do
+    data:extend{
+        {
+            type = "technology",
+            name = "tycoon-apple-farm-productivity-" .. i,
+            mod = "Tycoon",
+            level = i,
+            icon = "__tycoon__/graphics/icons/apple-farm.png",
+            icon_size = 256,
+            effects = {
+                {
+                    type = "unlock-recipe",
+                    recipe = "tycoon-grow-apples-with-water-" .. i + 1,
+                },
+            },
+            prerequisites = { "tycoon-apple-farm-productivity-" .. (i - 1) },
+            unit = {
+                count = 20+math.pow(i*2, 2),
+                ingredients = {
+                    { "automation-science-pack", 1 },
+                },
+                time = 30,
+            },
+        },
+    }
+end

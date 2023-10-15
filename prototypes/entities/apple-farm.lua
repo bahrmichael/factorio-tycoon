@@ -3,10 +3,10 @@ data:extend{
         type = "assembling-machine",
         name = "tycoon-apple-farm",
         icon = "__tycoon__/graphics/icons/apple-farm.png",
-        icon_size = 64,
+        icon_size = 256,
         max_health = 200,
         rotatable = false,
-        fixed_recipe = "tycoon-grow-apples-with-water",
+        -- fixed_recipe = "tycoon-grow-apples-with-water-1",
         fluid_boxes = {
             {
                 production_type = "input",

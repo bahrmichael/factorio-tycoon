@@ -3,6 +3,7 @@ Version: unreleased
 Date: 15. 10. 2023
   Major Features:
     - Wind turbines allow you to kickstart energy at remote primary productions without the need for solar panels.
+    - You can now research increased productivity for apple farms.
   Features:
     - Gardens now spawn where in gaps where any other buildings/roads are unlikely to spawn.
   Changes:

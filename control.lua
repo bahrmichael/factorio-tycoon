@@ -794,6 +794,23 @@ local function addConstructionGui(city, cityGui)
 
 end
 
+script.on_event(defines.events.on_research_finished, function(event)
+    if global.tycoon_primary_industries == nil then
+        return
+    end
+
+    local research = event.research
+    local name = research.name
+
+    if string.find(name, "tycoon-apple-farm-productivity", 1, true) then
+        local new_recipe = research.effects[1].recipe
+        for _, farm in ipairs(global.tycoon_primary_industries["tycoon-apple-farm"] or {}) do
+            farm.set_recipe(new_recipe)
+        end
+        game.forces.player.recipes["tycoon-grow-apples-with-water-" .. research.level].enabled = false
+    end
+end)
+
  -- todo: show construction material supply
 script.on_event(defines.events.on_gui_opened, function (gui)
     if gui.entity ~= nil and gui.entity.name == "tycoon-town-hall" then
@@ -1035,11 +1052,25 @@ local function placeInitialAppleFarm(city)
     return placePrimaryIndustryAtPosition(position, "tycoon-apple-farm")
 end
 
+local function addToGlobalPrimaryIndustries(entity)
+    if entity == nil then
+        return
+    end
+    if global.tycoon_primary_industries == nil then
+        global.tycoon_primary_industries = {}
+    end
+    if global.tycoon_primary_industries[entity.name] == nil then
+        global.tycoon_primary_industries[entity.name] = {}
+    end
+    table.insert(global.tycoon_primary_industries[entity.name], entity)
+end
+
 local function spawnPrimaryIndustries()
 
     if not global.tycoon_has_initial_apple_farm then
         local p = placeInitialAppleFarm(global.tycoon_cities[1])
         if p ~= nil or (global.tycoon_initial_apple_farm_radius or 100) > 1000 then
+            addToGlobalPrimaryIndustries(p)
             global.tycoon_has_initial_apple_farm = true
         else
             global.tycoon_initial_apple_farm_radius = (global.tycoon_initial_apple_farm_radius or 100) + 100
@@ -1061,6 +1092,7 @@ local function spawnPrimaryIndustries()
             local entity = placePrimaryIndustryAtPosition(position, primaryIndustry.name)
             if entity ~= nil then
                 table.remove(global.tycoon_new_primary_industries, i)
+                addToGlobalPrimaryIndustries(primaryIndustry)
             end
         end
     end
