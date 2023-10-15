@@ -5,7 +5,7 @@ Date: 15. 10. 2023
     - Wind turbines allow you to kickstart energy at remote primary productions without the need for solar panels.
     - You can now research increased productivity for apple farms.
   Features:
-    - Gardens now spawn where in gaps where any other buildings/roads are unlikely to spawn.
+    - Gardens now spawn in gaps where any other buildings/roads are unlikely to spawn.
   Changes:
     - Residential and highrise houses emit light.
     - When producing milk, the cow now has a 2% chance to die (98% success rate). On average each should yield 5,000 milk and last 50 minutes.
