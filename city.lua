@@ -674,7 +674,7 @@ local function getMap(direction)
     return result
 end
 
-local totalGardenSprites = 16
+local totalGardenSprites = 13
 local gardenSpriteIterator = 0
 
 local function getIteratedGardenName()
