@@ -358,34 +358,6 @@ end
 
 local CITY_SUPPLY_BUILDINGS = {"tycoon-market", "tycoon-hardware-store", "tycoon-water-tower"}
 
-script.on_event(defines.events.on_built_entity, function(event)
-    local entity = event.created_entity
-
-    local isCitySupplyBuilding = false
-    for _, supplyBuildingName in ipairs(CITY_SUPPLY_BUILDINGS) do
-        if entity.name == supplyBuildingName then
-            isCitySupplyBuilding = true
-            break
-        end
-    end
-    if not isCitySupplyBuilding then
-        return
-    end
-    
-    local nearbyTownHall = game.surfaces[1].find_entities_filtered{position=entity.position, radius=1000, name="tycoon-town-hall", limit=1}
-    if #nearbyTownHall == 0 then
-        game.players[1].print("You just built a city supply building outside of any town hall's range. Please build it within 1000 tiles of a city.")
-        return
-    end
-
-    local cityMapping = global.tycoon_city_buildings[nearbyTownHall[1].unit_number]
-    assert(cityMapping ~= nil, "When building an entity we found a town hall, but it has no city mapping.")
-    local cityId = cityMapping.cityId
-    local city = findCityById(cityId)
-    assert(city ~= nil, "When building an entity we found a cityId, but there is no city for it.")
-
-    invalidateSpecialBuildingsList(city, entity.name)
-end)
 
 local function isSupplyBuilding(entityName)
     for _, supplyBuildingName in ipairs(CITY_SUPPLY_BUILDINGS) do
@@ -395,6 +367,27 @@ local function isSupplyBuilding(entityName)
     end
     return false
 end
+
+script.on_event(defines.events.on_built_entity, function(event)
+    local entity = event.created_entity
+
+    if isSupplyBuilding(entity.name) then
+        local nearbyTownHall = game.surfaces[1].find_entities_filtered{position=entity.position, radius=1000, name="tycoon-town-hall", limit=1}
+        if #nearbyTownHall == 0 then
+            game.players[1].print("You just built a city supply building outside of any town hall's range. Please build it within 1000 tiles of a city.")
+            return
+        end
+
+        local cityMapping = global.tycoon_city_buildings[nearbyTownHall[1].unit_number]
+        assert(cityMapping ~= nil, "When building an entity we found a town hall, but it has no city mapping.")
+        local cityId = cityMapping.cityId
+        local city = findCityById(cityId)
+        assert(city ~= nil, "When building an entity we found a cityId, but there is no city for it.")
+
+        invalidateSpecialBuildingsList(city, entity.name)
+    end
+    
+end)
 
 --- @param entityName string
 --- @return boolean
