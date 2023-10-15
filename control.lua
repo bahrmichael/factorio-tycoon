@@ -133,6 +133,11 @@ local function initializeCity(city)
                         force = "neutral",
                         move_stuck_players = true
                     }
+                    game.surfaces[1].create_entity{
+                        name = "hiddenlight-60",
+                        position = {x = startCoordinates.x - 1 + SEGMENTS.segmentSize / 2, y = startCoordinates.y - 1 + SEGMENTS.segmentSize / 2},
+                        force = "neutral",
+                    }
                     townHall.destructible = false
                     city.special_buildings.town_hall = townHall
                     global.tycoon_city_buildings[townHall.unit_number] = {
@@ -382,37 +387,20 @@ script.on_event(defines.events.on_built_entity, function(event)
     invalidateSpecialBuildingsList(city, entity.name)
 end)
 
--- todo: also add robots and other workers
-script.on_event({defines.events.on_player_mined_entity}, function(event)
-    local entity = event.entity
-
-    local isCitySupplyBuilding = false
+local function isSupplyBuilding(entityName)
     for _, supplyBuildingName in ipairs(CITY_SUPPLY_BUILDINGS) do
-        if entity.name == supplyBuildingName then
-            isCitySupplyBuilding = true
-            break
+        if entityName == supplyBuildingName then
+            return true
         end
     end
-    if not isCitySupplyBuilding then
-        return
-    end
-    
-    local nearbyTownHall = game.surfaces[1].find_entities_filtered{position=entity.position, radius=1000, name="tycoon-town-hall", limit=1}
-    if #nearbyTownHall == 0 then
-        -- If there's no town hall in range then it probably was destroyed
-        -- todo: how should we handle that situation? Is the whole city gone?
-        -- probably in the "destroyed" event, because the player can't mine the town hall
-        return
-    end
+    return false
+end
 
-    local cityMapping = global.tycoon_city_buildings[nearbyTownHall[1].unit_number]
-    assert(cityMapping ~= nil, "When mining an entity an entity we found a town hall, but it has no city mapping.")
-    local cityId = cityMapping.cityId
-    local city = findCityById(cityId)
-    assert(city ~= nil, "When mining an entity we found a cityId, but there is no city for it.")
-
-    invalidateSpecialBuildingsList(city, entity.name)
-end)
+--- @param entityName string
+--- @return boolean
+local function isHouse(entityName)
+    return string.find(entityName, "tycoon-house-", 1, true) ~= nil
+end
 
 local citizenCounts = {
     simple = 4,
@@ -420,11 +408,32 @@ local citizenCounts = {
     highrise = 100,
 }
 
--- This event does not trigger when the player (or another entity mines a building)
--- todo: does it trigger when the game destroys an entity via scripts?
-script.on_event(defines.events.on_entity_destroyed, function(event)
+script.on_event({
+    defines.events.on_player_mined_entity,
+    defines.events.on_robot_mined_entity,
+    defines.events.on_entity_destroyed,
+}, function(event)
+    local entity = event.entity
     local unit_number = event.unit_number
-    if unit_number ~= nil then
+
+    if isSupplyBuilding(entity.name) then
+        
+        local nearbyTownHall = game.surfaces[1].find_entities_filtered{position=entity.position, radius=1000, name="tycoon-town-hall", limit=1}
+        if #nearbyTownHall == 0 then
+            -- If there's no town hall in range then it probably was destroyed
+            -- todo: how should we handle that situation? Is the whole city gone?
+            -- probably in the "destroyed" event, because the player can't mine the town hall
+            return
+        end
+
+        local cityMapping = global.tycoon_city_buildings[nearbyTownHall[1].unit_number]
+        assert(cityMapping ~= nil, "When mining an entity an entity we found a town hall, but it has no city mapping.")
+        local cityId = cityMapping.cityId
+        local city = findCityById(cityId)
+        assert(city ~= nil, "When mining an entity we found a cityId, but there is no city for it.")
+
+        invalidateSpecialBuildingsList(city, entity.name)
+    elseif isHouse(entity.name) and unit_number ~= nil then
         -- todo: make sure that new buildings are listed here
         local building = global.tycoon_city_buildings[unit_number]
         if building ~= nil then
@@ -446,6 +455,11 @@ script.on_event(defines.events.on_entity_destroyed, function(event)
                 if city ~= nil then
                     growCitizenCount(city, -1 * citizenCounts["highrise"], "highrise")
                 end
+            end
+
+            local light = global.tycoon_house_lights[unit_number]
+            if light ~= nil and light.valid then
+                light.destroy()
             end
         end
     end
@@ -782,8 +796,8 @@ local function addConstructionGui(city, cityGui)
     end
 
     constructionGui.add{type = "line"}
-    constructionGui.add{type = "label", caption = {"", "tycoon-gui-ubanization-requirement-1"}}
-    constructionGui.add{type = "label", caption = {"", "tycoon-gui-ubanization-requirement-2"}}
+    constructionGui.add{type = "label", caption = {"", "tycoon-gui-urbanization-requirement-1"}}
+    constructionGui.add{type = "label", caption = {"", "tycoon-gui-urbanization-requirement-2"}}
 
 end
 
