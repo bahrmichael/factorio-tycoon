@@ -297,6 +297,19 @@ local function localizePrimaryProductionName(name)
     end
 end
 
+--- @param prefix string
+--- @return number level
+local function findHighestProductivityLevel(prefix)
+    for i = 1, 20, 1 do
+        if (game.forces.player.technologies[prefix .. "-" .. i] or {}).researched == true then
+            -- noop, attempt the next level
+        else
+            return i
+        end
+    end
+    return 0
+end
+
 local function placePrimaryIndustryAtPosition(position, entityName)
     if position ~= nil then
         -- This is mainly here to avoid two industries being right next to each other, blocking each others pipes
@@ -333,12 +346,19 @@ local function placePrimaryIndustryAtPosition(position, entityName)
             }
         )
         if tag ~= nil then
-            return game.surfaces[1].create_entity{
+            local entity = game.surfaces[1].create_entity{
                 name = entityName,
                 position = {x = position.x, y = position.y},
                 force = "neutral",
                 move_stuck_players = true
             }
+            -- or any other primary industry that has productivity research
+            if entity.name == "tycoon-apple-farm" then
+                local level = findHighestProductivityLevel("tycoon-apple-farm-productivity")
+                local recipe = "tycoon-grow-apples-with-water-" .. level + 1
+                entity.set_recipe(recipe)
+            end
+            return entity
         end
     end
     return nil
