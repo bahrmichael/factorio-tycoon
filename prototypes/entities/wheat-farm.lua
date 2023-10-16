@@ -6,6 +6,7 @@ data:extend{
         icon_size = 64,
         max_health = 200,
         rotatable = false,
+        flags = { "not-rotatable", "not-deconstructable"},
         fixed_recipe = "tycoon-grow-wheat-with-water",
         fluid_boxes = {
             {

@@ -6,7 +6,7 @@ data:extend{
         icon_size = 256,
         max_health = 200,
         rotatable = false,
-        -- fixed_recipe = "tycoon-grow-apples-with-water-1",
+        flags = { "not-rotatable", "not-deconstructable"},
         fluid_boxes = {
             {
                 production_type = "input",

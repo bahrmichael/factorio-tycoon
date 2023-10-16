@@ -5,6 +5,7 @@ data:extend{
         icon = "__tycoon__/graphics/icons/stable.png",
         icon_size = 64,
         max_health = 200,
+        flags = { "placeable-player", "player-creation"},
         minable = {mining_time = 1, result = "tycoon-stable"},
         fluid_boxes = {
             {
