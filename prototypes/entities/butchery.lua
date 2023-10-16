@@ -7,7 +7,7 @@ data:extend{
         max_health = 200,
         collision_box = { { -8.4, -2.4}, {8.4, 2.4} },
         selection_box = { { -8.5, -2.5}, {8.5, 2.5} },
-        flags = {"placeable-player", "player-creation"},
+        flags = { "not-rotatable", "placeable-player", "player-creation"},
         minable = {mining_time = 1, result = "tycoon-butchery"},
         rotatable = false,
         animation = {

@@ -7,6 +7,7 @@ data:extend{
         max_health = 200,
         inventory_size = 200,
         rotatable = false,
+        flags = { "not-rotatable", "not-deconstructable"},
         corpse = "small-remnants",
         vehicle_impact_sound = {filename = "__base__/sound/car-metal-impact.ogg", volume = 0.65},
         repair_sound = {filename = "__base__/sound/manual-repair-simple.ogg"},

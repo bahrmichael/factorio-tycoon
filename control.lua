@@ -142,7 +142,8 @@ local function initializeCity(city)
                     city.special_buildings.town_hall = townHall
                     global.tycoon_city_buildings[townHall.unit_number] = {
                         cityId = city.id,
-                        entity_name = townHall.name
+                        entity_name = townHall.name,
+                        entity = townHall
                     }
                 end
             end
@@ -296,6 +297,19 @@ local function localizePrimaryProductionName(name)
     end
 end
 
+--- @param prefix string
+--- @return number level
+local function findHighestProductivityLevel(prefix)
+    for i = 1, 20, 1 do
+        if (game.forces.player.technologies[prefix .. "-" .. i] or {}).researched == true then
+            -- noop, attempt the next level
+        else
+            return i - 1
+        end
+    end
+    return 0
+end
+
 local function placePrimaryIndustryAtPosition(position, entityName)
     if position ~= nil then
         -- This is mainly here to avoid two industries being right next to each other, blocking each others pipes
@@ -332,12 +346,19 @@ local function placePrimaryIndustryAtPosition(position, entityName)
             }
         )
         if tag ~= nil then
-            return game.surfaces[1].create_entity{
+            local entity = game.surfaces[1].create_entity{
                 name = entityName,
                 position = {x = position.x, y = position.y},
                 force = "neutral",
                 move_stuck_players = true
             }
+            -- or any other primary industry that has productivity research
+            if entity.name == "tycoon-apple-farm" then
+                local level = findHighestProductivityLevel("tycoon-apple-farm-productivity")
+                local recipe = "tycoon-grow-apples-with-water-" .. level + 1
+                entity.set_recipe(recipe)
+            end
+            return entity
         end
     end
     return nil
@@ -406,12 +427,20 @@ script.on_event({
     defines.events.on_robot_mined_entity,
     defines.events.on_entity_destroyed,
 }, function(event)
-    local entity = event.entity
+    if global.tycoon_city_buildings == nil then
+        return
+    end
+    
     local unit_number = event.unit_number
+    local building = global.tycoon_city_buildings[unit_number]
 
-    if isSupplyBuilding(entity.name) then
+    if building == nil or building.entity == nil then
+        return
+    end
+
+    if isSupplyBuilding(building.entity_name) then
         
-        local nearbyTownHall = game.surfaces[1].find_entities_filtered{position=entity.position, radius=1000, name="tycoon-town-hall", limit=1}
+        local nearbyTownHall = game.surfaces[1].find_entities_filtered{position=building.entity.position, radius=1000, name="tycoon-town-hall", limit=1}
         if #nearbyTownHall == 0 then
             -- If there's no town hall in range then it probably was destroyed
             -- todo: how should we handle that situation? Is the whole city gone?
@@ -425,38 +454,52 @@ script.on_event({
         local city = findCityById(cityId)
         assert(city ~= nil, "When mining an entity we found a cityId, but there is no city for it.")
 
-        invalidateSpecialBuildingsList(city, entity.name)
-    elseif isHouse(entity.name) and unit_number ~= nil then
+        invalidateSpecialBuildingsList(city, building.entity_name)
+    elseif isHouse(building.entity_name) and unit_number ~= nil then
         -- todo: make sure that new buildings are listed here
-        local building = global.tycoon_city_buildings[unit_number]
-        if building ~= nil then
-            if string.find(building.entity_name, "tycoon-house-simple-", 1, true) then
-                local cityId = building.cityId
-                local city = findCityById(cityId)
-                if city ~= nil then
-                    growCitizenCount(city, -1 * citizenCounts["simple"], "simple")
-                end
-            elseif string.find(building.entity_name, "tycoon-house-residential-", 1, true) then
-                local cityId = building.cityId
-                local city = findCityById(cityId)
-                if city ~= nil then
-                    growCitizenCount(city, -1 * citizenCounts["residential"], "residential")
-                end
-            elseif string.find(building.entity_name, "tycoon-house-highrise-", 1, true) then
-                local cityId = building.cityId
-                local city = findCityById(cityId)
-                if city ~= nil then
-                    growCitizenCount(city, -1 * citizenCounts["highrise"], "highrise")
-                end
+        if string.find(building.entity_name, "tycoon-house-simple-", 1, true) then
+            local cityId = building.cityId
+            local city = findCityById(cityId)
+            if city ~= nil then
+                growCitizenCount(city, -1 * citizenCounts["simple"], "simple")
             end
+        elseif string.find(building.entity_name, "tycoon-house-residential-", 1, true) then
+            local cityId = building.cityId
+            local city = findCityById(cityId)
+            if city ~= nil then
+                growCitizenCount(city, -1 * citizenCounts["residential"], "residential")
+            end
+        elseif string.find(building.entity_name, "tycoon-house-highrise-", 1, true) then
+            local cityId = building.cityId
+            local city = findCityById(cityId)
+            if city ~= nil then
+                growCitizenCount(city, -1 * citizenCounts["highrise"], "highrise")
+            end
+        end
 
+        if global.tycoon_house_lights ~= nil then
             local light = global.tycoon_house_lights[unit_number]
             if light ~= nil and light.valid then
                 light.destroy()
             end
         end
     end
+
+    -- todo: mark cell as unused again, clear paving if necessary
 end)
+
+local function addToGlobalPrimaryIndustries(entity)
+    if entity == nil then
+        return
+    end
+    if global.tycoon_primary_industries == nil then
+        global.tycoon_primary_industries = {}
+    end
+    if global.tycoon_primary_industries[entity.name] == nil then
+        global.tycoon_primary_industries[entity.name] = {}
+    end
+    table.insert(global.tycoon_primary_industries[entity.name], entity)
+end
 
 script.on_event(defines.events.on_chunk_charted, function (chunk)
     if math.abs(chunk.position.x) < 5 and math.abs(chunk.position.y) < 5 then
@@ -498,7 +541,8 @@ script.on_event(defines.events.on_chunk_charted, function (chunk)
             end
             local nearbySameProduction = game.surfaces[1].find_entities_filtered{position=position, radius=minDistance, name=industryName, limit=1}
             if #nearbySameProduction == 0 then
-                placePrimaryIndustryAtPosition(position, industryName)
+                local p = placePrimaryIndustryAtPosition(position, industryName)
+                addToGlobalPrimaryIndustries(p)
             end
         end
     end
@@ -1050,19 +1094,6 @@ local function placeInitialAppleFarm(city)
     local coordinates = interpolateCoordinates(city.center, waterPosition, 0.5)
     local position = game.surfaces[1].find_non_colliding_position("tycoon-apple-farm", coordinates, 200, 5, true)
     return placePrimaryIndustryAtPosition(position, "tycoon-apple-farm")
-end
-
-local function addToGlobalPrimaryIndustries(entity)
-    if entity == nil then
-        return
-    end
-    if global.tycoon_primary_industries == nil then
-        global.tycoon_primary_industries = {}
-    end
-    if global.tycoon_primary_industries[entity.name] == nil then
-        global.tycoon_primary_industries[entity.name] = {}
-    end
-    table.insert(global.tycoon_primary_industries[entity.name], entity)
 end
 
 local function spawnPrimaryIndustries()

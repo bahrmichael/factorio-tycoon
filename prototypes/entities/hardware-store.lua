@@ -11,6 +11,7 @@ data:extend{
             result = "tycoon-hardware-store"
         },
         rotatable = false,
+        flags = { "not-rotatable", "placeable-player", "player-creation"},
         corpse = "small-remnants",
         vehicle_impact_sound = {filename = "__base__/sound/car-metal-impact.ogg", volume = 0.65},
         repair_sound = {filename = "__base__/sound/manual-repair-simple.ogg"},
