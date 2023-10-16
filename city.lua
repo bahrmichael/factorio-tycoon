@@ -1258,6 +1258,11 @@ local function completeConstruction(city, buildingTypes)
         createdAtTick = game.tick,
         entity = entity,
     }
+    global.tycoon_city_buildings[entity.unit_number] = {
+        cityId = city.id,
+        entity_name = entity.name,
+        entity = entity,
+    }
 
     if entityName == "tycoon-treasury" and not global.tycoon_intro_message_treasury_displayed then
         game.print({"", "[color=orange]Factorio Tycoon:[/color] ", {"tycooon-info-message-treasury"}})
