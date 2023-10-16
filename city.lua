@@ -1,5 +1,6 @@
 DEBUG = require("debug")
 local Queue = require("queue")
+local Constants = require("constants")
 
 --- @class Coordinates
 --- @field x number
@@ -60,6 +61,11 @@ local Queue = require("queue")
 --- @field buildingCounts { BuildingType: number }
 --- @field houseLocations Coordinates[]
 
+--- @alias CollidableStatus
+---| "free"
+---| "only-straight-rail"
+---| "blocked"
+
 --- @param p1 Coordinates
 --- @param p2 Coordinates
 --- @return number The distance between the two points.
@@ -69,6 +75,7 @@ local function calculateDistance(p1, p2)
     return math.sqrt(dx * dx + dy * dy)
 end
 
+--- @param city City
 --- @param coordinates Coordinates
 --- @param sendWarningForMethod string | nil
 --- @return Cell | nil cell
@@ -89,9 +96,6 @@ local function safeGridAccess(city, coordinates, sendWarningForMethod)
     end
     return cell
 end
-
--- Each cell has 6x6 tiles
-local CELL_SIZE = 6
 
 --- @param grid Cell[][]
 local function getGridSize(grid)
@@ -124,8 +128,8 @@ local function getCachedDistance(coordinates, offsetY, offsetX, cityCenter)
         return cachedDistances[key]
     else
         local distance = calculateDistance({
-            y = (coordinates.y + offsetY) * CELL_SIZE,
-            x = (coordinates.x + offsetX) * CELL_SIZE,
+            y = (coordinates.y + offsetY) * Constants.CELL_SIZE,
+            x = (coordinates.x + offsetX) * Constants.CELL_SIZE,
         }, cityCenter)
         cachedDistances[key] = distance
         return distance
@@ -194,6 +198,7 @@ end
 local function hasCliffsOrWater(area)
     local tiles = game.surfaces[1].find_tiles_filtered{
         area = area,
+        -- todo: add shallo water and others
         name = {"water", "deepwater", "cliff"},
         limit = 1
     }
@@ -215,7 +220,6 @@ local function isAreaFree(area, additionalIgnorables)
         end
     end
 
-    -- Too many trees / Other entities
     local entities = game.surfaces[1].find_entities_filtered({
         area=area,
         type={"tree"},
@@ -226,23 +230,18 @@ local function isAreaFree(area, additionalIgnorables)
     return #entities == 0
 end
 
---- @alias Collidable
----| "free"
----| "only-straight-rail"
----| "blocked"
-
 --- @param city City
 --- @param coordinates Coordinates
 --- @param additionalIgnorables string[] | nil
---- @return Collidable
+--- @return CollidableStatus
 local function checkForCollidables(city, coordinates, additionalIgnorables)
     local startCoordinates = {
-        y = (coordinates.y + getOffsetY(city)) * CELL_SIZE,
-        x = (coordinates.x + getOffsetX(city)) * CELL_SIZE,
+        y = (coordinates.y + getOffsetY(city)) * Constants.CELL_SIZE,
+        x = (coordinates.x + getOffsetX(city)) * Constants.CELL_SIZE,
     }
     local area = {
         {startCoordinates.x, startCoordinates.y},
-        {startCoordinates.x + CELL_SIZE, startCoordinates.y + CELL_SIZE}
+        {startCoordinates.x + Constants.CELL_SIZE, startCoordinates.y + Constants.CELL_SIZE}
     }
     -- Water / Cliffs
     if hasCliffsOrWater(area) then
@@ -403,12 +402,12 @@ end
 --- @return boolean
 local function areStraightRailsOrthogonal(city, coordinates, direction)
     local startCoordinates = {
-        y = (coordinates.y + getOffsetY(city)) * CELL_SIZE,
-        x = (coordinates.x + getOffsetX(city)) * CELL_SIZE,
+        y = (coordinates.y + getOffsetY(city)) * Constants.CELL_SIZE,
+        x = (coordinates.x + getOffsetX(city)) * Constants.CELL_SIZE,
     }
     local area = {
         {startCoordinates.x, startCoordinates.y},
-        {startCoordinates.x + CELL_SIZE, startCoordinates.y + CELL_SIZE}
+        {startCoordinates.x + Constants.CELL_SIZE, startCoordinates.y + Constants.CELL_SIZE}
     }
 
     -- Too many trees / Other entities
@@ -776,8 +775,8 @@ local function addBuildingLocations(city, recentCoordinates)
                             local offsetY = getOffsetY(city)
                             local offsetX = getOffsetX(city)
                             local cityCenter = {
-                                x = city.center.x + CELL_SIZE,
-                                y = city.center.y + CELL_SIZE,
+                                x = city.center.x + Constants.CELL_SIZE,
+                                y = city.center.y + Constants.CELL_SIZE,
                             }
                             local distanceA = getCachedDistance(value, offsetY, offsetX, cityCenter)
                             Queue.insert(city.buildingLocationQueue, value, math.ceil(distanceA))
@@ -809,12 +808,12 @@ end
 --- @param cellCoordinates Coordinates
 local function isCellFree(city, cellCoordinates)
     local startCoordinates = {
-        y = (cellCoordinates.y + getOffsetY(city)) * CELL_SIZE,
-        x = (cellCoordinates.x + getOffsetX(city)) * CELL_SIZE,
+        y = (cellCoordinates.y + getOffsetY(city)) * Constants.CELL_SIZE,
+        x = (cellCoordinates.x + getOffsetX(city)) * Constants.CELL_SIZE,
     }
     local area = {
         {x = startCoordinates.x, y = startCoordinates.y},
-        {x = startCoordinates.x + CELL_SIZE, y = startCoordinates.y + CELL_SIZE}
+        {x = startCoordinates.x + Constants.CELL_SIZE, y = startCoordinates.y + Constants.CELL_SIZE}
     }
     return isAreaFree(area)
 end
@@ -860,12 +859,12 @@ local function startConstruction(city, buildingConstruction, queue, allowedCoord
         end
 
         local startCoordinates = {
-            y = (coordinates.y + getOffsetY(city)) * CELL_SIZE,
-            x = (coordinates.x + getOffsetX(city)) * CELL_SIZE,
+            y = (coordinates.y + getOffsetY(city)) * Constants.CELL_SIZE,
+            x = (coordinates.x + getOffsetX(city)) * Constants.CELL_SIZE,
         }
         local area = {
             {x = startCoordinates.x, y = startCoordinates.y},
-            {x = startCoordinates.x + CELL_SIZE, y = startCoordinates.y + CELL_SIZE}
+            {x = startCoordinates.x + Constants.CELL_SIZE, y = startCoordinates.y + Constants.CELL_SIZE}
         }
 
         local cell = safeGridAccess(city, coordinates)
@@ -901,7 +900,7 @@ local function startConstruction(city, buildingConstruction, queue, allowedCoord
             -- Place an excavation site entity that will be later replaced with the actual building
             local excavationPit = game.surfaces[1].create_entity{
                 name = getIteratedExcavationPitName(),
-                position = {x = startCoordinates.x - 0.5 + CELL_SIZE / 2, y = startCoordinates.y - 0.5  + CELL_SIZE / 2},
+                position = {x = startCoordinates.x - 0.5 + Constants.CELL_SIZE / 2, y = startCoordinates.y - 0.5  + Constants.CELL_SIZE / 2},
                 force = "player",
                 move_stuck_players = true
             }
@@ -930,8 +929,8 @@ end
 --- @param coordinates Coordinates
 local function isCharted(city, coordinates)
     local chunkPosition = {
-        y = math.floor((coordinates.y + getOffsetY(city)) * CELL_SIZE / 32),
-        x = math.floor((coordinates.x + getOffsetX(city)) * CELL_SIZE / 32),
+        y = math.floor((coordinates.y + getOffsetY(city)) * Constants.CELL_SIZE / 32),
+        x = math.floor((coordinates.x + getOffsetX(city)) * Constants.CELL_SIZE / 32),
     }
     return game.forces.player.is_chunk_charted(game.surfaces[1], chunkPosition)
 end
@@ -1017,13 +1016,13 @@ local function growAtRandomRoadEnd(city)
         -- For each direction, fill the current cell with the direction and the neighbour with the inverse direction
         for _, direction in ipairs(pickedExpansionDirections) do
             local currentCellStartCoordinates = {
-                y = (roadEnd.coordinates.y + getOffsetY(city)) * CELL_SIZE,
-                x = (roadEnd.coordinates.x + getOffsetX(city)) * CELL_SIZE,
+                y = (roadEnd.coordinates.y + getOffsetY(city)) * Constants.CELL_SIZE,
+                x = (roadEnd.coordinates.x + getOffsetX(city)) * Constants.CELL_SIZE,
             }
 
             local currentArea = {
                 {currentCellStartCoordinates.x, currentCellStartCoordinates.y},
-                {currentCellStartCoordinates.x + CELL_SIZE, currentCellStartCoordinates.y + CELL_SIZE}
+                {currentCellStartCoordinates.x + Constants.CELL_SIZE, currentCellStartCoordinates.y + Constants.CELL_SIZE}
             }
             removeColldingEntities(currentArea, streetIgnorables)
 
@@ -1051,13 +1050,13 @@ local function growAtRandomRoadEnd(city)
                 neighbourPosition = {x = roadEnd.coordinates.x - 1, y = roadEnd.coordinates.y}
             end
             local neighbourCellStartCoordinates = {
-                y = (neighbourPosition.y + getOffsetY(city)) * CELL_SIZE,
-                x = (neighbourPosition.x + getOffsetX(city)) * CELL_SIZE,
+                y = (neighbourPosition.y + getOffsetY(city)) * Constants.CELL_SIZE,
+                x = (neighbourPosition.x + getOffsetX(city)) * Constants.CELL_SIZE,
             }
             
             local neighourArea = {
                 {neighbourCellStartCoordinates.x, neighbourCellStartCoordinates.y},
-                {neighbourCellStartCoordinates.x + CELL_SIZE, neighbourCellStartCoordinates.y + CELL_SIZE}
+                {neighbourCellStartCoordinates.x + Constants.CELL_SIZE, neighbourCellStartCoordinates.y + Constants.CELL_SIZE}
             }
             removeColldingEntities(neighourArea, streetIgnorables)
             
@@ -1172,8 +1171,8 @@ local function completeConstruction(city, buildingTypes)
     end
 
     local startCoordinates = {
-        y = (coordinates.y + getOffsetY(city)) * CELL_SIZE,
-        x = (coordinates.x + getOffsetX(city)) * CELL_SIZE,
+        y = (coordinates.y + getOffsetY(city)) * Constants.CELL_SIZE,
+        x = (coordinates.x + getOffsetX(city)) * Constants.CELL_SIZE,
     }
     printTiles(startCoordinates, {
         "111111",
@@ -1191,7 +1190,7 @@ local function completeConstruction(city, buildingTypes)
             xModifier = 0
             yModifier = -0.5
         end
-        local position = {x = startCoordinates.x + CELL_SIZE / 2 + xModifier, y = startCoordinates.y + CELL_SIZE / 2 + yModifier}
+        local position = {x = startCoordinates.x + Constants.CELL_SIZE / 2 + xModifier, y = startCoordinates.y + Constants.CELL_SIZE / 2 + yModifier}
         entity = game.surfaces[1].create_entity{
             name = getIteratedHouseName(entityName),
             position = position,
@@ -1239,14 +1238,14 @@ local function completeConstruction(city, buildingTypes)
     elseif entityName == "garden" then
         entity = game.surfaces[1].create_entity{
             name = getIteratedGardenName(),
-            position = {x = startCoordinates.x + CELL_SIZE / 2, y = startCoordinates.y  + CELL_SIZE / 2},
+            position = {x = startCoordinates.x + Constants.CELL_SIZE / 2, y = startCoordinates.y  + Constants.CELL_SIZE / 2},
             force = "player",
             move_stuck_players = true
         }
     else
         entity = game.surfaces[1].create_entity{
             name = entityName,
-            position = {x = startCoordinates.x + CELL_SIZE / 2, y = startCoordinates.y  + CELL_SIZE / 2},
+            position = {x = startCoordinates.x + Constants.CELL_SIZE / 2, y = startCoordinates.y  + Constants.CELL_SIZE / 2},
             force = "player",
             move_stuck_players = true
         }
@@ -1341,8 +1340,8 @@ end
 
 local function sortUpgradeCells(city, upgradeCells)
     local cityCenter = {
-        x = city.center.x + CELL_SIZE,
-        y = city.center.y + CELL_SIZE,
+        x = city.center.x + Constants.CELL_SIZE,
+        y = city.center.y + Constants.CELL_SIZE,
     }
 
     local offsetY = getOffsetY(city)

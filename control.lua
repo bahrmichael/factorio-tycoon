@@ -2,7 +2,7 @@ local Queue = require "queue"
 SEGMENTS = require("segments")
 CITY = require("city")
 CONSUMPTION = require("consumption")
--- TYCOON_STORY = require("tycoon-story")
+local Constants = require("constants")
 
 local primary_industry_names = {"tycoon-apple-farm", "tycoon-wheat-farm", "tycoon-fishery"}
 
@@ -99,7 +99,7 @@ local function initializeCity(city)
         local area = {
             -- Add 1 tile of border around it, so that it looks a bit nicer
             {x - 1, y - 1},
-            {x + SEGMENTS.segmentSize + 1, y + SEGMENTS.segmentSize + 1}
+            {x + Constants.CELL_SIZE + 1, y + Constants.CELL_SIZE + 1}
         }
         local removables = game.surfaces[1].find_entities_filtered({
             area=area,
@@ -119,8 +119,8 @@ local function initializeCity(city)
             if cell ~= nil then
                 local map = SEGMENTS.getMapForKey(cell[1])
                 local startCoordinates = {
-                    y = (y + getOffsetY(city)) * SEGMENTS.segmentSize,
-                    x = (x + getOffsetX(city)) * SEGMENTS.segmentSize,
+                    y = (y + getOffsetY(city)) * Constants.CELL_SIZE,
+                    x = (x + getOffsetX(city)) * Constants.CELL_SIZE,
                 }
                 clearCell(startCoordinates.y, startCoordinates.x)
                 if map ~= nil then
@@ -129,13 +129,13 @@ local function initializeCity(city)
                 if cell[1] == "town-hall" then
                     local townHall = game.surfaces[1].create_entity{
                         name = "tycoon-town-hall",
-                        position = {x = startCoordinates.x - 1 + SEGMENTS.segmentSize / 2, y = startCoordinates.y - 1 + SEGMENTS.segmentSize / 2},
+                        position = {x = startCoordinates.x - 1 + Constants.CELL_SIZE / 2, y = startCoordinates.y - 1 + Constants.CELL_SIZE / 2},
                         force = "neutral",
                         move_stuck_players = true
                     }
                     game.surfaces[1].create_entity{
                         name = "hiddenlight-60",
-                        position = {x = startCoordinates.x - 1 + SEGMENTS.segmentSize / 2, y = startCoordinates.y - 1 + SEGMENTS.segmentSize / 2},
+                        position = {x = startCoordinates.x - 1 + Constants.CELL_SIZE / 2, y = startCoordinates.y - 1 + Constants.CELL_SIZE / 2},
                         force = "neutral",
                     }
                     townHall.destructible = false
@@ -907,8 +907,6 @@ script.on_nth_tick(600, function()
     end
 end)
 
-local CITY_GROWTH_TICKS = 300
-
 local function canBuildSimpleHouse(city)
     local simpleCount = ((city.buildingCounts or {})["simple"] or 0)
     -- Todo: come up with a good function that slows down growth if there are too many
@@ -1204,7 +1202,7 @@ script.on_nth_tick(10, function()
     spawnPrimaryIndustries()
 end)
 
-script.on_nth_tick(CITY_GROWTH_TICKS, function(event)
+script.on_nth_tick(Constants.CITY_GROWTH_TICKS, function(event)
     -- global.tycoon_enable_debug_logging = true
 
     -- No need to do anything in the first 2 seconds
@@ -1303,9 +1301,6 @@ script.on_init(function()
     --         force = "player"
     --     }
     -- end
-
---    TYCOON_STORY[1]()
-
     
         -- /c game. player. insert{ name="stone", count=1000 }
         -- /c game. player. insert{ name="tycoon-water-tower", count=1 }
