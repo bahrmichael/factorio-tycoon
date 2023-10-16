@@ -2,8 +2,6 @@
 local SEGMENTS = {
 }
 
-SEGMENTS.segmentSize = 6
-
 local socketTypes = {
     empty = "empty",
     street = "street"

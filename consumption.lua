@@ -209,15 +209,14 @@ local resourcePrices = {
     ["tycoon-milk-bottle"] = 5 / kwPerCurrency,
     ["tycoon-bread"] = 4 / kwPerCurrency,
     ["tycoon-fish-filet"] = 4 / kwPerCurrency,
-    -- todo: balance the ones below
-    stone = 1,
-    ["iron-plate"] = 1,
-    ["steel-plate"] = 1,
-    ["stone-brick"] = 1,
-    ["concrete"] = 1,
-    ["small-lamp"] = 1,
-    ["pump"] = 1,
-    ["pipe"] = 1,
+    stone = 3 / kwPerCurrency,
+    ["iron-plate"] = 8 / kwPerCurrency,
+    ["steel-plate"] = 64,
+    ["stone-brick"] = 11 / kwPerCurrency,
+    ["concrete"] = 9 / kwPerCurrency,
+    ["small-lamp"] = 46 / kwPerCurrency,
+    ["pump"] = 201 / kwPerCurrency,
+    ["pipe"] = 9 / kwPerCurrency,
 }
 
 --- @param city City
