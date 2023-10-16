@@ -304,7 +304,7 @@ local function findHighestProductivityLevel(prefix)
         if (game.forces.player.technologies[prefix .. "-" .. i] or {}).researched == true then
             -- noop, attempt the next level
         else
-            return i
+            return i - 1
         end
     end
     return 0
