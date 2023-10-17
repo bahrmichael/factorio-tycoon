@@ -1,4 +1,9 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.1.2
+Date: 16. 10. 2023
+  Bugfixes:
+    - You can now connect the hardware store, market, and treasury to the circuit network. This allows you to read their content.
+---------------------------------------------------------------------------------------------------
 Version: 0.1.1
 Date: 16. 10. 2023
   Bugfixes:
