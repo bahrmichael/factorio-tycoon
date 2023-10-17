@@ -1,4 +1,9 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.1.1
+Date: 16. 10. 2023
+  Bugfixes:
+    - Fixed an issue where the player could change the recipe of primary industries. This would downgrade the industry's productivity to 0.
+---------------------------------------------------------------------------------------------------
 Version: 0.1.0
 Date: 16. 10. 2023
   Major Features:

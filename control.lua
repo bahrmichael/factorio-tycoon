@@ -358,6 +358,7 @@ local function placePrimaryIndustryAtPosition(position, entityName)
                 local recipe = "tycoon-grow-apples-with-water-" .. level + 1
                 entity.set_recipe(recipe)
             end
+            entity.recipe_locked = true
             return entity
         end
     end
@@ -850,6 +851,7 @@ script.on_event(defines.events.on_research_finished, function(event)
         local new_recipe = research.effects[1].recipe
         for _, farm in ipairs(global.tycoon_primary_industries["tycoon-apple-farm"] or {}) do
             farm.set_recipe(new_recipe)
+            farm.recipe_locked = true
         end
         game.forces.player.recipes["tycoon-grow-apples-with-water-" .. research.level].enabled = false
     end
