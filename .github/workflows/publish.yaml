@@ -77,4 +77,4 @@ jobs:
         git tag ${{ steps.get-version.outputs.version }}
         git push --tags
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
