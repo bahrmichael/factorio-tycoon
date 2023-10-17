@@ -73,6 +73,8 @@ jobs:
 
     - name: Create tag
       if: ${{ steps.changed-files.outputs.any_modified == 'true' && steps.get-version.outputs.version != 'unreleased' }}
-      run: git tag ${{ steps.get-version.outputs.version }}
+      run: |
+        git tag ${{ steps.get-version.outputs.version }}
+        git push --tags
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
