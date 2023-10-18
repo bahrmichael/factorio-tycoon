@@ -85,4 +85,16 @@ data:extend{
         result = "tycoon-wind-turbine",
         result_count = 1,
     },
+    {
+        type = "recipe",
+        name = "tycoon-city-planning-center",
+        category = "crafting",
+        enabled = false,
+        ingredients = {
+            { type = "item", name = "concrete", amount = 200 },
+            { type = "item", name = "steel-plate", amount = 150 },
+        },
+        result = "tycoon-city-planning-center",
+        result_count = 1,
+    },
 }

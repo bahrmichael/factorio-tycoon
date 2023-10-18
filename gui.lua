@@ -163,9 +163,15 @@ local function addConstructionMaterialsGui(rootGui, constructionNeeds, city, har
         end
     end
 
-    -- constructionGui.add{type = "line"}
-    -- constructionGui.add{type = "label", caption = {"", {"tycoon-gui-urbanization-requirement-1"}}}
-    -- constructionGui.add{type = "label", caption = {"", {"tycoon-gui-urbanization-requirement-2"}}}
+    constructionGui.add{type = "line"}
+    
+    constructionGui.add{type = "label", caption = {"", {"tycoon-gui-construction-requirement-1"}}}
+    constructionGui.add{type = "label", caption = {"", {"tycoon-gui-construction-requirement-2"}}}
+    
+    if housingType ~= "simple" then
+        constructionGui.add{type = "label", caption = {"", {"tycoon-gui-urbanization-requirement-1"}}}
+        constructionGui.add{type = "label", caption = {"", {"tycoon-gui-urbanization-requirement-2"}}}
+    end
 end
 
 --- @param rootGui any

@@ -125,7 +125,7 @@ data:extend{
         prerequisites = { "tycoon-husbandry", "automation-2" },
         order = "g-e-e",
         unit = {
-          count = 30,
+          count = 100,
           ingredients = {
             { "automation-science-pack", 1 },
             { "logistic-science-pack", 1 },
@@ -210,13 +210,37 @@ data:extend{
         prerequisites = { "fluid-handling", "concrete", "tycoon-residential-housing", "tycoon-bottling" },
         order = "g-e-e",
         unit = {
-          count = 120,
+          count = 200,
           ingredients = {
             { "automation-science-pack", 1 },
             { "logistic-science-pack", 1 },
             { "chemical-science-pack", 1 },
           },
           time = 30,
+        },
+    },
+    {
+        type = "technology",
+        name = "tycoon-multiple-cities",
+        mod = "Tycoon",
+        icon = "__tycoon__/graphics/icons/multiple-cities.png",
+        icon_size = 256,
+        effects = {
+            {
+                type = "unlock-recipe",
+                recipe = "tycoon-city-planning-center",
+            },
+        },
+        prerequisites = { "tycoon-highrise-housing" },
+        order = "g-e-e",
+        unit = {
+          count = 300,
+          ingredients = {
+            { "automation-science-pack", 1 },
+            { "logistic-science-pack", 1 },
+            { "chemical-science-pack", 1 },
+          },
+          time = 60,
         },
     },
     {
