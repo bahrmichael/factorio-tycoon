@@ -1,4 +1,9 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.1.4
+Date: 18. 10. 2023
+  Changes:
+    - The town hall's GUI now has tabs with an overview and more detailed breakdowns per housing tier.
+---------------------------------------------------------------------------------------------------
 Version: 0.1.3
 Date: 16. 10. 2023
   Bugfixes:
