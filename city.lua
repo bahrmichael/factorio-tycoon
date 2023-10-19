@@ -842,6 +842,10 @@ local function startConstruction(city, buildingConstruction, queueIndex, allowed
         city[queueIndex] = Queue.new()
     end
 
+    city[queueIndex] = Queue.removeDuplicates(city[queueIndex], function(v)
+        return v.x .. "-" .. v.y
+    end)
+
     -- Make up to 10 attempts to find a location where we can start a construction site
     local attempts = 10
     if allowedCoordinates ~= nil then
@@ -973,7 +977,9 @@ local function growAtRandomRoadEnd(city)
         DEBUG.logRoadEnds(city.roadEnds)
         -- When expanding the grid I noticed that there sometimes were duplicates, which may have multiplied the coordinate shift (e.g. 3 duplicates meant that x/y for each would be shifted by 3 cells)
         -- No idea why there are duplicates or why the multiplication happens, but removing duplicates helped as well
-        Queue.removeDuplicates(city.roadEnds)
+        Queue.removeDuplicates(city.roadEnds, function(v)
+            return v.coordinates.x .. "-" .. v.coordinates.y .. "-" .. v.direction
+        end)
         expand_grid(city)
         -- Since we extended the grid (and inserted a top/left row/colum) all roadEnd coordinates need to shift one
         if city.roadEnds ~= nil then
