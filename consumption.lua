@@ -294,7 +294,7 @@ local function consumeBasicNeeds(city)
 
     if #markets >= 1 then
         for resource, amounts in pairs(city.stats.basic_needs) do
-            if resource ~= "water" then
+            if resource ~= "water" and amounts.required > 0 then
                 consumeItem({
                     name = resource,
                     required = amounts.required
