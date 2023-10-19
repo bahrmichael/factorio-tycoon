@@ -9,6 +9,7 @@ data:extend{
         mining_time = 1,
         result = "tycoon-water-tower"
       },
+      flags = { "placeable-player", "player-creation"},
       fluid_box = {
         production_type = "input",
         base_area = 100,

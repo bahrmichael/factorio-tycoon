@@ -4,7 +4,7 @@ CITY = require("city")
 CONSUMPTION = require("consumption")
 local Constants = require("constants")
 local GUI = require("gui")
-require("city-planning")
+local CityPlanning = require("city-planning")
 
 local primary_industry_names = {"tycoon-apple-farm", "tycoon-wheat-farm", "tycoon-fishery"}
 
@@ -456,7 +456,7 @@ local function getBuildables(city, stores)
         }},
     }
 
-    local buildables = {}
+    local buildables = {"simple"}
     for key, resources in pairs(constructionResources) do
         local anyResourceMissing = false
         for _, resource in ipairs(resources) do
@@ -506,7 +506,7 @@ script.on_event(defines.events.on_gui_opened, function (gui)
 
         CONSUMPTION.updateNeeds(city)
 
-        local guiKey = "city_overview_" .. city.id
+        local guiKey = "city_overview"
         local cityGui = player.gui.relative[guiKey]
         if cityGui ~= nil then
             -- clear any previous gui so that we can fully reconstruct it
@@ -536,7 +536,7 @@ script.on_event(defines.events.on_gui_click, function(event)
 end)
 
 script.on_nth_tick(600, function()
-    for _, city in ipairs(global.tycoon_cities) do
+    for _, city in ipairs(global.tycoon_cities or {}) do
         if city.special_buildings.town_hall ~= nil and city.special_buildings.town_hall.valid then
             CONSUMPTION.consumeBasicNeeds(city)
         end
@@ -829,7 +829,7 @@ local function rediscoverUnusedFields(city)
 end
 
 script.on_nth_tick(1200, function()
-    for _, city in ipairs(global.tycoon_cities) do
+    for _, city in ipairs(global.tycoon_cities or {}) do
         rediscoverUnusedFields(city)
     end
 end)
@@ -859,22 +859,23 @@ script.on_nth_tick(Constants.CITY_GROWTH_TICKS, function(event)
         global.tycoon_info_message_primary_industries_displayed = true
     end
 
-    for _, city in ipairs(global.tycoon_cities) do
+    for _, city in ipairs(global.tycoon_cities or {}) do
         if city.special_buildings.town_hall ~= nil and city.special_buildings.town_hall.valid then
 
-            local suppliedTiers = {}
-            if CONSUMPTION.areBasicNeedsMet(city, getNeeds(city, "simple")) then
-                table.insert(suppliedTiers, "simple")
-            end
-            if CONSUMPTION.areBasicNeedsMet(city, getNeeds(city, "residential")) then
-                table.insert(suppliedTiers, "residential")
-            end
-            if CONSUMPTION.areBasicNeedsMet(city, getNeeds(city, "highrise")) then
-                table.insert(suppliedTiers, "highrise")
-            end
-            if #suppliedTiers > 0 then
-                newCityGrowth(city, suppliedTiers)
-            end
+            local suppliedTiers = {"simple"}
+            -- if CONSUMPTION.areBasicNeedsMet(city, getNeeds(city, "simple")) then
+            --     table.insert(suppliedTiers, "simple")
+            -- end
+            -- if CONSUMPTION.areBasicNeedsMet(city, getNeeds(city, "residential")) then
+            --     table.insert(suppliedTiers, "residential")
+            -- end
+            -- if CONSUMPTION.areBasicNeedsMet(city, getNeeds(city, "highrise")) then
+            --     table.insert(suppliedTiers, "highrise")
+            -- end
+            -- if #suppliedTiers > 0 then
+            --     newCityGrowth(city, suppliedTiers)
+            -- end
+            newCityGrowth(city, suppliedTiers)
 
             -- We need to initialize the tag here, because tags can only be placed on charted chunks.
             -- And the game needs a moment to start and chart the initial chunks, even if it can already place entities.
@@ -891,11 +892,69 @@ script.on_nth_tick(Constants.CITY_GROWTH_TICKS, function(event)
     end
 end)
 
+script.on_event(defines.events.on_player_cursor_stack_changed, function(event)
+    
+    local player = game.players[event.player_index]
+    if (player or {}).cursor_stack ~= nil then
+        if player.cursor_stack.valid_for_read and (player.cursor_stack.name == "tycoon-market" or player.cursor_stack.name == "tycoon-hardware-store") then
+            
+            -- Clear renderings if there are any. Otherwise we may increase the alpha value making it brighter.
+            rendering.clear("tycoon")
+
+            for _, city in ipairs(global.tycoon_cities or {}) do
+                
+                local r = rendering.draw_circle{
+                    color = {0.1, 0.2, 0.1, 0.01},
+                    -- todo: add tech that increases this range, but only up to 250 which is the max for building cities all over the map
+                    radius = 100,
+                    filled = true,
+                    target = city.special_buildings.town_hall,
+                    surface = game.surfaces[1],
+                    draw_on_ground = true,
+                }
+
+                game.print(r)
+
+                if global.tycoon_player_renderings == nil then
+                    global.tycoon_player_renderings = {}
+                end
+                if global.tycoon_player_renderings[event.player_index] == nil then
+                    global.tycoon_player_renderings[event.player_index] = {}
+                end
+                table.insert(global.tycoon_player_renderings, r)
+            end
+        else
+            -- for _, r in ipairs((global.tycoon_player_renderings or {})[event.player_index] or {}) do
+            --     -- game.print(r)
+            -- end
+            rendering.clear("tycoon")
+        end
+    end
+end)
+
+
+script.on_nth_tick(Constants.EXPANSION_TICKS, function ()
+    CityPlanning.addMoreCities()
+end)
+
+script.on_nth_tick(30, function()
+    if #(global.tycoon_cities or {}) > 0 then
+        return
+    end
+
+    global.tycoon_cities = {}
+    local position = game.surfaces[1].find_non_colliding_position("tycoon-town-center-virtual", {0, 0}, 200, 5, true)
+    position.x = math.floor(position.x)
+    position.y = math.floor(position.y)
+    CityPlanning.addCity(position)
+end)
+
 script.on_init(function()
 
     global.tycoon_global_generator = game.create_random_generator()
 
     global.tycoon_city_buildings = {}
+    global.tycoon_cities = {}
 
     -- global.tycoon_cities = {}
     -- for i = 1, 8, 1 do

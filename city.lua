@@ -930,8 +930,8 @@ end
 --- @param coordinates Coordinates
 local function isCharted(city, coordinates)
     local chunkPosition = {
-        y = math.floor((coordinates.y + getOffsetY(city)) * Constants.CELL_SIZE / 32),
-        x = math.floor((coordinates.x + getOffsetX(city)) * Constants.CELL_SIZE / 32),
+        y = math.floor((coordinates.y + getOffsetY(city)) / 32),
+        x = math.floor((coordinates.x + getOffsetX(city)) / 32),
     }
     return game.forces.player.is_chunk_charted(game.surfaces[1], chunkPosition)
 end
@@ -974,7 +974,7 @@ local function growAtRandomRoadEnd(city)
         -- When expanding the grid I noticed that there sometimes were duplicates, which may have multiplied the coordinate shift (e.g. 3 duplicates meant that x/y for each would be shifted by 3 cells)
         -- No idea why there are duplicates or why the multiplication happens, but removing duplicates helped as well
         city.roadEnds = Queue.removeDuplicates(city.roadEnds, function(v)
-            return v.coordinates.x .. "-" .. v.coordinates.y
+            return v.coordinates.x .. "-" .. v.coordinates.y .. "-" .. v.direction
         end)
         expand_grid(city)
         -- Since we extended the grid (and inserted a top/left row/colum) all roadEnd coordinates need to shift one

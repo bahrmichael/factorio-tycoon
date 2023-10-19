@@ -62,8 +62,6 @@ end
 
 local MIN_DISTANCE = Constants.CITY_RADIUS * 2 + 200
 local COST_PER_CITY = 1000
--- every 1 minute
-local EXPANSION_TICKS = 3600
 
 local function isInRangeOfCity(city, position)
     local cityCenter = city.center
@@ -103,6 +101,13 @@ local function findNewCityPosition()
         end
     end
     return nil
+end
+
+local function buildStartCoordinates(city, coordinates)
+    return {
+        y = math.floor(((coordinates.y * Constants.CELL_SIZE) + getOffsetY(city))),
+        x = math.floor(((coordinates.x * Constants.CELL_SIZE) + getOffsetX(city))),
+    }
 end
 
 local function translateStarterCell(cell)
@@ -165,10 +170,11 @@ local function initializeCity(city, position)
             local cell = safeGridAccess(city, {x=x, y=y}, "initializeCity")
             if cell ~= nil then
                 local map = SEGMENTS.getMapForKey(cell[1])
-                local startCoordinates = {
-                    y = ((y * Constants.CELL_SIZE) + getOffsetY(city)),
-                    x = ((x * Constants.CELL_SIZE) + getOffsetX(city)),
-                }
+                local startCoordinates = buildStartCoordinates(city, {x=x-0.5, y=y-0.5})
+                -- local startCoordinates = {
+                --     y = ((y * Constants.CELL_SIZE) + getOffsetY(city)),
+                --     x = ((x * Constants.CELL_SIZE) + getOffsetX(city)),
+                -- }
                 clearCell(startCoordinates.y, startCoordinates.x)
                 if map ~= nil then
                     printTiles(startCoordinates.y, startCoordinates.x, map, "concrete")
@@ -191,15 +197,6 @@ local function initializeCity(city, position)
                         cityId = city.id,
                         entity_name = townHall.name,
                         entity = townHall
-                    }
-
-                    rendering.draw_circle{
-                        color = {0.1, 0.1, 0.6, 0.01},
-                        radius = 250,
-                        filled = true,
-                        target = townHall,
-                        surface = game.surfaces[1],
-                        draw_on_ground = true,
                     }
                 end
             end
@@ -319,7 +316,7 @@ local function addCity(position)
     CONSUMPTION.updateNeeds(global.tycoon_cities[cityId])
 end
 
-script.on_nth_tick(EXPANSION_TICKS, function ()
+local function addMoreCities()
     if not game.forces.player.technologies["tycoon-multiple-cities"].researched then
         return
     end
@@ -373,14 +370,9 @@ script.on_nth_tick(EXPANSION_TICKS, function ()
     end
 
     -- todo: return isk if nothing was built
-end)
+end
 
-script.on_nth_tick(60, function()
-    if #(global.tycoon_cities or {}) > 0 and game.tick >= 60 then
-        return
-    end
-
-    global.tycoon_cities = {}
-    local position = game.surfaces[1].find_non_colliding_position("tycoon-town-center-virtual", {0, 0}, 200, 5, true)
-    addCity(position)
-end)
+return {
+    addCity = addCity,
+    addMoreCities = addMoreCities,
+}
