@@ -1367,6 +1367,24 @@ local function clearCell(city, upgradeCell)
     end
 end
 
+local function hasPlayerEntities(city, cell)
+    -- local startCoordinates = buildStartCoordinates(city, cell.coordinates)
+    local startCoordinates = {
+        y = (cell.coordinates.y + getOffsetY(city)) * Constants.CELL_SIZE,
+        x = (cell.coordinates.x + getOffsetX(city)) * Constants.CELL_SIZE,
+    }
+    local area = {
+        {x = startCoordinates.x, y = startCoordinates.y},
+        {x = startCoordinates.x + Constants.CELL_SIZE, y = startCoordinates.y + Constants.CELL_SIZE}
+    }
+    local playerEntities = game.surfaces[1].find_entities_filtered({
+        area=area,
+        force=game.forces.player,
+        limit=1
+    })
+    return #playerEntities > 0
+end
+
 --- @param city City
 --- @return boolean upgradeStarted
 local function upgradeHouse(city, newStage)
@@ -1380,6 +1398,11 @@ local function upgradeHouse(city, newStage)
     sortUpgradeCells(city, upgradeCells)
 
     local upgradeCell = upgradeCells[1]
+    -- If the player has built entities in this cell in the meantime, we can either not upgrade or destroy their entities. Staying safe and not upgrading is probably better.
+    if hasPlayerEntities(city, upgradeCell) then
+        return false
+    end
+
     clearCell(city, upgradeCell)
 
     local upgradePath = upgradeCell.upgradePath
