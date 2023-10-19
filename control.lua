@@ -726,7 +726,13 @@ script.on_event(defines.events.on_gui_opened, function (gui)
 
         CONSUMPTION.updateNeeds(city)
 
-        local guiKey = "city_overview_" .. city.id
+
+        -- For backwards compatibility
+        if player.gui.relative["city_overview_1"] then
+            player.gui.relative["city_overview_1"].destroy()
+        end
+
+        local guiKey = "city_overview"
         local cityGui = player.gui.relative[guiKey]
         if cityGui ~= nil then
             -- clear any previous gui so that we can fully reconstruct it
