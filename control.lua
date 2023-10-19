@@ -4,6 +4,7 @@ CITY = require("city")
 CONSUMPTION = require("consumption")
 local Constants = require("constants")
 local GUI = require("gui")
+local GridUtil = require("grid-util")
 
 local primary_industry_names = {"tycoon-apple-farm", "tycoon-wheat-farm", "tycoon-fishery"}
 
@@ -119,10 +120,7 @@ local function initializeCity(city)
             local cell = safeGridAccess(city, {x=x, y=y}, "initializeCity")
             if cell ~= nil then
                 local map = SEGMENTS.getMapForKey(cell[1])
-                local startCoordinates = {
-                    y = (y + getOffsetY(city)) * Constants.CELL_SIZE,
-                    x = (x + getOffsetX(city)) * Constants.CELL_SIZE,
-                }
+                local startCoordinates = GridUtil.translateCityGridToTileCoordinates(city, {y=y, x=x})
                 clearCell(startCoordinates.y, startCoordinates.x)
                 if map ~= nil then
                     printTiles(startCoordinates.y, startCoordinates.x, map, "concrete")

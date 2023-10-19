@@ -1,6 +1,7 @@
 DEBUG = require("debug")
 local Queue = require("queue")
 local Constants = require("constants")
+local GridUtil = require("grid-util")
 
 --- @class Coordinates
 --- @field x number
@@ -235,10 +236,7 @@ end
 --- @param additionalIgnorables string[] | nil
 --- @return CollidableStatus
 local function checkForCollidables(city, coordinates, additionalIgnorables)
-    local startCoordinates = {
-        y = (coordinates.y + getOffsetY(city)) * Constants.CELL_SIZE,
-        x = (coordinates.x + getOffsetX(city)) * Constants.CELL_SIZE,
-    }
+    local startCoordinates = GridUtil.translateCityGridToTileCoordinates(city, coordinates)
     local area = {
         {startCoordinates.x, startCoordinates.y},
         {startCoordinates.x + Constants.CELL_SIZE, startCoordinates.y + Constants.CELL_SIZE}
@@ -401,10 +399,7 @@ end
 --- @param direction Direction
 --- @return boolean
 local function areStraightRailsOrthogonal(city, coordinates, direction)
-    local startCoordinates = {
-        y = (coordinates.y + getOffsetY(city)) * Constants.CELL_SIZE,
-        x = (coordinates.x + getOffsetX(city)) * Constants.CELL_SIZE,
-    }
+    local startCoordinates = GridUtil.translateCityGridToTileCoordinates(city, coordinates)
     local area = {
         {startCoordinates.x, startCoordinates.y},
         {startCoordinates.x + Constants.CELL_SIZE, startCoordinates.y + Constants.CELL_SIZE}
@@ -807,10 +802,7 @@ end
 
 --- @param cellCoordinates Coordinates
 local function isCellFree(city, cellCoordinates)
-    local startCoordinates = {
-        y = (cellCoordinates.y + getOffsetY(city)) * Constants.CELL_SIZE,
-        x = (cellCoordinates.x + getOffsetX(city)) * Constants.CELL_SIZE,
-    }
+    local startCoordinates = GridUtil.translateCityGridToTileCoordinates(city, cellCoordinates)
     local area = {
         {x = startCoordinates.x, y = startCoordinates.y},
         {x = startCoordinates.x + Constants.CELL_SIZE, y = startCoordinates.y + Constants.CELL_SIZE}
@@ -863,10 +855,7 @@ local function startConstruction(city, buildingConstruction, queueIndex, allowed
             end
         end
 
-        local startCoordinates = {
-            y = (coordinates.y + getOffsetY(city)) * Constants.CELL_SIZE,
-            x = (coordinates.x + getOffsetX(city)) * Constants.CELL_SIZE,
-        }
+        local startCoordinates = GridUtil.translateCityGridToTileCoordinates(city, coordinates)
         local area = {
             {x = startCoordinates.x, y = startCoordinates.y},
             {x = startCoordinates.x + Constants.CELL_SIZE, y = startCoordinates.y + Constants.CELL_SIZE}
@@ -1022,10 +1011,7 @@ local function growAtRandomRoadEnd(city)
         DEBUG.log('Picked Expansion Directions: ' .. #pickedExpansionDirections .. " (" .. table.concat(pickedExpansionDirections, ",") .. ")")
         -- For each direction, fill the current cell with the direction and the neighbour with the inverse direction
         for _, direction in ipairs(pickedExpansionDirections) do
-            local currentCellStartCoordinates = {
-                y = (roadEnd.coordinates.y + getOffsetY(city)) * Constants.CELL_SIZE,
-                x = (roadEnd.coordinates.x + getOffsetX(city)) * Constants.CELL_SIZE,
-            }
+            local currentCellStartCoordinates = GridUtil.translateCityGridToTileCoordinates(city, roadEnd.coordinates)
 
             local currentArea = {
                 {currentCellStartCoordinates.x, currentCellStartCoordinates.y},
@@ -1056,10 +1042,7 @@ local function growAtRandomRoadEnd(city)
             elseif direction == "west" then
                 neighbourPosition = {x = roadEnd.coordinates.x - 1, y = roadEnd.coordinates.y}
             end
-            local neighbourCellStartCoordinates = {
-                y = (neighbourPosition.y + getOffsetY(city)) * Constants.CELL_SIZE,
-                x = (neighbourPosition.x + getOffsetX(city)) * Constants.CELL_SIZE,
-            }
+            local neighbourCellStartCoordinates = GridUtil.translateCityGridToTileCoordinates(city, neighbourPosition)
             
             local neighourArea = {
                 {neighbourCellStartCoordinates.x, neighbourCellStartCoordinates.y},
@@ -1177,10 +1160,7 @@ local function completeConstruction(city, buildingTypes)
         cell.entity.destroy()
     end
 
-    local startCoordinates = {
-        y = (coordinates.y + getOffsetY(city)) * Constants.CELL_SIZE,
-        x = (coordinates.x + getOffsetX(city)) * Constants.CELL_SIZE,
-    }
+    local startCoordinates = GridUtil.translateCityGridToTileCoordinates(city, coordinates)
     printTiles(startCoordinates, {
         "111111",
         "111111",
@@ -1375,10 +1355,7 @@ end
 
 local function hasPlayerEntities(city, cell)
     -- local startCoordinates = buildStartCoordinates(city, cell.coordinates)
-    local startCoordinates = {
-        y = (cell.coordinates.y + getOffsetY(city)) * Constants.CELL_SIZE,
-        x = (cell.coordinates.x + getOffsetX(city)) * Constants.CELL_SIZE,
-    }
+    local startCoordinates = GridUtil.translateCityGridToTileCoordinates(city, cell.coordinates)
     local area = {
         {x = startCoordinates.x, y = startCoordinates.y},
         {x = startCoordinates.x + Constants.CELL_SIZE, y = startCoordinates.y + Constants.CELL_SIZE}
@@ -1388,7 +1365,13 @@ local function hasPlayerEntities(city, cell)
         force=game.forces.player,
         limit=1
     })
-    return #playerEntities > 0
+    local countNonHouses = 0
+    for _, v in ipairs(playerEntities) do
+        if not string.find(v.name, "tycoon-house-", 1, true) then
+            countNonHouses = countNonHouses + 1
+        end
+    end
+    return countNonHouses > 0
 end
 
 --- @param city City
@@ -1401,9 +1384,9 @@ local function upgradeHouse(city, newStage)
         return false
     end
 
-    sortUpgradeCells(city, upgradeCells)
+    -- sortUpgradeCells(city, upgradeCells)
 
-    local upgradeCell = upgradeCells[1]
+    local upgradeCell = upgradeCells[math.random(#upgradeCells)]
     -- If the player has built entities in this cell in the meantime, we can either not upgrade or destroy their entities. Staying safe and not upgrading is probably better.
     if hasPlayerEntities(city, upgradeCell) then
         return false
