@@ -1,4 +1,5 @@
 local CONSUMPTION = require("consumption")
+local Constants = require("constants")
 
 -- This array is ordered from most expensive to cheapest, so that
 -- we do expensive upgrades first (instead of just letting the road always expand).
@@ -259,7 +260,7 @@ local function listSpecialCityBuildings(city, name)
         entities = game.surfaces[1].find_entities_filtered{
             name=name,
             position=city.special_buildings.town_hall.position,
-            radius=1000
+            radius=Constants.CITY_SIZE
         }
         city.special_buildings.other[name] = entities
     end

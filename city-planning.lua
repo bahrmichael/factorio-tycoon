@@ -8,11 +8,11 @@ local function getGridSize(grid)
 end
 
 local function getOffsetX(city)
-    return -1 * (getGridSize(city.grid) - 1) / 2 + (city.center.x or 0)
+    return (-1 * (getGridSize(city.grid) - 1) / 2) * Constants.CELL_SIZE + (city.center.x or 0)
 end
 
 local function getOffsetY(city)
-    return -1 * (getGridSize(city.grid) - 1) / 2 + (city.center.y or 0)
+    return (-1 * (getGridSize(city.grid) - 1) / 2) * Constants.CELL_SIZE + (city.center.y or 0)
 end
 
 --- @param coordinates Coordinates
@@ -60,14 +60,15 @@ local function calculateDistance(p1, p2)
     return math.sqrt(dx * dx + dy * dy)
 end
 
-local MIN_DISTANCE_CHUNKS = 5
-local COST_PER_CITY = 100
-local EXPANSION_TICKS = 600 -- 3600
+local MIN_DISTANCE = Constants.CITY_RADIUS * 2 + 200
+local COST_PER_CITY = 1000
+-- every 1 minute
+local EXPANSION_TICKS = 3600
 
 local function isInRangeOfCity(city, position)
     local cityCenter = city.center
     local distance = calculateDistance(city.center, position)
-    return distance < MIN_DISTANCE_CHUNKS * 32
+    return distance < MIN_DISTANCE
 end
 
 local function isInRangeOfAnyCity(position)
@@ -165,8 +166,8 @@ local function initializeCity(city, position)
             if cell ~= nil then
                 local map = SEGMENTS.getMapForKey(cell[1])
                 local startCoordinates = {
-                    y = (y + getOffsetY(city)) * Constants.CELL_SIZE,
-                    x = (x + getOffsetX(city)) * Constants.CELL_SIZE,
+                    y = ((y * Constants.CELL_SIZE) + getOffsetY(city)),
+                    x = ((x * Constants.CELL_SIZE) + getOffsetX(city)),
                 }
                 clearCell(startCoordinates.y, startCoordinates.x)
                 if map ~= nil then
@@ -190,6 +191,15 @@ local function initializeCity(city, position)
                         cityId = city.id,
                         entity_name = townHall.name,
                         entity = townHall
+                    }
+
+                    rendering.draw_circle{
+                        color = {0.1, 0.1, 0.6, 0.01},
+                        radius = 250,
+                        filled = true,
+                        target = townHall,
+                        surface = game.surfaces[1],
+                        draw_on_ground = true,
                     }
                 end
             end
@@ -309,8 +319,7 @@ local function addCity(position)
     CONSUMPTION.updateNeeds(global.tycoon_cities[cityId])
 end
 
--- every 1 minute
-script.on_nth_tick(3600, function ()
+script.on_nth_tick(EXPANSION_TICKS, function ()
     if not game.forces.player.technologies["tycoon-multiple-cities"].researched then
         return
     end
@@ -362,6 +371,8 @@ script.on_nth_tick(3600, function ()
         --     }
         -- )
     end
+
+    -- todo: return isk if nothing was built
 end)
 
 script.on_nth_tick(60, function()

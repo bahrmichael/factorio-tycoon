@@ -1,3 +1,5 @@
+local Constants = require("constants")
+
 --- @class BasicNeed
 --- @field provided number
 --- @field required number
@@ -131,7 +133,7 @@ local function listSpecialCityBuildings(city, name)
         entities = game.surfaces[1].find_entities_filtered{
             name=name,
             position=city.special_buildings.town_hall.position,
-            radius=1000
+            radius=Constants.CITY_RADIUS
         }
         city.special_buildings.other[name] = entities
     end

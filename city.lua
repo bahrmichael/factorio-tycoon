@@ -104,12 +104,19 @@ end
 
 --- @param city City
 local function getOffsetX(city)
-    return -1 * (getGridSize(city.grid) - 1) / 2 + city.center.x
+    return (-1 * (getGridSize(city.grid)) / 2) * Constants.CELL_SIZE + (city.center.x or 0)
 end
 
 --- @param city City
 local function getOffsetY(city)
-    return -1 * (getGridSize(city.grid) - 1) / 2 + city.center.y
+    return (-1 * (getGridSize(city.grid)) / 2) * Constants.CELL_SIZE + (city.center.y or 0)
+end
+
+local function buildStartCoordinates(city, coordinates)
+    return {
+        y = math.floor(((coordinates.y * Constants.CELL_SIZE) + getOffsetY(city))),
+        x = math.floor(((coordinates.x * Constants.CELL_SIZE) + getOffsetX(city))),
+    }
 end
 
 --- @param coordinates Coordinates
@@ -235,10 +242,7 @@ end
 --- @param additionalIgnorables string[] | nil
 --- @return CollidableStatus
 local function checkForCollidables(city, coordinates, additionalIgnorables)
-    local startCoordinates = {
-        y = (coordinates.y + getOffsetY(city)) * Constants.CELL_SIZE,
-        x = (coordinates.x + getOffsetX(city)) * Constants.CELL_SIZE,
-    }
+    local startCoordinates = buildStartCoordinates(city, coordinates)
     local area = {
         {startCoordinates.x, startCoordinates.y},
         {startCoordinates.x + Constants.CELL_SIZE, startCoordinates.y + Constants.CELL_SIZE}
@@ -401,10 +405,7 @@ end
 --- @param direction Direction
 --- @return boolean
 local function areStraightRailsOrthogonal(city, coordinates, direction)
-    local startCoordinates = {
-        y = (coordinates.y + getOffsetY(city)) * Constants.CELL_SIZE,
-        x = (coordinates.x + getOffsetX(city)) * Constants.CELL_SIZE,
-    }
+    local startCoordinates = buildStartCoordinates(city, coordinates)
     local area = {
         {startCoordinates.x, startCoordinates.y},
         {startCoordinates.x + Constants.CELL_SIZE, startCoordinates.y + Constants.CELL_SIZE}
@@ -807,10 +808,7 @@ end
 
 --- @param cellCoordinates Coordinates
 local function isCellFree(city, cellCoordinates)
-    local startCoordinates = {
-        y = (cellCoordinates.y + getOffsetY(city)) * Constants.CELL_SIZE,
-        x = (cellCoordinates.x + getOffsetX(city)) * Constants.CELL_SIZE,
-    }
+    local startCoordinates = buildStartCoordinates(city, cellCoordinates)
     local area = {
         {x = startCoordinates.x, y = startCoordinates.y},
         {x = startCoordinates.x + Constants.CELL_SIZE, y = startCoordinates.y + Constants.CELL_SIZE}
@@ -834,12 +832,17 @@ end
 
 --- @param city City
 --- @param buildingConstruction BuildingConstruction
+--- @param queueIndex string
 --- @param allowedCoordinates Coordinates[] | nil
 --- @return boolean started
-local function startConstruction(city, buildingConstruction, queue, allowedCoordinates)
-    if queue == nil then
-        queue = Queue.new()
+local function startConstruction(city, buildingConstruction, queueIndex, allowedCoordinates)
+    if city[queueIndex] == nil then
+        city[queueIndex] = Queue.new()
     end
+
+    city[queueIndex] = Queue.removeDuplicates(city[queueIndex], function(v)
+        return v.x .. "-" .. v.y
+    end)
 
     -- Make up to 10 attempts to find a location where we can start a construction site
     local attempts = 10
@@ -851,17 +854,14 @@ local function startConstruction(city, buildingConstruction, queue, allowedCoord
         if allowedCoordinates ~= nil then
             coordinates = table.remove(allowedCoordinates)
         else
-            coordinates = Queue.popleft(queue)
+            coordinates = Queue.popleft(city[queueIndex])
             if coordinates == nil then
                 -- If there are no more entries left in the queue, then abort
                 return false
             end
         end
 
-        local startCoordinates = {
-            y = (coordinates.y + getOffsetY(city)) * Constants.CELL_SIZE,
-            x = (coordinates.x + getOffsetX(city)) * Constants.CELL_SIZE,
-        }
+        local startCoordinates = buildStartCoordinates(city, coordinates)
         local area = {
             {x = startCoordinates.x, y = startCoordinates.y},
             {x = startCoordinates.x + Constants.CELL_SIZE, y = startCoordinates.y + Constants.CELL_SIZE}
@@ -871,24 +871,25 @@ local function startConstruction(city, buildingConstruction, queue, allowedCoord
 
         if coordinates.x <= 1 or coordinates.y <= 1 or coordinates.y >= #city.grid or coordinates.x > #city.grid then
             -- If it's at the edge of the grid, then put it back
-            Queue.pushright(queue, coordinates)
+            Queue.pushright(city[queueIndex], coordinates)
         elseif cell == nil then
             -- noop, if the grid has not been expanded this far, then don't try to build a building here
             -- this should insert the coordinates at the end of the list, so that
             -- the next iteration will pick a different element from the beginning of the list
-            Queue.pushright(queue, coordinates)
+            Queue.pushright(city[queueIndex], coordinates)
         elseif cell.type ~= "unused" then
             -- If this location already has a road or building, then don't attempt to build
             -- here again.
             -- noop
         elseif not isAreaFree(area) then
-            -- noop, if there are collidables than retry later
+            -- noop, if there are collidables then retry later
             -- this should insert the coordinates at the end of the list, so that
             -- the next iteration will pick a different element from the beginning of the list
-            Queue.pushright(queue, coordinates)
+            Queue.pushright(city[queueIndex], coordinates)
+            -- todo: if this point is reached by an upgrade, then the cell may get stuck. Or will it be attempted reconstruction later?
         elseif buildingConstruction.buildingType == "simple" and not isConnectedToRoad(city, coordinates) then
             -- Don't build buildings if there is no road connection yet
-            Queue.pushright(queue, coordinates)
+            Queue.pushright(city[queueIndex], coordinates)
         elseif buildingConstruction.buildingType == "garden" and isConnectedToRoad(city, coordinates) then
             -- Don't build gardens if there's a road right next to it
         else
@@ -900,7 +901,7 @@ local function startConstruction(city, buildingConstruction, queue, allowedCoord
             -- Place an excavation site entity that will be later replaced with the actual building
             local excavationPit = game.surfaces[1].create_entity{
                 name = getIteratedExcavationPitName(),
-                position = {x = startCoordinates.x - 0.5 + Constants.CELL_SIZE / 2, y = startCoordinates.y - 0.5  + Constants.CELL_SIZE / 2},
+                position = {x = startCoordinates.x + Constants.CELL_SIZE / 2, y = startCoordinates.y + Constants.CELL_SIZE / 2},
                 force = "player",
                 move_stuck_players = true
             }
@@ -972,7 +973,9 @@ local function growAtRandomRoadEnd(city)
         DEBUG.logRoadEnds(city.roadEnds)
         -- When expanding the grid I noticed that there sometimes were duplicates, which may have multiplied the coordinate shift (e.g. 3 duplicates meant that x/y for each would be shifted by 3 cells)
         -- No idea why there are duplicates or why the multiplication happens, but removing duplicates helped as well
-        Queue.removeDuplicates(city.roadEnds)
+        city.roadEnds = Queue.removeDuplicates(city.roadEnds, function(v)
+            return v.coordinates.x .. "-" .. v.coordinates.y
+        end)
         expand_grid(city)
         -- Since we extended the grid (and inserted a top/left row/colum) all roadEnd coordinates need to shift one
         if city.roadEnds ~= nil then
@@ -1015,10 +1018,7 @@ local function growAtRandomRoadEnd(city)
         DEBUG.log('Picked Expansion Directions: ' .. #pickedExpansionDirections .. " (" .. table.concat(pickedExpansionDirections, ",") .. ")")
         -- For each direction, fill the current cell with the direction and the neighbour with the inverse direction
         for _, direction in ipairs(pickedExpansionDirections) do
-            local currentCellStartCoordinates = {
-                y = (roadEnd.coordinates.y + getOffsetY(city)) * Constants.CELL_SIZE,
-                x = (roadEnd.coordinates.x + getOffsetX(city)) * Constants.CELL_SIZE,
-            }
+            local currentCellStartCoordinates = buildStartCoordinates(city, roadEnd.coordinates)
 
             local currentArea = {
                 {currentCellStartCoordinates.x, currentCellStartCoordinates.y},
@@ -1049,10 +1049,7 @@ local function growAtRandomRoadEnd(city)
             elseif direction == "west" then
                 neighbourPosition = {x = roadEnd.coordinates.x - 1, y = roadEnd.coordinates.y}
             end
-            local neighbourCellStartCoordinates = {
-                y = (neighbourPosition.y + getOffsetY(city)) * Constants.CELL_SIZE,
-                x = (neighbourPosition.x + getOffsetX(city)) * Constants.CELL_SIZE,
-            }
+            local neighbourCellStartCoordinates = buildStartCoordinates(city, neighbourPosition)
             
             local neighourArea = {
                 {neighbourCellStartCoordinates.x, neighbourCellStartCoordinates.y},
@@ -1170,10 +1167,7 @@ local function completeConstruction(city, buildingTypes)
         cell.entity.destroy()
     end
 
-    local startCoordinates = {
-        y = (coordinates.y + getOffsetY(city)) * Constants.CELL_SIZE,
-        x = (coordinates.x + getOffsetX(city)) * Constants.CELL_SIZE,
-    }
+    local startCoordinates = buildStartCoordinates(city, coordinates)
     printTiles(startCoordinates, {
         "111111",
         "111111",
@@ -1185,12 +1179,7 @@ local function completeConstruction(city, buildingTypes)
     local entityName = excavationPit.buildingConstruction.buildingType
     local entity
     if entityName == "simple" or entityName == "residential" or entityName == "highrise" then
-        local xModifier, yModifier = 0, 0
-        if entityName == "residential" then
-            xModifier = 0
-            yModifier = -0.5
-        end
-        local position = {x = startCoordinates.x + Constants.CELL_SIZE / 2 + xModifier, y = startCoordinates.y + Constants.CELL_SIZE / 2 + yModifier}
+        local position = {x = startCoordinates.x + Constants.CELL_SIZE / 2, y = startCoordinates.y + Constants.CELL_SIZE / 2}
         entity = game.surfaces[1].create_entity{
             name = getIteratedHouseName(entityName),
             position = position,
@@ -1238,14 +1227,14 @@ local function completeConstruction(city, buildingTypes)
     elseif entityName == "garden" then
         entity = game.surfaces[1].create_entity{
             name = getIteratedGardenName(),
-            position = {x = startCoordinates.x + Constants.CELL_SIZE / 2, y = startCoordinates.y  + Constants.CELL_SIZE / 2},
+            position = {x = startCoordinates.x + Constants.CELL_SIZE / 2, y = startCoordinates.y + Constants.CELL_SIZE / 2},
             force = "player",
             move_stuck_players = true
         }
     else
         entity = game.surfaces[1].create_entity{
             name = entityName,
-            position = {x = startCoordinates.x + Constants.CELL_SIZE / 2, y = startCoordinates.y  + Constants.CELL_SIZE / 2},
+            position = {x = startCoordinates.x + Constants.CELL_SIZE / 2, y = startCoordinates.y + Constants.CELL_SIZE / 2},
             force = "player",
             move_stuck_players = true
         }
@@ -1366,6 +1355,20 @@ local function clearCell(city, upgradeCell)
     end
 end
 
+local function hasPlayerEntities(city, cell)
+    local startCoordinates = buildStartCoordinates(city, cell.coordinates)
+    local area = {
+        {x = startCoordinates.x, y = startCoordinates.y},
+        {x = startCoordinates.x + Constants.CELL_SIZE, y = startCoordinates.y + Constants.CELL_SIZE}
+    }
+    local playerEntities = game.surfaces[1].find_entities_filtered({
+        area=area,
+        force=game.forces.player,
+        limit=1
+    })
+    return #playerEntities > 0
+end
+
 --- @param city City
 --- @return boolean upgradeStarted
 local function upgradeHouse(city, newStage)
@@ -1379,6 +1382,12 @@ local function upgradeHouse(city, newStage)
     sortUpgradeCells(city, upgradeCells)
 
     local upgradeCell = upgradeCells[1]
+
+    -- If the player has built entities in this cell in the meantime, we can either not upgrade or destroy their entities. Staying safe and not upgrading is probably better.
+    if hasPlayerEntities(city, upgradeCell) then
+        return false
+    end
+
     clearCell(city, upgradeCell)
 
     local upgradePath = upgradeCell.upgradePath
@@ -1386,7 +1395,7 @@ local function upgradeHouse(city, newStage)
     startConstruction(city, {
         buildingType = upgradePath.nextStage,
         constructionTimeInTicks = city.generator(upgradePath.upgradeDurationInSeconds[1] * 60, upgradePath.upgradeDurationInSeconds[2] * 60),
-    }, city.buildingLocationQueue, {upgradeCell.coordinates})
+    }, "buildingLocationQueue", {upgradeCell.coordinates})
 
     return true
 end

@@ -33,14 +33,6 @@ local function getGridSize(grid)
     return #grid
 end
 
-local function getOffsetX(city)
-    return -1 * (getGridSize(city.grid) - 1) / 2 + (city.center.x or 0)
-end
-
-local function getOffsetY(city)
-    return -1 * (getGridSize(city.grid) - 1) / 2 + (city.center.y or 0)
-end
-
 local function printTiles(startY, startX, map, tileName)
     local x, y = startX, startY
     for _, value in ipairs(map) do
@@ -584,7 +576,7 @@ local function canUpgradeToResidential(city)
     local gridSize = #city.grid
     local residentialPercentage = math.ceil(gridSize * 0.1)
     local residentialPercentageCount = residentialPercentage * residentialPercentage
-    return residentialCount < residentialPercentageCount
+    return true -- residentialCount < residentialPercentageCount
 end
 
 local function canUpgradeToHighrise(city)
@@ -652,7 +644,7 @@ local function newCityGrowth(city, suppliedTiers)
                 -- Special buildings should be completed very quickly.
                 -- Here we just wait 2 seconds by default.
                 constructionTimeInTicks = 120,
-            }, city.buildingLocationQueue)
+            }, "buildingLocationQueue")
             if not isBuilt then
                 table.insert(city.priority_buildings, 1, prioBuilding)
             end
@@ -670,7 +662,7 @@ local function newCityGrowth(city, suppliedTiers)
             isBuilt = CITY.startConstruction(city, {
                 buildingType = "simple",
                 constructionTimeInTicks = city.generator(600, 1200)
-            }, city.buildingLocationQueue)
+            }, "buildingLocationQueue")
         end
         -- Keep the road construction outside the above if block,
         -- so that the roads can expand if no building has been constructed
@@ -680,7 +672,7 @@ local function newCityGrowth(city, suppliedTiers)
                 CITY.startConstruction(city, {
                     buildingType = "garden",
                     constructionTimeInTicks = 60 -- city.generator(300, 600)
-                }, city.gardenLocationQueue)
+                }, "gardenLocationQueue")
             else
                 -- The city should not grow its road network too much if there are (valid) possibleBuildingLocations
                 -- todo: how do we separate out invalid ones?
