@@ -864,7 +864,7 @@ local function newCityGrowth(city, suppliedTiers)
                 -- Special buildings should be completed very quickly.
                 -- Here we just wait 2 seconds by default.
                 constructionTimeInTicks = 120,
-            }, city.buildingLocationQueue)
+            }, "buildingLocationQueue")
             if not isBuilt then
                 table.insert(city.priority_buildings, 1, prioBuilding)
             end
@@ -882,7 +882,7 @@ local function newCityGrowth(city, suppliedTiers)
             isBuilt = CITY.startConstruction(city, {
                 buildingType = "simple",
                 constructionTimeInTicks = city.generator(600, 1200)
-            }, city.buildingLocationQueue)
+            }, "buildingLocationQueue")
         end
         -- Keep the road construction outside the above if block,
         -- so that the roads can expand if no building has been constructed
@@ -892,7 +892,7 @@ local function newCityGrowth(city, suppliedTiers)
                 CITY.startConstruction(city, {
                     buildingType = "garden",
                     constructionTimeInTicks = 60 -- city.generator(300, 600)
-                }, city.gardenLocationQueue)
+                }, "gardenLocationQueue")
             else
                 -- The city should not grow its road network too much if there are (valid) possibleBuildingLocations
                 -- todo: how do we separate out invalid ones?

@@ -834,11 +834,12 @@ end
 
 --- @param city City
 --- @param buildingConstruction BuildingConstruction
+--- @param queueIndex string
 --- @param allowedCoordinates Coordinates[] | nil
 --- @return boolean started
-local function startConstruction(city, buildingConstruction, queue, allowedCoordinates)
-    if queue == nil then
-        queue = Queue.new()
+local function startConstruction(city, buildingConstruction, queueIndex, allowedCoordinates)
+    if city[queueIndex] == nil then
+        city[queueIndex] = Queue.new()
     end
 
     -- Make up to 10 attempts to find a location where we can start a construction site
@@ -851,7 +852,7 @@ local function startConstruction(city, buildingConstruction, queue, allowedCoord
         if allowedCoordinates ~= nil then
             coordinates = table.remove(allowedCoordinates)
         else
-            coordinates = Queue.popleft(queue)
+            coordinates = Queue.popleft(city[queueIndex])
             if coordinates == nil then
                 -- If there are no more entries left in the queue, then abort
                 return false
@@ -871,12 +872,12 @@ local function startConstruction(city, buildingConstruction, queue, allowedCoord
 
         if coordinates.x <= 1 or coordinates.y <= 1 or coordinates.y >= #city.grid or coordinates.x > #city.grid then
             -- If it's at the edge of the grid, then put it back
-            Queue.pushright(queue, coordinates)
+            Queue.pushright(city[queueIndex], coordinates)
         elseif cell == nil then
             -- noop, if the grid has not been expanded this far, then don't try to build a building here
             -- this should insert the coordinates at the end of the list, so that
             -- the next iteration will pick a different element from the beginning of the list
-            Queue.pushright(queue, coordinates)
+            Queue.pushright(city[queueIndex], coordinates)
         elseif cell.type ~= "unused" then
             -- If this location already has a road or building, then don't attempt to build
             -- here again.
@@ -885,10 +886,10 @@ local function startConstruction(city, buildingConstruction, queue, allowedCoord
             -- noop, if there are collidables than retry later
             -- this should insert the coordinates at the end of the list, so that
             -- the next iteration will pick a different element from the beginning of the list
-            Queue.pushright(queue, coordinates)
+            Queue.pushright(city[queueIndex], coordinates)
         elseif buildingConstruction.buildingType == "simple" and not isConnectedToRoad(city, coordinates) then
             -- Don't build buildings if there is no road connection yet
-            Queue.pushright(queue, coordinates)
+            Queue.pushright(city[queueIndex], coordinates)
         elseif buildingConstruction.buildingType == "garden" and isConnectedToRoad(city, coordinates) then
             -- Don't build gardens if there's a road right next to it
         else
@@ -1386,7 +1387,7 @@ local function upgradeHouse(city, newStage)
     startConstruction(city, {
         buildingType = upgradePath.nextStage,
         constructionTimeInTicks = city.generator(upgradePath.upgradeDurationInSeconds[1] * 60, upgradePath.upgradeDurationInSeconds[2] * 60),
-    }, city.buildingLocationQueue, {upgradeCell.coordinates})
+    }, "buildingLocationQueue", {upgradeCell.coordinates})
 
     return true
 end
