@@ -231,7 +231,7 @@ data:extend{
                 recipe = "tycoon-city-planning-center",
             },
         },
-        prerequisites = { "tycoon-highrise-housing" },
+        prerequisites = { "tycoon-highrise-housing", "automated-rail-transportation" },
         order = "g-e-e",
         unit = {
           count = 300,

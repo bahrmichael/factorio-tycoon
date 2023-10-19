@@ -4,6 +4,7 @@ CITY = require("city")
 CONSUMPTION = require("consumption")
 local Constants = require("constants")
 local GUI = require("gui")
+require("city-planning")
 
 local primary_industry_names = {"tycoon-apple-farm", "tycoon-wheat-farm", "tycoon-fishery"}
 
@@ -55,186 +56,7 @@ local function printTiles(startY, startX, map, tileName)
     end
 end
 
-local function translateStarterCell(cell)
-    if cell == "intersection" then
-        cell = {
-            type = "road",
-            roadSockets = {"south", "north", "east", "west"}
-        }
-    elseif cell == "linear.horizontal" then
-        cell = {
-            type = "road",
-            roadSockets = {"east", "west"}
-        }
-    elseif cell == "linear.vertical" then
-        cell = {
-            type = "road",
-            roadSockets = {"south", "north"}
-        }
-    elseif cell == "town-hall" then
-        cell = {
-            type = "building"
-        }
-    else
-        cell = {
-            type = "road",
-            roadSockets = {"south", "north", "east", "west"}
-        }
-        -- assert(false, "Should not reach this branch in translateStarterCell.")
-    end
-    return cell
-end
 
-local function initializeCity(city)
-    city.grid = {
-        {{"corner.rightToBottom"},    {"linear.horizontal"}, {"corner.bottomToLeft"}},
-        {{"linear.vertical"}, {"town-hall"},         {"linear.vertical"}},
-        {{"corner.topToRight"},    {"linear.horizontal"}, {"corner.leftToTop"}},
-    }
-
-    local position = game.surfaces[1].find_non_colliding_position("tycoon-town-center-virtual", {0, 0}, 200, 5, true)
-    city.center.x = position.x
-    city.center.y = position.y
-
-    local function clearCell(y, x)
-        local area = {
-            -- Add 1 tile of border around it, so that it looks a bit nicer
-            {x - 1, y - 1},
-            {x + Constants.CELL_SIZE + 1, y + Constants.CELL_SIZE + 1}
-        }
-        local removables = game.surfaces[1].find_entities_filtered({
-            area=area,
-            name={"character", "tycoon-town-hall"},
-            invert=true
-        })
-        for _, entity in ipairs(removables) do
-            if entity.valid then
-                entity.destroy()
-            end
-        end
-    end
-
-    for y = 1, getGridSize(city.grid) do
-        for x = 1, getGridSize(city.grid) do
-            local cell = safeGridAccess(city, {x=x, y=y}, "initializeCity")
-            if cell ~= nil then
-                local map = SEGMENTS.getMapForKey(cell[1])
-                local startCoordinates = {
-                    y = (y + getOffsetY(city)) * Constants.CELL_SIZE,
-                    x = (x + getOffsetX(city)) * Constants.CELL_SIZE,
-                }
-                clearCell(startCoordinates.y, startCoordinates.x)
-                if map ~= nil then
-                    printTiles(startCoordinates.y, startCoordinates.x, map, "concrete")
-                end
-                if cell[1] == "town-hall" then
-                    local townHall = game.surfaces[1].create_entity{
-                        name = "tycoon-town-hall",
-                        position = {x = startCoordinates.x - 1 + Constants.CELL_SIZE / 2, y = startCoordinates.y - 1 + Constants.CELL_SIZE / 2},
-                        force = "neutral",
-                        move_stuck_players = true
-                    }
-                    game.surfaces[1].create_entity{
-                        name = "hiddenlight-60",
-                        position = {x = startCoordinates.x - 1 + Constants.CELL_SIZE / 2, y = startCoordinates.y - 1 + Constants.CELL_SIZE / 2},
-                        force = "neutral",
-                    }
-                    townHall.destructible = false
-                    city.special_buildings.town_hall = townHall
-                    global.tycoon_city_buildings[townHall.unit_number] = {
-                        cityId = city.id,
-                        entity_name = townHall.name,
-                        entity = townHall
-                    }
-                end
-            end
-        end
-    end
-
-
-    for i = 1, #city.grid, 1 do
-        for j = 1, #city.grid, 1 do
-            local c = safeGridAccess(city, {y=i, x=j})
-            -- todo: rather replace this with a proper initial grid (no need for translation then)
-            assert(c ~= nil or #c == 0, "Failed to translate starter cells of city.")
-            city.grid[i][j] = translateStarterCell(c[1])
-        end
-    end
-
-    local possibleRoadEnds = {
-        {
-            coordinates = {
-                x = 1,
-                y = 1,
-            },
-            direction = "west"
-        },
-        {
-            coordinates = {
-                x = 1,
-                y = 1,
-            },
-            direction = "north"
-        },
-
-        {
-            coordinates = {
-                x = 3,
-                y = 1,
-            },
-            direction = "east"
-        },
-        {
-            coordinates = {
-                x = 3,
-                y = 1,
-            },
-            direction = "north"
-        },
-
-        {
-            coordinates = {
-                x = 3,
-                y = 3,
-            },
-            direction = "east"
-        },
-        {
-            coordinates = {
-                x = 3,
-                y = 3,
-            },
-            direction = "south"
-        },
-
-        {
-            coordinates = {
-                x = 1,
-                y = 3,
-            },
-            direction = "west"
-        },
-        {
-            coordinates = {
-                x = 1,
-                y = 3,
-            },
-            direction = "south"
-        },
-    }
-
-    city.roadEnds = Queue.new()
-
-    -- We're adding some randomness here
-    -- Instead of adding 8 road connections to the town center, we pick between 4 and 8.
-    -- This makes individual towns feel a bit more diverse.
-    local roadEndCount = city.generator(4, 8)
-    for i = 1, roadEndCount, 1 do
-        Queue.pushright(city.roadEnds, table.remove(possibleRoadEnds, city.generator(#possibleRoadEnds)))
-    end
-
-    table.insert(city.priority_buildings, {name = "tycoon-treasury", priority = 10})
-end
 
 local function growCitizenCount(city, count, tier)
     if city.citizens[tier] == nil then
@@ -918,7 +740,7 @@ end
 
 local function spawnPrimaryIndustries()
 
-    if not global.tycoon_has_initial_apple_farm then
+    if not global.tycoon_has_initial_apple_farm and #(global.tycoon_cities or {}) > 0 then
         local p = placeInitialAppleFarm(global.tycoon_cities[1])
         if p ~= nil or (global.tycoon_initial_apple_farm_radius or 100) > 1000 then
             addToGlobalPrimaryIndustries(p)
@@ -1082,38 +904,6 @@ script.on_init(function()
     global.tycoon_global_generator = game.create_random_generator()
 
     global.tycoon_city_buildings = {}
-
-    local cityId = 1
-    local generatorSalt = cityId * 1337
-    global.tycoon_cities = {{
-        id = cityId,
-        generator = game.create_random_generator(game.surfaces[1].map_gen_settings.seed + generatorSalt),
-        grid = {},
-        pending_cells = {},
-        priority_buildings = {},
-        special_buildings = {
-            town_hall = nil,
-            other = {}
-        },
-        center = {
-            x = 8,
-            y = -3,
-        },
-        hasTag = false,
-        name = "Your First City",
-        stats = {
-            basic_needs = {},
-            construction_materials = {}
-        },
-        citizens = {
-            simple = 0,
-            residential = 0,
-            highrise = 0,
-        },
-        constructionProbability = 1.0,
-    }}
-    initializeCity(global.tycoon_cities[1])
-    CONSUMPTION.updateNeeds(global.tycoon_cities[1])
 
     -- global.tycoon_cities = {}
     -- for i = 1, 8, 1 do
