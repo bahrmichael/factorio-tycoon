@@ -128,28 +128,19 @@ end
 
 --- Remove duplicate values from the queue.
 --- @param queue table The queue to remove duplicates from.
-function Queue.removeDuplicates(queue)
+function Queue.removeDuplicates(queue, toKey)
     local uniqueValues = {}
-    local currentIndex = queue.first
-    local last = queue.last
-
+    local newQueue = Queue.new()
     for i = queue.first, queue.last, 1 do
-        local value = queue[i]
-        if value ~= nil then
-            if uniqueValues[value] then
-                -- Value is a duplicate, remove it
-                for i = currentIndex, last - 1 do
-                    queue[i] = queue[i + 1]
-                end
-
-                queue[last] = nil
-                last = last - 1
-            else
+        if queue[i] ~= nil then
+            local value = toKey(queue[i])
+            if not uniqueValues[value] then
+                Queue.pushright(newQueue, queue[i])
                 uniqueValues[value] = true
-                currentIndex = currentIndex + 1
             end
         end
     end
+    return newQueue
 end
 
 
