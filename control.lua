@@ -664,6 +664,40 @@ local function getBuildables(city, stores)
     return buildables
 end
 
+script.on_event(defines.events.on_player_cursor_stack_changed, function(event)
+    local player = game.players[event.player_index]
+    if (player or {}).cursor_stack ~= nil then
+        if player.cursor_stack.valid_for_read and (player.cursor_stack.name == "tycoon-market" or player.cursor_stack.name == "tycoon-hardware-store" or player.cursor_stack.name == "tycoon-water-tower") then
+
+            -- Clear renderings if there are any. Otherwise we may increase the alpha value making it brighter.
+            rendering.clear("tycoon")
+
+            for _, city in ipairs(global.tycoon_cities or {}) do
+
+                local r = rendering.draw_circle{
+                    color = {0.1, 0.2, 0.1, 0.01},
+                    -- todo: add tech that increases this range, but only up to 250 which is the max for building cities all over the map
+                    radius = 1000,
+                    filled = true,
+                    target = city.special_buildings.town_hall,
+                    surface = game.surfaces[1],
+                    draw_on_ground = true,
+                }
+
+                if global.tycoon_player_renderings == nil then
+                    global.tycoon_player_renderings = {}
+                end
+                if global.tycoon_player_renderings[event.player_index] == nil then
+                    global.tycoon_player_renderings[event.player_index] = {}
+                end
+                table.insert(global.tycoon_player_renderings, r)
+            end
+        else
+            rendering.clear("tycoon")
+        end
+    end
+end)
+
 script.on_event(defines.events.on_research_finished, function(event)
     if global.tycoon_primary_industries == nil then
         return
