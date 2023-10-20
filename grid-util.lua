@@ -6,12 +6,12 @@ end
 
 --- @param city City
 local function getOffsetX(city)
-    return -1 * (getGridSize(city.grid) - 1) / 2 + city.center.x
+    return (-1 * (getGridSize(city.grid) - 1) / 2) * Constants.CELL_SIZE + city.center.x
 end
 
 --- @param city City
 local function getOffsetY(city)
-    return -1 * (getGridSize(city.grid) - 1) / 2 + city.center.y
+    return (-1 * (getGridSize(city.grid) - 1) / 2) * Constants.CELL_SIZE + city.center.y
 end
 
 --- @param coordinates Coordinates
@@ -37,8 +37,8 @@ end
 
 local function translateCityGridToTileCoordinates(city, coordinates)
     return {
-        y = (coordinates.y + getOffsetY(city)) * Constants.CELL_SIZE,
-        x = (coordinates.x + getOffsetX(city)) * Constants.CELL_SIZE,
+        y = (coordinates.y * Constants.CELL_SIZE + getOffsetY(city)),
+        x = (coordinates.x * Constants.CELL_SIZE + getOffsetX(city)),
     }
 end
 
