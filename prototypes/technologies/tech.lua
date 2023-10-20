@@ -161,7 +161,7 @@ data:extend{
             { "automation-science-pack", 1 },
             { "logistic-science-pack", 1 },
           },
-          time = 30,
+          time = 100,
         },
     },
     {
@@ -210,13 +210,63 @@ data:extend{
         prerequisites = { "fluid-handling", "concrete", "tycoon-residential-housing", "tycoon-bottling" },
         order = "g-e-e",
         unit = {
-          count = 120,
+          count = 200,
           ingredients = {
             { "automation-science-pack", 1 },
             { "logistic-science-pack", 1 },
             { "chemical-science-pack", 1 },
           },
           time = 30,
+        },
+    },
+    {
+        type = "technology",
+        name = "tycoon-multiple-cities",
+        mod = "Tycoon",
+        icon = "__tycoon__/graphics/icons/multiple-cities.png",
+        icon_size = 256,
+        effects = {
+            {
+                type = "unlock-recipe",
+                recipe = "tycoon-urban-planning-center",
+            },
+        },
+        prerequisites = { "tycoon-highrise-housing", "automated-rail-transportation", "advanced-electronics" },
+        order = "g-e-e",
+        unit = {
+          count = 100,
+          ingredients = {
+            { "automation-science-pack", 1 },
+            { "logistic-science-pack", 1 },
+            { "chemical-science-pack", 1 },
+            { "production-science-pack", 1 },
+          },
+          time = 60,
+        },
+    },
+    {
+        type = "technology",
+        name = "tycoon-public-transportation",
+        mod = "Tycoon",
+        icon = "__tycoon__/graphics/icons/public-transportation.png",
+        icon_size = 256,
+        effects = {
+            {
+                type = "unlock-recipe",
+                recipe = "tycoon-passenger-train-station",
+            },
+        },
+        prerequisites = { "tycoon-multiple-cities" },
+        order = "g-e-e",
+        unit = {
+          count = 200,
+          ingredients = {
+            { "automation-science-pack", 1 },
+            { "logistic-science-pack", 1 },
+            { "chemical-science-pack", 1 },
+            { "production-science-pack", 1 },
+          },
+          time = 60,
         },
     },
     {
