@@ -2,6 +2,7 @@ local GridUtil = require("grid-util")
 local Segments = require("segments")
 local Consumption = require("consumption")
 local Constants = require("constants")
+local DataConstants = require("data-constants")
 local Queue = require("queue")
 
 local function printTiles(startY, startX, map, tileName)
@@ -271,7 +272,7 @@ local function addCity(position)
             other = {}
         },
         center = position,
-        name = "City #" .. cityId,
+        name = DataConstants.CityNames[(cityId % #DataConstants.CityNames) + 1],
         stats = {
             basic_needs = {},
             construction_materials = {}

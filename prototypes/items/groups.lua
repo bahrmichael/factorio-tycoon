@@ -33,6 +33,12 @@ data:extend({
     },
     {
         type = "item-subgroup",
+        name = "tycoon-passengers",
+        group = "tycoon",
+        order = "e"
+    },
+    {
+        type = "item-subgroup",
         name = "tycoon-hidden",
         group = "tycoon",
         order = "z"

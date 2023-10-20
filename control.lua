@@ -896,7 +896,7 @@ script.on_nth_tick(Constants.CITY_GROWTH_TICKS, function(event)
                 local tag = game.forces.player.add_chart_tag(game.surfaces[1],
                     {
                         position = {x = city.special_buildings.town_hall.position.x, y = city.special_buildings.town_hall.position.y},
-                        text = city.name .. " Town Center"
+                        text = city.name
                     }
                 )
                 city.tag = tag
