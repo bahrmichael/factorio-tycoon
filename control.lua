@@ -825,8 +825,14 @@ local function rediscoverUnusedFields(city)
                 end
                 -- Sometimes there are also 2 unused cells within a housing group. We probably need a better check, but for now we'll just build gardens when there are 3 houses.
                 if surroundCount >= 3 then
+                    if city.gardenLocationQueue == nil then
+                        city.gardenLocationQueue = Queue.new()
+                    end
                     Queue.pushright(city.gardenLocationQueue, {x=x, y=y})
                 else
+                    if city.buildingLocationQueue == nil then
+                        city.buildingLocationQueue = Queue.new()
+                    end
                     Queue.pushright(city.buildingLocationQueue, {x=x, y=y})
                 end
 
