@@ -730,6 +730,7 @@ end
 local function placeInitialAppleFarm(city)
     local waterTiles = game.surfaces[1].find_tiles_filtered{
         position = city.center,
+        -- 1000 is the max range that the search algorithm may extend to, it's not related to the city radius
         radius = math.min(global.tycoon_initial_apple_farm_radius or 100, 1000),
         name={"water", "deepwater"},
         limit = 1,

@@ -122,16 +122,6 @@ end
 local function addConstructionMaterialsGui(rootGui, constructionNeeds, city, hardwareStores, housingType)
    
     local constructionGui = rootGui.add{type = "frame", direction = "vertical", caption = {"", {"tycoon-gui-construction"}}}
-    local constructionGuiTable = constructionGui.add{type = "table", column_count = 3}
-    local constructionSiteColoring = "green"
-    if #(city.excavationPits or {}) >= #city.grid then
-        constructionSiteColoring = "red"
-    end
-    constructionGuiTable.add{type = "label", caption = {"", {"tycoon-gui-construction-sites"}, ":"}}
-    constructionGuiTable.add{type = "label", caption = {"", "[color=" .. constructionSiteColoring .. "]",  #(city.excavationPits or {}), "/", #city.grid, "[/color]"}}
-    constructionGuiTable.add{type = "label", caption = ""}
-
-    constructionGui.add{type = "line"}
 
     local tbl = constructionGui.add{type = "table", column_count = 2, draw_horizontal_lines = true}
     
@@ -163,9 +153,15 @@ local function addConstructionMaterialsGui(rootGui, constructionNeeds, city, har
         end
     end
 
-    -- constructionGui.add{type = "line"}
-    -- constructionGui.add{type = "label", caption = {"", {"tycoon-gui-urbanization-requirement-1"}}}
-    -- constructionGui.add{type = "label", caption = {"", {"tycoon-gui-urbanization-requirement-2"}}}
+    constructionGui.add{type = "line"}
+
+    constructionGui.add{type = "label", caption = {"", {"tycoon-gui-construction-requirement-1"}}}
+    constructionGui.add{type = "label", caption = {"", {"tycoon-gui-construction-requirement-2"}}}
+
+    if housingType ~= "simple" then
+        constructionGui.add{type = "label", caption = {"", {"tycoon-gui-urbanization-requirement-1"}}}
+        constructionGui.add{type = "label", caption = {"", {"tycoon-gui-urbanization-requirement-2"}}}
+    end
 end
 
 --- @param rootGui any
@@ -360,13 +356,6 @@ local function addCityOverview(city, anchor)
     -- overall construction materials status
     tbl.add{type = "label", caption = {"", {"tycoon-gui-construction-materials"}, ": "}}
     tbl.add{type = "label", caption = getOverallConstructionMaterialsCaption(city)}
-    -- construction sites
-    local constructionSiteColoring = "green"
-    if #(city.excavationPits or {}) >= #city.grid then
-        constructionSiteColoring = "red"
-    end
-    tbl.add{type = "label", caption = {"", {"tycoon-gui-construction-sites"}, ":"}}
-    tbl.add{type = "label", caption = {"", "[color=" .. constructionSiteColoring .. "]",  #(city.excavationPits or {}), "/", #city.grid, "[/color]"}}
 end
 
 local function addCityView(city, anchor)
