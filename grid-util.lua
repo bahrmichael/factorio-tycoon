@@ -4,15 +4,7 @@ local function getGridSize(grid)
     return #grid
 end
 
---- @param city City
-local function getOffsetX(city)
-    return city.center.x - ((getGridSize(city)) / 2) * Constants.CELL_SIZE
-end
 
---- @param city City
-local function getOffsetY(city)
-    return city.center.y - ((getGridSize(city)) / 2) * Constants.CELL_SIZE
-end
 
 --- @param coordinates Coordinates
 --- @param sendWarningForMethod string | nil
@@ -35,10 +27,33 @@ local function safeGridAccess(city, coordinates, sendWarningForMethod)
     return cell
 end
 
-local function translateCityGridToTileCoordinates(city, coordinates)
+--- @param city City
+local function getOffsetX(city)
+    -- -3 is because the center starts at the top left of the initial 3x3 grid. so at the beginning there must be no additional offset.
+    -- but then it should grow by one for each grid expansion (each expansion is 2 rows and columns, so we divide it by 2)
+    return city.center.x - ((getGridSize(city.grid) - 3) / 2) * Constants.CELL_SIZE
+end
+
+--- @param city City
+local function getOffsetY(city)
+    return city.center.y - ((getGridSize(city.grid) - 3) / 2) * Constants.CELL_SIZE
+end
+
+local function translateCoordinateDistance(coordinates)
+    -- -1 because for the 1x1 cell, we want to start at the top left most city center start coordinates, so they need to shift by 0/0
     return {
-        y = ((coordinates.y - 1) * Constants.CELL_SIZE + getOffsetY(city)),
-        x = ((coordinates.x - 1) * Constants.CELL_SIZE + getOffsetX(city)),
+        y = (coordinates.y - 1) * Constants.CELL_SIZE,
+        x = (coordinates.x - 1) * Constants.CELL_SIZE,
+    }
+end
+
+local function translateCityGridToTileCoordinates(city, coordinates)
+    local distance = translateCoordinateDistance(coordinates)
+    local y = distance.y + getOffsetY(city)
+    local x = distance.x + getOffsetX(city)
+    return {
+        y = y,
+        x = x,
     }
 end
 

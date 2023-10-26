@@ -901,8 +901,8 @@ end
 
 local function clearAreaAndPrintTiles(city, coordinates, map)
     local currentCellStartCoordinates = GridUtil.translateCityGridToTileCoordinates(city, {
-        x = coordinates.x -1,
-        y = coordinates.y -1,
+        x = coordinates.x,
+        y = coordinates.y,
     })
     printTiles(currentCellStartCoordinates, map, "concrete")
 
@@ -989,6 +989,8 @@ local function growAtRandomRoadEnd(city)
         DEBUG.log('Picked Expansion Directions: ' .. #pickedExpansionDirections .. " (" .. table.concat(pickedExpansionDirections, ",") .. ")")
         -- For each direction, fill the current cell with the direction and the neighbour with the inverse direction
         for _, direction in ipairs(pickedExpansionDirections) do
+
+            game.print("new road: x=" .. roadEnd.coordinates.x .. " y=" .. roadEnd.coordinates.y)
 
             clearAreaAndPrintTiles(city, roadEnd.coordinates, getMap(direction))
 
