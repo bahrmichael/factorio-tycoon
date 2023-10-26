@@ -938,11 +938,56 @@ script.on_nth_tick(30, function()
 
     global.tycoon_cities = {}
     local position = game.surfaces[1].find_non_colliding_position("tycoon-town-center-virtual", {0, 0}, 200, 5, true)
-    position.x = math.floor(position.x)
-    position.y = math.floor(position.y)
+    position.x = math.floor(position.x) - Constants.CELL_SIZE * 1
+    position.y = math.floor(position.y) - Constants.CELL_SIZE * 1
     CityPlanning.addCity(position)
 end)
 
 script.on_nth_tick(Constants.MORE_CITIES_TICKS, function ()
     CityPlanning.addMoreCities()
+end)
+
+local function spawnSuppliedBuilding(city, entityName, supplyName, supplyAmount)
+
+    local position = game.surfaces[1].find_non_colliding_position(entityName, city.center, 200, 5, true)
+    position.x = math.floor(position.x)
+    position.y = math.floor(position.y) + 20
+
+    local e = game.surfaces[1].create_entity{
+        name = entityName,
+        position = position,
+        force = "neutral",
+        move_stuck_players = true
+    }
+
+    if supplyName == "water" then
+        e.insert_fluid{name = "water", amount = supplyAmount}
+    else
+        e.insert{name = supplyName, count = supplyAmount}
+    end
+end
+
+commands.add_command("tycoon", nil, function(command)
+    if command.player_index ~= nil and command.parameter == "spawn_city" then
+        local position = game.surfaces[1].find_non_colliding_position("tycoon-town-center-virtual", {#global.tycoon_cities * 50, #global.tycoon_cities * 50}, 200, 5, true)
+        position.x = math.floor(position.x)
+        position.y = math.floor(position.y)
+        local cityName = CityPlanning.addCity(position)
+        
+        game.print("Created city: " .. cityName)
+        
+        local cityIndex = #global.tycoon_cities
+        local city = global.tycoon_cities[cityIndex]
+        spawnSuppliedBuilding(city, "tycoon-market", "tycoon-apple", 1000)
+        spawnSuppliedBuilding(city, "tycoon-hardware-store", "stone-brick", 1000)
+        spawnSuppliedBuilding(city, "tycoon-hardware-store", "iron-plate", 1000)
+        spawnSuppliedBuilding(city, "tycoon-water-tower", "water", 10000)
+    elseif command.player_index ~= nil and command.parameter == "position" then
+        local player = game.players[command.player_index]
+        player.print('x='..player.character.position.x..' y='..player.character.position.y)
+    elseif command.parameter == "grow" then
+        CITY.growAtRandomRoadEnd(global.tycoon_cities[1])
+    else
+        game.print("Unknown command: tycoon " .. command.parameter)
+    end
 end)

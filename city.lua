@@ -899,6 +899,21 @@ local function incraseCoordinates(coordinates, city)
     coordinates.y = coordinates.y + 1
 end
 
+local function clearAreaAndPrintTiles(city, coordinates, map)
+    local currentCellStartCoordinates = GridUtil.translateCityGridToTileCoordinates(city, {
+        x = coordinates.x -1,
+        y = coordinates.y -1,
+    })
+    printTiles(currentCellStartCoordinates, map, "concrete")
+
+    local currentArea = {
+        {currentCellStartCoordinates.x, currentCellStartCoordinates.y},
+        {currentCellStartCoordinates.x + Constants.CELL_SIZE, currentCellStartCoordinates.y + Constants.CELL_SIZE}
+    }
+    removeColldingEntities(currentArea, streetIgnorables)
+
+end
+
 --- @param city City
 --- @return Coordinates | nil coordinates
 local function growAtRandomRoadEnd(city)
@@ -974,15 +989,9 @@ local function growAtRandomRoadEnd(city)
         DEBUG.log('Picked Expansion Directions: ' .. #pickedExpansionDirections .. " (" .. table.concat(pickedExpansionDirections, ",") .. ")")
         -- For each direction, fill the current cell with the direction and the neighbour with the inverse direction
         for _, direction in ipairs(pickedExpansionDirections) do
-            local currentCellStartCoordinates = GridUtil.translateCityGridToTileCoordinates(city, roadEnd.coordinates)
 
-            local currentArea = {
-                {currentCellStartCoordinates.x, currentCellStartCoordinates.y},
-                {currentCellStartCoordinates.x + Constants.CELL_SIZE, currentCellStartCoordinates.y + Constants.CELL_SIZE}
-            }
-            removeColldingEntities(currentArea, streetIgnorables)
+            clearAreaAndPrintTiles(city, roadEnd.coordinates, getMap(direction))
 
-            printTiles(currentCellStartCoordinates, getMap(direction), "concrete")
             local currentCell = GridUtil.safeGridAccess(city, roadEnd.coordinates, "processPickedExpansionDirectionCurrent")
             if currentCell == nil then
                 return nil
@@ -1005,29 +1014,23 @@ local function growAtRandomRoadEnd(city)
             elseif direction == "west" then
                 neighbourPosition = {x = roadEnd.coordinates.x - 1, y = roadEnd.coordinates.y}
             end
-            local neighbourCellStartCoordinates = GridUtil.translateCityGridToTileCoordinates(city, neighbourPosition)
-            
-            local neighourArea = {
-                {neighbourCellStartCoordinates.x, neighbourCellStartCoordinates.y},
-                {neighbourCellStartCoordinates.x + Constants.CELL_SIZE, neighbourCellStartCoordinates.y + Constants.CELL_SIZE}
-            }
-            removeColldingEntities(neighourArea, streetIgnorables)
-            
-            local neighourSocket = invertDirection(direction)
-            printTiles(neighbourCellStartCoordinates, getMap(neighourSocket), "concrete")
+
+            local neighbourSocket = invertDirection(direction)
+            clearAreaAndPrintTiles(city, neighbourPosition, getMap(neighbourSocket))
+
             local neighbourCell = GridUtil.safeGridAccess(city, neighbourPosition, "processPickedExpansionDirectionNeighbour")
             if neighbourCell == nil then
                 return nil
             end
 
             if neighbourCell.type == "road" then
-                if indexOf(neighbourCell.roadSockets, neighourSocket) == nil then
-                    table.insert(neighbourCell.roadSockets, neighourSocket)
+                if indexOf(neighbourCell.roadSockets, neighbourSocket) == nil then
+                    table.insert(neighbourCell.roadSockets, neighbourSocket)
                 end
             elseif neighbourCell.type == "unused" then
                 city.grid[neighbourPosition.y][neighbourPosition.x] = {
                     type = "road",
-                    roadSockets = {neighourSocket}
+                    roadSockets = {neighbourSocket}
                 }
                 -- When creating a new road cell, then we also mark that as a roadEnd to later continue from
                 DEBUG.log('Add roadEnd: ' .. neighbourPosition.y .. "/" .. neighbourPosition.x)

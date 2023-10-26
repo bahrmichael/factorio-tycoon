@@ -6,12 +6,12 @@ end
 
 --- @param city City
 local function getOffsetX(city)
-    return (-1 * (getGridSize(city.grid) - 1) / 2) * Constants.CELL_SIZE + city.center.x
+    return city.center.x - ((getGridSize(city)) / 2) * Constants.CELL_SIZE
 end
 
 --- @param city City
 local function getOffsetY(city)
-    return (-1 * (getGridSize(city.grid) - 1) / 2) * Constants.CELL_SIZE + city.center.y
+    return city.center.y - ((getGridSize(city)) / 2) * Constants.CELL_SIZE
 end
 
 --- @param coordinates Coordinates
@@ -28,7 +28,7 @@ local function safeGridAccess(city, coordinates, sendWarningForMethod)
     local cell = row[coordinates.x]
     if cell == nil then
         if sendWarningForMethod ~= nil then
-            game.print({"", {"tycoon-grid-access-warning", {"tycoon-grid-access-row"}, sendWarningForMethod}})
+            game.print({"", {"tycoon-grid-access-warning", {"tycoon-grid-access-cell"}, sendWarningForMethod}})
         end
         return nil
     end
@@ -37,8 +37,8 @@ end
 
 local function translateCityGridToTileCoordinates(city, coordinates)
     return {
-        y = (coordinates.y * Constants.CELL_SIZE + getOffsetY(city)),
-        x = (coordinates.x * Constants.CELL_SIZE + getOffsetX(city)),
+        y = ((coordinates.y - 1) * Constants.CELL_SIZE + getOffsetY(city)),
+        x = ((coordinates.x - 1) * Constants.CELL_SIZE + getOffsetX(city)),
     }
 end
 

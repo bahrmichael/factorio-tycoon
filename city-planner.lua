@@ -157,15 +157,19 @@ local function initializeCity(city, position)
                     printTiles(startCoordinates.y, startCoordinates.x, map, "concrete")
                 end
                 if cell.initKey == "town-hall" then
+                    local thPosition = {
+                        x = startCoordinates.x - 1 + Constants.CELL_SIZE / 2, 
+                        y = startCoordinates.y - 1 + Constants.CELL_SIZE / 2,
+                    }
                     local townHall = game.surfaces[1].create_entity{
                         name = "tycoon-town-hall",
-                        position = {x = startCoordinates.x - 1 + Constants.CELL_SIZE / 2, y = startCoordinates.y - 1 + Constants.CELL_SIZE / 2},
+                        position = thPosition,
                         force = "neutral",
                         move_stuck_players = true
                     }
                     game.surfaces[1].create_entity{
                         name = "hiddenlight-60",
-                        position = {x = startCoordinates.x - 1 + Constants.CELL_SIZE / 2, y = startCoordinates.y - 1 + Constants.CELL_SIZE / 2},
+                        position = thPosition,
                         force = "neutral",
                     }
                     townHall.destructible = false
@@ -260,6 +264,7 @@ local function addCity(position)
         global.tycoon_cities = {}
     end
     local cityId = #global.tycoon_cities + 1
+    local cityName = DataConstants.CityNames[(cityId % #DataConstants.CityNames) + 1]
     local generatorSalt = cityId * 1337
     table.insert(global.tycoon_cities, {
         id = cityId,
@@ -271,8 +276,11 @@ local function addCity(position)
             town_hall = nil,
             other = {}
         },
-        center = position,
-        name = DataConstants.CityNames[(cityId % #DataConstants.CityNames) + 1],
+        center = {
+            x = position.x, -- + 6 * Constants.CELL_SIZE,
+            y = position.y, -- + 6 * Constants.CELL_SIZE,
+        },
+        name = cityName,
         stats = {
             basic_needs = {},
             construction_materials = {}
@@ -285,50 +293,52 @@ local function addCity(position)
     })
     initializeCity(global.tycoon_cities[cityId], position)
     Consumption.updateNeeds(global.tycoon_cities[cityId])
+
+    game.print("Initialized city at x=" .. position.x .. " y=" .. position.y)
+
+    return cityName
 end
 
 local function addMoreCities()
-    -- if not game.forces.player.technologies["tycoon-multiple-cities"].researched then
-    --     return
-    -- end
+    if not game.forces.player.technologies["tycoon-multiple-cities"].researched then
+        return
+    end
 
-    -- local cityPlanningCenters = game.surfaces[1].find_entities_filtered{
-    --     name = "tycoon-city-planning-center"
-    -- }
+    local urbanPlanningCenters = game.surfaces[1].find_entities_filtered{
+        name = "tycoon-urban-planning-center"
+    }
 
-    -- local totalAvailableFunds = 0
-    -- for _, c in ipairs(cityPlanningCenters) do
-    --     local availableFunds = c.get_item_count("tycoon-currency")
-    --     totalAvailableFunds = totalAvailableFunds + availableFunds
-    -- end
+    local totalAvailableFunds = 0
+    for _, c in ipairs(urbanPlanningCenters) do
+        local availableFunds = c.get_item_count("tycoon-currency")
+        totalAvailableFunds = totalAvailableFunds + availableFunds
+    end
 
-    -- -- improve this function to scale up
-    -- local requiredFunds = #(global.tycoon_cities or {}) * COST_PER_CITY
-    -- if requiredFunds > totalAvailableFunds then
-    --     return
-    -- end
-
-    -- -- sort the centers with most currency first, so that we need to remove from fewer centers
-    -- table.sort(cityPlanningCenters, function (a, b)
-    --     return a.get_item_count("tycoon-currency") > b.get_item_count("tycoon-currency")
-    -- end)
-
-    -- for _, c in ipairs(cityPlanningCenters) do
-    --     local availableCount = c.get_item_count("tycoon-currency")
-    --     local removed = c.remove_item({name = "tycoon-currency", count = math.min(requiredFunds, availableCount)})
-    --     requiredFunds = requiredFunds - removed
-    --     if requiredFunds <= 0 then
-    --         break
-    --     end
-    -- end
+    -- improve this function to scale up
+    local requiredFunds = #(global.tycoon_cities or {}) * COST_PER_CITY
+    if requiredFunds > totalAvailableFunds then
+        return
+    end
 
     local newCityPosition = findNewCityPosition()
     if newCityPosition ~= nil then
-        addCity(newCityPosition)
-        game.print("Created new city at x=" .. newCityPosition.x .. " y=" .. newCityPosition.y)
+        local cityName = addCity(newCityPosition)
+        game.print({"", "[color=orange]Factorio Tycoon:[/color] ", {"tycooon-new-city", cityName}})
+
+        -- sort the centers with most currency first, so that we need to remove from fewer centers
+        table.sort(urbanPlanningCenters, function (a, b)
+            return a.get_item_count("tycoon-currency") > b.get_item_count("tycoon-currency")
+        end)
+        for _, c in ipairs(urbanPlanningCenters) do
+            local availableCount = c.get_item_count("tycoon-currency")
+            local removed = c.remove_item({name = "tycoon-currency", count = math.min(requiredFunds, availableCount)})
+            requiredFunds = requiredFunds - removed
+            if requiredFunds <= 0 then
+                break
+            end
+        end
     end
 
-    -- todo: return isk if nothing was built
 end
 
 return {
