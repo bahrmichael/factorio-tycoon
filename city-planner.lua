@@ -72,61 +72,63 @@ local function findNewCityPosition()
     return nil
 end
 
-local initialGrid = {
-    {
+local function initialGrid()
+    return {
         {
-            type = "road",
-            roadSockets = {"south", "north", "east", "west"},
-            initKey = "corner.rightToBottom"
+            {
+                type = "road",
+                roadSockets = {"south", "north", "east", "west"},
+                initKey = "corner.rightToBottom"
+            },
+            {
+                type = "road",
+                roadSockets = {"east", "west"},
+                initKey = "linear.horizontal"
+            },
+            {
+                type = "road",
+                roadSockets = {"south", "north", "east", "west"},
+                initKey = "corner.bottomToLeft"
+            }
         },
         {
-            type = "road",
-            roadSockets = {"east", "west"},
-            initKey = "linear.horizontal"
+            {
+                type = "road",
+                roadSockets = {"south", "north"},
+                initKey = "linear.vertical"
+            },
+            {
+                type = "building",
+                initKey = "town-hall"
+            },
+            {
+                type = "road",
+                roadSockets = {"south", "north"},
+                initKey = "linear.vertical"
+            },
         },
         {
-            type = "road",
-            roadSockets = {"south", "north", "east", "west"},
-            initKey = "corner.bottomToLeft"
-        }
-    },
-    {
-        {
-            type = "road",
-            roadSockets = {"south", "north"},
-            initKey = "linear.vertical"
-        },
-        {
-            type = "building",
-            initKey = "town-hall"
-        },
-        {
-            type = "road",
-            roadSockets = {"south", "north"},
-            initKey = "linear.vertical"
-        },
-    },
-    {
-        {
-            type = "road",
-            roadSockets = {"south", "north", "east", "west"},
-            initKey = "corner.topToRight"
-        },
-        {
-            type = "road",
-            roadSockets = {"east", "west"},
-            initKey = "linear.horizontal"
-        },
-        {
-            type = "road",
-            roadSockets = {"south", "north", "east", "west"},
-            initKey = "corner.leftToTop"
+            {
+                type = "road",
+                roadSockets = {"south", "north", "east", "west"},
+                initKey = "corner.topToRight"
+            },
+            {
+                type = "road",
+                roadSockets = {"east", "west"},
+                initKey = "linear.horizontal"
+            },
+            {
+                type = "road",
+                roadSockets = {"south", "north", "east", "west"},
+                initKey = "corner.leftToTop"
+            }
         }
     }
-}
+end
 
 local function initializeCity(city, position)
-    city.grid = initialGrid
+    city.grid = initialGrid()
 
     local function clearCell(y, x)
         local area = {
@@ -300,7 +302,7 @@ local function addCity(position)
 end
 
 local function addMoreCities()
-    if not game.forces.player.technologies["tycoon-multiple-cities"].researched then
+    if not (game.forces.player.technologies["tycoon-multiple-cities"] or {}).researched then
         return
     end
 
