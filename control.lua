@@ -985,9 +985,23 @@ commands.add_command("tycoon", nil, function(command)
     elseif command.player_index ~= nil and command.parameter == "position" then
         local player = game.players[command.player_index]
         player.print('x='..player.character.position.x..' y='..player.character.position.y)
-    elseif command.parameter == "grow" then
-        CITY.growAtRandomRoadEnd(global.tycoon_cities[1])
+    elseif command.parameter == "grow-1" then
+        local c = CITY.growAtRandomRoadEnd(global.tycoon_cities[1])
+        if c == nil then
+            game.print("City 1 expanded grid to size " .. #global.tycoon_cities[1].grid)
+        else
+            game.print("new road in cit 1: x=" .. c.x .. " y=" .. c.y)
+        end
+    elseif command.parameter == "grow-2" then
+        local c = CITY.growAtRandomRoadEnd(global.tycoon_cities[2])
+        if c == nil then
+            game.print("City 2 expanded grid to size " .. #global.tycoon_cities[1].grid)
+        else
+            game.print("new road in city 2: x=" .. c.x .. " y=" .. c.y)
+        end
+    elseif command.parameter == "grid" then
+        DEBUG.logGrid(global.tycoon_cities[1].grid, game.print)
     else
-        game.print("Unknown command: tycoon " .. command.parameter)
+        game.print("Unknown command: tycoon " .. (command.parameter or ""))
     end
 end)

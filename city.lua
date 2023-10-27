@@ -990,8 +990,6 @@ local function growAtRandomRoadEnd(city)
         -- For each direction, fill the current cell with the direction and the neighbour with the inverse direction
         for _, direction in ipairs(pickedExpansionDirections) do
 
-            game.print("new road: x=" .. roadEnd.coordinates.x .. " y=" .. roadEnd.coordinates.y)
-
             clearAreaAndPrintTiles(city, roadEnd.coordinates, getMap(direction))
 
             local currentCell = GridUtil.safeGridAccess(city, roadEnd.coordinates, "processPickedExpansionDirectionCurrent")
