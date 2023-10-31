@@ -1,7 +1,6 @@
 local Queue = require "queue"
-SEGMENTS = require("segments")
-CITY = require("city")
-CONSUMPTION = require("consumption")
+local City = require("city")
+local Consumption = require("consumption")
 local Constants = require("constants")
 local GUI = require("gui")
 local GridUtil = require("grid-util")
@@ -30,7 +29,7 @@ local function growCitizenCount(city, count, tier)
         city.citizens[tier] = 0
     end
     city.citizens[tier] = city.citizens[tier] + count
-    CONSUMPTION.updateNeeds(city)
+    Consumption.updateNeeds(city)
 end
 
 local function invalidateSpecialBuildingsList(city, name)
@@ -513,8 +512,7 @@ script.on_event(defines.events.on_gui_opened, function (gui)
         local city = findCityByTownHallUnitNumber(unit_number)
         assert(city ~= nil, "Could not find the city for town hall unit number ".. unit_number)
 
-        CONSUMPTION.updateNeeds(city)
-
+        Consumption.updateNeeds(city)
 
         -- For backwards compatibility
         if player.gui.relative["city_overview_1"] then
@@ -532,9 +530,36 @@ script.on_event(defines.events.on_gui_opened, function (gui)
         cityGui = player.gui.relative.add{type = "frame", anchor = anchor, caption = {"", {"tycoon-gui-city-overview"}}, direction = "vertical", name = guiKey}
 
         GUI.addCityView(city, cityGui)
+    elseif gui.entity ~= nil and gui.entity.name == "tycoon-passenger-train-station" then
+        local player = game.players[gui.player_index]
+        local unit_number = gui.entity.unit_number
+
+        local guiKey = "train_station_view"
+        local trainStationGui = player.gui.relative[guiKey]
+        if trainStationGui ~= nil then
+            -- clear any previous gui so that we can fully reconstruct it
+            trainStationGui.destroy()
+        end
+
+        local anchor = {gui = defines.relative_gui_type.container_gui, name = "tycoon-passenger-train-station", position = defines.relative_gui_position.right}
+        trainStationGui = player.gui.relative.add{type = "frame", anchor = anchor, caption = {"", {"tycoon-gui-city-overview"}}, direction = "vertical", name = guiKey}
+
+        GUI.addTrainStationView(unit_number, trainStationGui)
     end
 end)
 
+script.on_event(defines.events.on_gui_text_changed, function(event)
+    if string.find(event.element.name, "train_station_limit", 1, true) then
+        local delimiter = ":"
+        local parts = {} -- To store the split parts
+        for substring in event.element.name:gmatch("[^" .. delimiter .. "]+") do
+            table.insert(parts, substring)
+        end
+        local trainStationUnitNumber = tonumber(parts[2])
+        global.tycoon_train_station_limits[trainStationUnitNumber] = math.min(tonumber(event.text) or 0, 100)
+    end
+    -- game.print(event.number)
+end)
 
 script.on_event(defines.events.on_gui_click, function(event)
     local player = game.players[event.player_index]
@@ -553,7 +578,7 @@ end)
 script.on_nth_tick(600, function()
     for _, city in ipairs(global.tycoon_cities) do
         if city.special_buildings.town_hall ~= nil and city.special_buildings.town_hall.valid then
-            CONSUMPTION.consumeBasicNeeds(city)
+            Consumption.consumeBasicNeeds(city)
         end
     end
 end)
@@ -583,7 +608,7 @@ local function canUpgradeToResidential(city)
         return false
     end
 
-    local needsMet = CONSUMPTION.areBasicNeedsMet(city, getNeeds(city, "residential"))
+    local needsMet = Consumption.areBasicNeedsMet(city, getNeeds(city, "residential"))
     if not needsMet then
         return false
     end
@@ -612,7 +637,7 @@ local function canUpgradeToHighrise(city)
         return false
     end
 
-    local needsMet = CONSUMPTION.areBasicNeedsMet(city, getNeeds(city, "highrise"))
+    local needsMet = Consumption.areBasicNeedsMet(city, getNeeds(city, "highrise"))
     if not needsMet then
         return false
     end
@@ -628,7 +653,7 @@ local function newCityGrowth(city, suppliedTiers)
     assert(city.grid ~= nil and #city.grid > 1, "Expected grid to be initialized and larger than 1x1.")
 
     -- Attempt to complete constructions first
-    local completedConstructionBuildingType = CITY.completeConstruction(city, suppliedTiers)
+    local completedConstructionBuildingType = City.completeConstruction(city, suppliedTiers)
     if completedConstructionBuildingType ~= nil then
         if completedConstructionBuildingType == "simple" then
             growCitizenCount(city, citizenCounts["simple"], "simple")
@@ -654,7 +679,7 @@ local function newCityGrowth(city, suppliedTiers)
         local isBuilt
         if key == "specialBuildings" and #(city.priority_buildings or {}) > 0 then
             local prioBuilding = table.remove(city.priority_buildings, 1)
-            isBuilt = CITY.startConstruction(city, {
+            isBuilt = City.startConstruction(city, {
                 buildingType = prioBuilding.name,
                 -- Special buildings should be completed very quickly.
                 -- Here we just wait 2 seconds by default.
@@ -664,17 +689,17 @@ local function newCityGrowth(city, suppliedTiers)
                 table.insert(city.priority_buildings, 1, prioBuilding)
             end
         elseif key == "highrise" and canUpgradeToHighrise(city) then
-            isBuilt = CITY.upgradeHouse(city, "highrise")
+            isBuilt = City.upgradeHouse(city, "highrise")
             if isBuilt then
                 growCitizenCount(city, -1 * citizenCounts["residential"], "residential")
             end
         elseif key == "residential" and canUpgradeToResidential(city) then
-            isBuilt = CITY.upgradeHouse(city, "residential")
+            isBuilt = City.upgradeHouse(city, "residential")
             if isBuilt then
                 growCitizenCount(city, -1 * citizenCounts["simple"], "simple")
             end
         elseif key == "simple" and canBuildSimpleHouse(city) then
-            isBuilt = CITY.startConstruction(city, {
+            isBuilt = City.startConstruction(city, {
                 buildingType = "simple",
                 constructionTimeInTicks = city.generator(600, 1200)
             }, "buildingLocationQueue")
@@ -684,7 +709,7 @@ local function newCityGrowth(city, suppliedTiers)
         -- We can't add this to the buildables check, or the iteration will never get there
         if not isBuilt then
             if city.gardenLocationQueue ~= nil and city.generator() < 0.25 and Queue.count(city.gardenLocationQueue, true) > 0 then
-                CITY.startConstruction(city, {
+                City.startConstruction(city, {
                     buildingType = "garden",
                     constructionTimeInTicks = 60 -- city.generator(300, 600)
                 }, "gardenLocationQueue")
@@ -695,16 +720,16 @@ local function newCityGrowth(city, suppliedTiers)
                 local possibleBuildingLocationsCount = Queue.count(city.buildingLocationQueue)
                 if city.generator() < (#city.grid / possibleBuildingLocationsCount) and excavationPitCount < #city.grid then
                     -- todo: add check that road resources are available
-                    local coordinates = CITY.growAtRandomRoadEnd(city)
+                    local coordinates = City.growAtRandomRoadEnd(city)
                     if coordinates ~= nil then
-                        CITY.updatepossibleBuildingLocations(city, coordinates)
+                        City.updatepossibleBuildingLocations(city, coordinates)
                         isBuilt = true
                     end
                 end
             end
         else
             for _, item in ipairs(resources) do
-                CONSUMPTION.consumeItem(item, hardwareStores, city, true)
+                Consumption.consumeItem(item, hardwareStores, city, true)
             end
             break
         end
@@ -814,7 +839,7 @@ local function rediscoverUnusedFields(city)
     for y = innerRadius, innerRadius * 2, 1 do
         for x = innerRadius, innerRadius * 2, 1 do
             local cell = GridUtil.safeGridAccess(city, {x=x, y=y})
-            if cell ~= nil and cell.type == "unused" and CITY.isCellFree(city, {x=x, y=y}) then
+            if cell ~= nil and cell.type == "unused" and City.isCellFree(city, {x=x, y=y}) then
                 local surroundsOfUnused = getSurroundingCoordinates(y, x, 1, false)
                 -- Test if this cell is surrounded by houses, if yes then place a garden
                 -- Because we use getSurroundingCoordinates with allowDiagonal=false above, we only need to count 4 houses or roads
@@ -885,13 +910,13 @@ script.on_nth_tick(Constants.CITY_GROWTH_TICKS, function(event)
         if city.special_buildings.town_hall ~= nil and city.special_buildings.town_hall.valid then
 
             local suppliedTiers = {}
-            if CONSUMPTION.areBasicNeedsMet(city, getNeeds(city, "simple")) then
+            if Consumption.areBasicNeedsMet(city, getNeeds(city, "simple")) then
                 table.insert(suppliedTiers, "simple")
             end
-            if CONSUMPTION.areBasicNeedsMet(city, getNeeds(city, "residential")) then
+            if Consumption.areBasicNeedsMet(city, getNeeds(city, "residential")) then
                 table.insert(suppliedTiers, "residential")
             end
-            if CONSUMPTION.areBasicNeedsMet(city, getNeeds(city, "highrise")) then
+            if Consumption.areBasicNeedsMet(city, getNeeds(city, "highrise")) then
                 table.insert(suppliedTiers, "highrise")
             end
             if #suppliedTiers > 0 then
@@ -991,14 +1016,14 @@ commands.add_command("tycoon", nil, function(command)
         local player = game.players[command.player_index]
         player.print('x='..player.character.position.x..' y='..player.character.position.y)
     elseif command.parameter == "grow-1" then
-        local c = CITY.growAtRandomRoadEnd(global.tycoon_cities[1])
+        local c = City.growAtRandomRoadEnd(global.tycoon_cities[1])
         if c == nil then
             game.print("City 1 expanded grid to size " .. #global.tycoon_cities[1].grid)
         else
             game.print("new road in cit 1: x=" .. c.x .. " y=" .. c.y)
         end
     elseif command.parameter == "grow-2" then
-        local c = CITY.growAtRandomRoadEnd(global.tycoon_cities[2])
+        local c = City.growAtRandomRoadEnd(global.tycoon_cities[2])
         if c == nil then
             game.print("City 2 expanded grid to size " .. #global.tycoon_cities[1].grid)
         else

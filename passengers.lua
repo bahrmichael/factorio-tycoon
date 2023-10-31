@@ -66,6 +66,18 @@ local function spawnPassengers(city)
         if #trainStations > 0 then
             local selectedTrainStation = trainStations[math.random(#trainStations)]
             if selectedTrainStation ~= nil and selectedTrainStation.valid then
+
+                local passengerLimit = (global.tycoon_train_station_limits or {})[selectedTrainStation.unit_number] or 100
+                local departingPassengers = 0
+                for name, count in pairs(selectedTrainStation.get_inventory(1).get_contents()) do
+                    if name ~= "tycoon-passenger-" .. string.lower(city.name) and string.find(name, "tycoon-passenger-", 1, true) then
+                        departingPassengers = departingPassengers + count
+                    end
+                end
+                if departingPassengers >= passengerLimit then
+                    return
+                end
+
                 -- todo: check if train station has enough space, otherwise distribute passengers
                 local destination = getRandomCityName(city.name)
                 if destination == nil then

@@ -1,4 +1,5 @@
-local CONSUMPTION = require("consumption")
+local Consumption = require("consumption")
+local Constants = require("constants")
 
 -- This array is ordered from most expensive to cheapest, so that
 -- we do expensive upgrades first (instead of just letting the road always expand).
@@ -249,7 +250,7 @@ local function listSpecialCityBuildings(city, name)
         entities = game.surfaces[1].find_entities_filtered{
             name=name,
             position=city.special_buildings.town_hall.position,
-            radius=1000
+            radius=Constants.CITY_RADIUS
         }
         city.special_buildings.other[name] = entities
     end
@@ -296,9 +297,9 @@ local function addHousingView(housingType, city, anchor)
 end
 
 local function getOverallBasicNeedsCaption(city)
-    local simpleMet = CONSUMPTION.areBasicNeedsMet(city, getNeeds(city, "simple"))
-    local residentialMet = not game.forces.player.technologies["tycoon-residential-housing"].researched or CONSUMPTION.areBasicNeedsMet(city, getNeeds(city, "residential"))
-    local highriseMet = not game.forces.player.technologies["tycoon-highrise-housing"].researched or CONSUMPTION.areBasicNeedsMet(city, getNeeds(city, "highrise"))
+    local simpleMet = Consumption.areBasicNeedsMet(city, getNeeds(city, "simple"))
+    local residentialMet = not game.forces.player.technologies["tycoon-residential-housing"].researched or Consumption.areBasicNeedsMet(city, getNeeds(city, "residential"))
+    local highriseMet = not game.forces.player.technologies["tycoon-highrise-housing"].researched or Consumption.areBasicNeedsMet(city, getNeeds(city, "highrise"))
 
     if simpleMet and residentialMet and highriseMet then
         return {"", "[color=green]", {"tycoon-gui-status-supplied"}, "[/color]"}
@@ -358,6 +359,29 @@ local function addCityOverview(city, anchor)
     tbl.add{type = "label", caption = getOverallConstructionMaterialsCaption(city)}
 end
 
+local function addTrainStationView(trainStationUnitNumber, anchor)
+    if not global.tycoon_train_station_limits then
+        global.tycoon_train_station_limits = {}
+    end
+
+    if not global.tycoon_train_station_limits[trainStationUnitNumber] then
+        -- 100 is the inventory_size of the passenger-train-station entity
+        global.tycoon_train_station_limits[trainStationUnitNumber] = 100
+    end
+
+    local flow = anchor.add{type = "flow", direction = "vertical"}
+    -- todo: maybe better to use a number input if we can't display the value
+    flow.add{type = "label", caption = "Maximum departing passengers (0 to 100)"}
+    flow.add{
+        type = "textfield", 
+        numeric = true,
+        allow_decimal = false,
+        allow_negative = false,
+        text = "" .. global.tycoon_train_station_limits[trainStationUnitNumber],
+        name = "train_station_limit:" .. trainStationUnitNumber
+    }
+end
+
 local function addCityView(city, anchor)
     local tabbed_pane = anchor.add{type="tabbed-pane"}
     local tab_overview = tabbed_pane.add{type="tab", caption={"", {"tycoon-gui-city-overview"}}}
@@ -389,6 +413,7 @@ local GUI = {
     addBasicNeedsView = addBasicNeedsView,
     addConstructionMaterialsGui = addConstructionMaterialsGui,
     addCityView = addCityView,
+    addTrainStationView = addTrainStationView,
 }
 
 return GUI
