@@ -1364,7 +1364,7 @@ local function upgradeHouse(city, newStage)
 
     -- sortUpgradeCells(city, upgradeCells)
 
-    local upgradeCell = upgradeCells[math.random(#upgradeCells)]
+    local upgradeCell = upgradeCells[city.generator(#upgradeCells)]
     -- If the player has built entities in this cell in the meantime, we can either not upgrade or destroy their entities. Staying safe and not upgrading is probably better.
     if hasPlayerEntities(city, upgradeCell) then
         return false
