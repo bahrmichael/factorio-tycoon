@@ -234,7 +234,7 @@ script.on_event({
         return
     end
 
-    if isSupplyBuilding(building.entity_name) or entity.name == "tycoon-passenger-train-station" then
+    if isSupplyBuilding(building.entity_name) or building.entity_name == "tycoon-passenger-train-station" then
         
         local nearbyTownHall = game.surfaces[1].find_entities_filtered{position=building.entity.position, radius=Constants.CITY_RADIUS, name="tycoon-town-hall", limit=1}
         if #nearbyTownHall == 0 then

@@ -287,8 +287,8 @@ local function addCity(position)
             other = {}
         },
         center = {
-            x = position.x, -- + 6 * Constants.CELL_SIZE,
-            y = position.y, -- + 6 * Constants.CELL_SIZE,
+            x = position.x,
+            y = position.y,
         },
         name = cityName,
         stats = {
@@ -303,8 +303,6 @@ local function addCity(position)
     })
     initializeCity(global.tycoon_cities[cityId], position)
     Consumption.updateNeeds(global.tycoon_cities[cityId])
-
-    game.print("Initialized city at x=" .. position.x .. " y=" .. position.y)
 
     return cityName
 end

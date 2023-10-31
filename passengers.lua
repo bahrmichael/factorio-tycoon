@@ -96,7 +96,6 @@ local function spawnPassengers(city)
                     position = selectedTrainStation.position,
                 }
 
-                -- selectedTrainStation.get_inventory(1).find_item_stack("tycoon-passenger-gearford")
                 for i = 1, #selectedTrainStation.get_inventory(1), 1 do
                     local p = selectedTrainStation.get_inventory(1)[i]
                     if p ~= nil and p.valid and p.valid_for_read and p.name == passenger and p.tags.created == nil then

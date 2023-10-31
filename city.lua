@@ -1192,14 +1192,9 @@ local function completeConstruction(city, buildingTypes)
             end
         end
     elseif entityName == "garden" then
-        local yModifier, xModifier = 0, 0
-        -- if entityName == "garden" then
-        --     xModifier = -1
-        --     yModifier = -1
-        -- end
         entity = game.surfaces[1].create_entity{
             name = getIteratedGardenName(),
-            position = {x = startCoordinates.x + Constants.CELL_SIZE / 2 + xModifier, y = startCoordinates.y  + Constants.CELL_SIZE / 2 + yModifier},
+            position = {x = startCoordinates.x + Constants.CELL_SIZE / 2, y = startCoordinates.y  + Constants.CELL_SIZE / 2},
             force = "player",
             move_stuck_players = true
         }
@@ -1361,8 +1356,6 @@ local function upgradeHouse(city, newStage)
     if #upgradeCells == 0 then
         return false
     end
-
-    -- sortUpgradeCells(city, upgradeCells)
 
     local upgradeCell = upgradeCells[city.generator(#upgradeCells)]
     -- If the player has built entities in this cell in the meantime, we can either not upgrade or destroy their entities. Staying safe and not upgrading is probably better.
