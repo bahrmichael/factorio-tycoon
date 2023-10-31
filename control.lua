@@ -6,6 +6,7 @@ local Constants = require("constants")
 local GUI = require("gui")
 local GridUtil = require("grid-util")
 local CityPlanning = require("city-planner")
+local Passengers = require("passengers")
 
 local primary_industry_names = {"tycoon-apple-farm", "tycoon-wheat-farm", "tycoon-fishery"}
 
@@ -33,7 +34,7 @@ local function growCitizenCount(city, count, tier)
 end
 
 local function invalidateSpecialBuildingsList(city, name)
-    assert(city.special_buildings ~= nil, "The special buildings should never be nil. There has been one error though, so I added this assetion.")
+    assert(city.special_buildings ~= nil, "The special buildings should never be nil. There has been one error though, so I added this assertion.")
 
     if city.special_buildings.other[name] ~= nil then
         city.special_buildings.other[name] = nil
@@ -181,10 +182,10 @@ end
 script.on_event(defines.events.on_built_entity, function(event)
     local entity = event.created_entity
 
-    if isSupplyBuilding(entity.name) then
-        local nearbyTownHall = game.surfaces[1].find_entities_filtered{position=entity.position, radius=1000, name="tycoon-town-hall", limit=1}
+    if isSupplyBuilding(entity.name) or entity.name == "tycoon-passenger-train-station" then
+        local nearbyTownHall = game.surfaces[1].find_entities_filtered{position=entity.position, radius=Constants.CITY_RADIUS, name="tycoon-town-hall", limit=1}
         if #nearbyTownHall == 0 then
-            game.players[1].print("You just built a city supply building outside of any town hall's range. Please build it within 1000 tiles of a city.")
+            game.players[1].print("You just built a city building outside of any town hall's range. Please build it near a town hall.")
             return
         end
 
@@ -227,9 +228,9 @@ script.on_event({
         return
     end
 
-    if isSupplyBuilding(building.entity_name) then
+    if isSupplyBuilding(building.entity_name) or entity.name == "tycoon-passenger-train-station" then
         
-        local nearbyTownHall = game.surfaces[1].find_entities_filtered{position=building.entity.position, radius=1000, name="tycoon-town-hall", limit=1}
+        local nearbyTownHall = game.surfaces[1].find_entities_filtered{position=building.entity.position, radius=Constants.CITY_RADIUS, name="tycoon-town-hall", limit=1}
         if #nearbyTownHall == 0 then
             -- If there's no town hall in range then it probably was destroyed
             -- todo: how should we handle that situation? Is the whole city gone?
@@ -455,7 +456,7 @@ end
 script.on_event(defines.events.on_player_cursor_stack_changed, function(event)
     local player = game.players[event.player_index]
     if (player or {}).cursor_stack ~= nil then
-        if player.cursor_stack.valid_for_read and (player.cursor_stack.name == "tycoon-market" or player.cursor_stack.name == "tycoon-hardware-store" or player.cursor_stack.name == "tycoon-water-tower") then
+        if player.cursor_stack.valid_for_read and (player.cursor_stack.name == "tycoon-passenger-train-station" or player.cursor_stack.name == "tycoon-market" or player.cursor_stack.name == "tycoon-hardware-store" or player.cursor_stack.name == "tycoon-water-tower") then
 
             -- Clear renderings if there are any. Otherwise we may increase the alpha value making it brighter.
             rendering.clear("tycoon")
@@ -933,6 +934,10 @@ end)
 
 script.on_nth_tick(30, function()
     if #(global.tycoon_cities or {}) > 0 then
+        for _, city in ipairs(global.tycoon_cities) do
+            Passengers.clearPassengers(city)
+            Passengers.spawnPassengers(city)
+        end
         return
     end
 
