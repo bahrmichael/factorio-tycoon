@@ -90,7 +90,11 @@ local function spawnPassengers(city)
                     return
                 end
                 local passenger = "tycoon-passenger-" .. string.lower(destination)
-                selectedTrainStation.insert{name = passenger, count = newPassengerCount}
+                local newPassengerCount = selectedTrainStation.insert{name = passenger, count = newPassengerCount}
+                game.players[1].create_local_flying_text{
+                    text = {"", {"tycoon-passengers-new", newPassengerCount}},
+                    position = selectedTrainStation.position,
+                }
 
                 -- selectedTrainStation.get_inventory(1).find_item_stack("tycoon-passenger-gearford")
                 for i = 1, #selectedTrainStation.get_inventory(1), 1 do
@@ -182,10 +186,6 @@ local function clearPassengers(city)
                     local randomTreasury = treasuries[city.generator(#treasuries)]
                     local applicableReward = math.ceil(reward)
                     randomTreasury.insert{name = "tycoon-currency", count = applicableReward}
-                    game.players[1].create_local_flying_text{
-                        text = {"", {"tycoon-gui-passenger-reward", applicableReward}},
-                        position = randomTreasury.position,
-                    }
                 end
             end
         end
