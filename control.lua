@@ -335,8 +335,8 @@ script.on_event(defines.events.on_chunk_charted, function (chunk)
                 -- Don't go below 50 though
                 minDistance = math.max(200 * game.surfaces[1].map_gen_settings.water, 50)
             end
-            local nearbySameProduction = game.surfaces[1].find_entities_filtered{position=position, radius=minDistance, name=industryName, limit=1}
-            if #nearbySameProduction == 0 then
+            local nearbyBlockingEntities = game.surfaces[1].find_entities_filtered{position=position, radius=minDistance, name=industryName, limit=1}
+            if #nearbyBlockingEntities == 0 then
                 local p = placePrimaryIndustryAtPosition(position, industryName)
                 addToGlobalPrimaryIndustries(p)
             end
@@ -776,6 +776,16 @@ local function placeInitialAppleFarm(city)
     local waterPosition = waterTiles[1].position
     local coordinates = interpolateCoordinates(city.center, waterPosition, 0.5)
     local position = game.surfaces[1].find_non_colliding_position("tycoon-apple-farm", coordinates, 200, 5, true)
+    -- make sure this doesn't spawn too close to town halls
+    local townHalls = game.surfaces[1].find_entities_filtered{
+        position = position,
+        radius = 50,
+        name = "tycoon-town-hall",
+        limit = 1
+    }
+    if #townHalls > 0 then
+        return nil
+    end
     return placePrimaryIndustryAtPosition(position, "tycoon-apple-farm")
 end
 
@@ -803,6 +813,18 @@ local function spawnPrimaryIndustries()
                 y = primaryIndustry.startCoordinates.y
             end
             local position = game.surfaces[1].find_non_colliding_position(primaryIndustry.name, {x, y}, 200, 5, true)
+
+            -- make sure this doesn't spawn too close to existing player entities
+            local playerEntities = game.surfaces[1].find_entities_filtered{
+                position = position,
+                radius = 50,
+                force = game.forces.player,
+                limit = 1
+            }
+            if #playerEntities > 0 then
+                return
+            end
+
             local entity = placePrimaryIndustryAtPosition(position, primaryIndustry.name)
             if entity ~= nil then
                 table.remove(global.tycoon_new_primary_industries, i)

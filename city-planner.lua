@@ -62,7 +62,15 @@ local function findNewCityPosition()
                             y = math.floor(newCityPosition.y / 32),
                         })
                         if isChunkCharted then
-                            return newCityPosition
+                            local playerEntities = game.surfaces[1].find_entities_filtered{
+                                position = newCityPosition,
+                                radius = Constants.CITY_RADIUS,
+                                force = game.forces.player,
+                                limit = 1
+                            }
+                            if #playerEntities == 0 then
+                                return newCityPosition
+                            end
                         end
                     end
                 end
