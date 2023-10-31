@@ -542,7 +542,7 @@ script.on_event(defines.events.on_gui_opened, function (gui)
         end
 
         local anchor = {gui = defines.relative_gui_type.container_gui, name = "tycoon-passenger-train-station", position = defines.relative_gui_position.right}
-        trainStationGui = player.gui.relative.add{type = "frame", anchor = anchor, caption = {"", {"tycoon-gui-city-overview"}}, direction = "vertical", name = guiKey}
+        trainStationGui = player.gui.relative.add{type = "frame", anchor = anchor, caption = {"", {"tycoon-gui-train-station-view"}}, direction = "vertical", name = guiKey}
 
         GUI.addTrainStationView(unit_number, trainStationGui)
     end

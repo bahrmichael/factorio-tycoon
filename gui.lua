@@ -370,8 +370,7 @@ local function addTrainStationView(trainStationUnitNumber, anchor)
     end
 
     local flow = anchor.add{type = "flow", direction = "vertical"}
-    -- todo: maybe better to use a number input if we can't display the value
-    flow.add{type = "label", caption = "Maximum departing passengers (0 to 100)"}
+    flow.add{type = "label", caption = {"", {"tycoon-gui-train-station-limit", 0, 100}, ":"}}
     flow.add{
         type = "textfield", 
         numeric = true,
