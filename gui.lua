@@ -359,7 +359,7 @@ local function addCityOverview(city, anchor)
     tbl.add{type = "label", caption = getOverallConstructionMaterialsCaption(city)}
 end
 
-local function addTrainStationView(trainStationUnitNumber, anchor)
+local function addTrainStationView(trainStationUnitNumber, anchor, city)
     if not global.tycoon_train_station_limits then
         global.tycoon_train_station_limits = {}
     end
@@ -370,6 +370,10 @@ local function addTrainStationView(trainStationUnitNumber, anchor)
     end
 
     local flow = anchor.add{type = "flow", direction = "vertical"}
+    if city ~= nil then
+        flow.add{type = "label", caption = {"", {"tycoon-gui-train-station-for-city", city.name}}}
+        flow.add{type = "line"}
+    end
     flow.add{type = "label", caption = {"", {"tycoon-gui-train-station-limit", 0, 100}, ":"}}
     flow.add{
         type = "textfield", 

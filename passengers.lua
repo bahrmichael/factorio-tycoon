@@ -38,14 +38,14 @@ end
 
 --- @param currentCity string
 --- @return string | nil name
-local function getRandomCityName(currentCityName)
+local function getRandomCityName(city)
     if #(global.tycoon_cities or {}) == 0 then
         return nil
     end
     -- up to 10 attempts at getting a random entry that's different to the current name
     for i = 1, 10, 1 do
-        local r = global.tycoon_cities[math.random(#global.tycoon_cities)].name
-        if r ~= currentCityName then
+        local r = global.tycoon_cities[city.generator(#global.tycoon_cities)].name
+        if r ~= city.name then
             return r
         end
     end
@@ -58,13 +58,19 @@ local function spawnPassengers(city)
         return
     end
 
-    -- todo: add train stations to special buildings
     local citizenCount = countCitizens(city)
-    local newPassengerCount = math.random(0, 1) -- todo: find a better approach to increase the number of new citizens with city growth
+    local factor = 0.01
+    if citizenCount < 10 then
+        factor = 1
+    elseif citizenCount < 100 then
+        factor = 0.1
+    end
+
+    local newPassengerCount = math.floor(citizenCount * factor * city.generator())
     if newPassengerCount > 0 then
         local trainStations = listSpecialCityBuildings(city, "tycoon-passenger-train-station")
         if #trainStations > 0 then
-            local selectedTrainStation = trainStations[math.random(#trainStations)]
+            local selectedTrainStation = trainStations[city.generator(#trainStations)]
             if selectedTrainStation ~= nil and selectedTrainStation.valid then
 
                 local passengerLimit = (global.tycoon_train_station_limits or {})[selectedTrainStation.unit_number] or 100
@@ -79,7 +85,7 @@ local function spawnPassengers(city)
                 end
 
                 -- todo: check if train station has enough space, otherwise distribute passengers
-                local destination = getRandomCityName(city.name)
+                local destination = getRandomCityName(city)
                 if destination == nil then
                     return
                 end
@@ -174,7 +180,12 @@ local function clearPassengers(city)
 
                 if #treasuries > 0 and reward > 0 then
                     local randomTreasury = treasuries[city.generator(#treasuries)]
-                    randomTreasury.insert{name = "tycoon-currency", count = math.ceil(reward)}
+                    local applicableReward = math.ceil(reward)
+                    randomTreasury.insert{name = "tycoon-currency", count = applicableReward}
+                    game.players[1].create_local_flying_text{
+                        text = {"", {"tycoon-gui-passenger-reward", applicableReward}},
+                        position = randomTreasury.position,
+                    }
                 end
             end
         end

@@ -195,6 +195,13 @@ script.on_event(defines.events.on_built_entity, function(event)
         assert(city ~= nil, "When building an entity we found a cityId, but there is no city for it.")
 
         invalidateSpecialBuildingsList(city, entity.name)
+
+        if global.tycoon_entity_meta_info == nil then
+            global.tycoon_entity_meta_info = {}
+        end
+        global.tycoon_entity_meta_info[entity.unit_number] = {
+            cityId = cityId
+        }
     end
     
 end)
@@ -527,7 +534,7 @@ script.on_event(defines.events.on_gui_opened, function (gui)
         end
 
         local anchor = {gui = defines.relative_gui_type.container_gui, name = "tycoon-town-hall", position = defines.relative_gui_position.right}
-        cityGui = player.gui.relative.add{type = "frame", anchor = anchor, caption = {"", {"tycoon-gui-city-overview"}}, direction = "vertical", name = guiKey}
+        cityGui = player.gui.relative.add{type = "frame", anchor = anchor, caption = city.name, direction = "vertical", name = guiKey}
 
         GUI.addCityView(city, cityGui)
     elseif gui.entity ~= nil and gui.entity.name == "tycoon-passenger-train-station" then
@@ -544,7 +551,8 @@ script.on_event(defines.events.on_gui_opened, function (gui)
         local anchor = {gui = defines.relative_gui_type.container_gui, name = "tycoon-passenger-train-station", position = defines.relative_gui_position.right}
         trainStationGui = player.gui.relative.add{type = "frame", anchor = anchor, caption = {"", {"tycoon-gui-train-station-view"}}, direction = "vertical", name = guiKey}
 
-        GUI.addTrainStationView(unit_number, trainStationGui)
+        local cityId = ((global.tycoon_entity_meta_info or {})[unit_number] or {}).cityId
+        GUI.addTrainStationView(unit_number, trainStationGui, findCityById(cityId))
     end
 end)
 
