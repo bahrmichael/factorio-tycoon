@@ -74,19 +74,6 @@ data:extend{
     },
     {
         type = "recipe",
-        name = "tycoon-wind-turbine",
-        category = "crafting",
-        enabled = false,
-        ingredients = {
-            { type = "item", name = "wood", amount = 20 },
-            { type = "item", name = "stone-brick", amount = 10 },
-            { type = "item", name = "iron-plate", amount = 10 },
-        },
-        result = "tycoon-wind-turbine",
-        result_count = 1,
-    },
-    {
-        type = "recipe",
         name = "tycoon-passenger-train-station",
         category = "crafting",
         enabled = false,
