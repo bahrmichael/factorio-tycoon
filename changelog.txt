@@ -1,4 +1,9 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.1.5
+Date: 03. 11. 2023
+  Bugfixes:
+    - Fixed an issue where rotating the university would lead to a mismatched collision/selection box.
+---------------------------------------------------------------------------------------------------
 Version: 0.1.4
 Date: 18. 10. 2023
   Changes:
