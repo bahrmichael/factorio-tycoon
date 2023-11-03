@@ -1140,10 +1140,8 @@ local function completeConstruction(city, buildingTypes)
     if entityName == "simple" or entityName == "residential" or entityName == "highrise" then
         local xModifier, yModifier = 0, 0
         if entityName == "simple" then
-            xModifier = 0
-            yModifier = 0
+            -- no shift
         elseif entityName == "residential" then
-            xModifier = -1
             yModifier = -0.5
         end
         local position = {x = startCoordinates.x + Constants.CELL_SIZE / 2 + xModifier, y = startCoordinates.y + Constants.CELL_SIZE / 2 + yModifier}
