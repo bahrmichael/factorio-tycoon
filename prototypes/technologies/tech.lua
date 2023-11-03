@@ -13,7 +13,7 @@ data:extend{
         },
         order = "g-e-e",
         unit = {
-          count = 10,
+          count = 30,
           ingredients = {
             { "automation-science-pack", 1 },
           },
@@ -43,11 +43,34 @@ data:extend{
         prerequisites = { "tycoon-farming" },
         order = "g-e-e",
         unit = {
-          count = 15,
+          count = 60,
           ingredients = {
             { "automation-science-pack", 1 },
           },
           time = 30,
+        },
+    },
+    {
+        type = "technology",
+        name = "tycoon-milking",
+        mod = "Tycoon",
+        icon = "__tycoon__/graphics/icons/milking.png",
+        icon_size = 256,
+        effects = {
+            {
+                type = "unlock-recipe",
+                recipe = "tycoon-milk-cow",
+            },
+        },
+        prerequisites = { "tycoon-husbandry" },
+        order = "g-e-e",
+        unit = {
+          count = 60,
+          ingredients = {
+            { "automation-science-pack", 1 },
+            { "logistic-science-pack", 1 },
+          },
+          time = 60,
         },
     },
     {
@@ -73,12 +96,12 @@ data:extend{
         prerequisites = { "tycoon-farming", "tycoon-husbandry", "automation-2" },
         order = "g-e-e",
         unit = {
-          count = 60,
+          count = 100,
           ingredients = {
             { "automation-science-pack", 1 },
             { "logistic-science-pack", 1 },
           },
-          time = 30,
+          time = 60,
         },
     },
     {
@@ -101,15 +124,15 @@ data:extend{
                 recipe = "tycoon-refurbish-bottle",
             },
         },
-        prerequisites = { "tycoon-husbandry", "automation-2" },
+        prerequisites = { "tycoon-milking", "automation-2" },
         order = "g-e-e",
         unit = {
-          count = 30,
+          count = 100,
           ingredients = {
             { "automation-science-pack", 1 },
             { "logistic-science-pack", 1 },
           },
-          time = 30,
+          time = 60,
         },
     },
     {
@@ -210,7 +233,7 @@ data:extend{
                 recipe = "tycoon-urban-planning-center",
             },
         },
-        prerequisites = { "tycoon-highrise-housing", "automated-rail-transportation", "advanced-electronics" },
+        prerequisites = { "tycoon-highrise-housing" },
         order = "g-e-e",
         unit = {
           count = 100,
@@ -235,7 +258,7 @@ data:extend{
                 recipe = "tycoon-passenger-train-station",
             },
         },
-        prerequisites = { "tycoon-multiple-cities" },
+        prerequisites = { "tycoon-multiple-cities", "automated-rail-transportation" },
         order = "g-e-e",
         unit = {
           count = 200,
