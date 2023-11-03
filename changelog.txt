@@ -1,4 +1,9 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.1.6
+Date: 03. 11. 2023
+  Features:
+    - The mod now comes with tips and tricks. Some are shown at the beginning in the lower left, others appear as you progress through the mod's content.
+---------------------------------------------------------------------------------------------------
 Version: 0.1.5
 Date: 03. 11. 2023
   Bugfixes:
