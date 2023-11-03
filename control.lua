@@ -511,6 +511,10 @@ script.on_event(defines.events.on_research_finished, function(event)
     end
 end)
 
+script.on_event(defines.events.on_lua_shortcut, function(event)
+    game.print("Multiple cities overview is not implemented yet.")
+end)
+
  -- todo: show construction material supply
 script.on_event(defines.events.on_gui_opened, function (gui)
     if gui.entity ~= nil and gui.entity.name == "tycoon-town-hall" then
