@@ -90,11 +90,13 @@ local function spawnPassengers(city)
                     return
                 end
                 local passenger = "tycoon-passenger-" .. string.lower(destination)
-                local newPassengerCount = selectedTrainStation.insert{name = passenger, count = newPassengerCount}
-                game.players[1].create_local_flying_text{
-                    text = {"", {"tycoon-passengers-new", newPassengerCount}},
-                    position = selectedTrainStation.position,
-                }
+                local insertedPassengerCount = selectedTrainStation.insert{name = passenger, count = newPassengerCount}
+                for _, player in ipairs(game.players) do
+                    player.create_local_flying_text{
+                        text = {"", {"tycoon-passengers-new", insertedPassengerCount}},
+                        position = selectedTrainStation.position,
+                    }
+                end
 
                 for i = 1, #selectedTrainStation.get_inventory(1), 1 do
                     local p = selectedTrainStation.get_inventory(1)[i]

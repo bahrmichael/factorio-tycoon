@@ -184,7 +184,7 @@ script.on_event(defines.events.on_built_entity, function(event)
     if isSupplyBuilding(entity.name) or entity.name == "tycoon-passenger-train-station" then
         local nearbyTownHall = game.surfaces[1].find_entities_filtered{position=entity.position, radius=Constants.CITY_RADIUS, name="tycoon-town-hall", limit=1}
         if #nearbyTownHall == 0 then
-            game.players[1].print("You just built a city building outside of any town hall's range. Please build it near a town hall.")
+            game.players[event.player_index].print("You just built a city building outside of any town hall's range. Please build it near a town hall.")
             return
         end
 
