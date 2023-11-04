@@ -298,9 +298,9 @@ local function addHousingView(housingType, city, anchor)
 end
 
 local function getOverallBasicNeedsCaption(city)
-    local simpleMet = Consumption.areBasicNeedsMet(city, getNeeds(city, "simple"))
-    local residentialMet = not game.forces.player.technologies["tycoon-residential-housing"].researched or Consumption.areBasicNeedsMet(city, getNeeds(city, "residential"))
-    local highriseMet = not game.forces.player.technologies["tycoon-highrise-housing"].researched or Consumption.areBasicNeedsMet(city, getNeeds(city, "highrise"))
+    local simpleMet = Consumption.areBasicNeedsMet(city, getNeeds(city, "simple"), true)
+    local residentialMet = not game.forces.player.technologies["tycoon-residential-housing"].researched or Consumption.areBasicNeedsMet(city, getNeeds(city, "residential"), true)
+    local highriseMet = not game.forces.player.technologies["tycoon-highrise-housing"].researched or Consumption.areBasicNeedsMet(city, getNeeds(city, "highrise"), true)
 
     if simpleMet and residentialMet and highriseMet then
         return {"", "[color=green]", {"tycoon-gui-status-supplied"}, "[/color]"}

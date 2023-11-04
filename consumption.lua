@@ -185,13 +185,13 @@ end
 
 --- @param city City
 --- @param needs any | nil
-local function areBasicNeedsMet(city, needs)
+local function areBasicNeedsMet(city, needs, forGui)
     updateProvidedAmounts(city)
 
     local n = needs or city.stats.basic_needs
 
     for _, amounts in pairs(n) do
-        if amounts ~= nil and amounts.required == 0 then
+        if forGui and amounts ~= nil and amounts.required == 0 then
             return true
         elseif (amounts == nil or amounts.provided == nil or amounts.provided == 0) then
             return false
