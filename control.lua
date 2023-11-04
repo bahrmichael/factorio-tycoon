@@ -557,6 +557,20 @@ script.on_event(defines.events.on_gui_opened, function (gui)
 
         local cityId = ((global.tycoon_entity_meta_info or {})[unit_number] or {}).cityId
         GUI.addTrainStationView(unit_number, trainStationGui, findCityById(cityId))
+    elseif gui.entity ~= nil and gui.entity.name == "tycoon-urban-planning-center" then
+        local player = game.players[gui.player_index]
+
+        local guiKey = "urban_planning_center_view"
+        local urbanPlanningCenterGui = player.gui.relative[guiKey]
+        if urbanPlanningCenterGui ~= nil then
+            -- clear any previous gui so that we can fully reconstruct it
+            urbanPlanningCenterGui.destroy()
+        end
+
+        local anchor = {gui = defines.relative_gui_type.container_gui, name = "tycoon-urban-planning-center", position = defines.relative_gui_position.right}
+        urbanPlanningCenterGui = player.gui.relative.add{type = "frame", anchor = anchor, caption = {"", {"entity-name.tycoon-urban-planning-center"}}, direction = "vertical", name = guiKey}
+
+        GUI.addUrbanPlanningCenterView(urbanPlanningCenterGui)
     end
 end)
 

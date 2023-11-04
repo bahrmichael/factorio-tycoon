@@ -1,5 +1,6 @@
 local Consumption = require("consumption")
 local Constants = require("constants")
+local CityPlanner = require("city-planner")
 
 -- This array is ordered from most expensive to cheapest, so that
 -- we do expensive upgrades first (instead of just letting the road always expand).
@@ -411,12 +412,33 @@ local function addCityView(city, anchor)
     tabbed_pane.selected_tab_index = 1
 end
 
+local function addUrbanPlanningCenterView(anchor)
+    local totalAvailable = CityPlanner.getTotalAvailableFunds()
+    local requiredFunds = CityPlanner.getRequiredFundsForNextCity()
+    local tbl = anchor.add{type = "table", column_count = 2, draw_horizontal_lines = true}
+    tbl.add{type = "label", caption = {"", {"tycoon-required-funds-for-next-city"}, ":"}}
+    tbl.add{type = "label", caption = {"", requiredFunds}}
+    tbl.add{type = "label", caption = {"", {"tycoon-total-available-funds"}, ":"}}
+    tbl.add{type = "label", caption = {"", totalAvailable}}
+
+    anchor.add{type = "label", caption = {"", {"tycoon-progress"}}}
+    anchor.add{type = "progressbar", value = totalAvailable / requiredFunds}
+    
+    if requiredFunds < totalAvailable then
+        anchor.add{type = "line", direction = "horizontal"}
+        anchor.add{type = "label", caption = {"", {"tycoon-urban-planning-center-hint-1"}}}
+        anchor.add{type = "label", caption = {"", {"tycoon-urban-planning-center-hint-2"}}}
+        anchor.add{type = "label", caption = {"", {"tycoon-urban-planning-center-hint-3"}}}
+    end
+end
+
 local GUI = {
     addHousingView = addHousingView,
     addBasicNeedsView = addBasicNeedsView,
     addConstructionMaterialsGui = addConstructionMaterialsGui,
     addCityView = addCityView,
     addTrainStationView = addTrainStationView,
+    addUrbanPlanningCenterView = addUrbanPlanningCenterView,
 }
 
 return GUI

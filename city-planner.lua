@@ -33,7 +33,6 @@ local MIN_DISTANCE = Constants.CITY_RADIUS * 2 + 200
 local COST_PER_CITY = 1000
 
 local function isInRangeOfCity(city, position)
-    local cityCenter = city.center
     local distance = calculateDistance(city.center, position)
     return distance < MIN_DISTANCE
 end
@@ -307,11 +306,12 @@ local function addCity(position)
     return cityName
 end
 
-local function addMoreCities()
-    if not (game.forces.player.technologies["tycoon-multiple-cities"] or {}).researched then
-        return
-    end
+local function getRequiredFundsForNextCity()
+    -- improve this function to scale up
+    return math.pow(#(global.tycoon_cities or {}), 2) * COST_PER_CITY
+end
 
+local function getTotalAvailableFunds()
     local urbanPlanningCenters = game.surfaces[1].find_entities_filtered{
         name = "tycoon-urban-planning-center"
     }
@@ -322,8 +322,21 @@ local function addMoreCities()
         totalAvailableFunds = totalAvailableFunds + availableFunds
     end
 
-    -- improve this function to scale up
-    local requiredFunds = #(global.tycoon_cities or {}) * COST_PER_CITY
+    return totalAvailableFunds
+end
+
+local function addMoreCities()
+    if not (game.forces.player.technologies["tycoon-multiple-cities"] or {}).researched then
+        return
+    end
+
+    local urbanPlanningCenters = game.surfaces[1].find_entities_filtered{
+        name = "tycoon-urban-planning-center"
+    }
+
+    local totalAvailableFunds = getTotalAvailableFunds()
+    local requiredFunds = getRequiredFundsForNextCity()
+
     if requiredFunds > totalAvailableFunds then
         return
     end
@@ -352,4 +365,6 @@ end
 return {
     addCity = addCity,
     addMoreCities = addMoreCities,
+    getRequiredFundsForNextCity = getRequiredFundsForNextCity,
+    getTotalAvailableFunds = getTotalAvailableFunds,
 }
