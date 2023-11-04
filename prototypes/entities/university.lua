@@ -5,9 +5,10 @@ data:extend{
         icon = "__tycoon__/graphics/icons/university.png",
         icon_size = 64,
         max_health = 200,
+        rotatable = false,
         collision_box = { { -12, -9}, {12, 11} },
         selection_box = { { -12, -9}, {12, 11} },
-        flags = {"placeable-player", "player-creation"},
+        flags = {"placeable-player", "player-creation", "not-rotatable"},
         minable = {mining_time = 1, result = "tycoon-university"},
         animation = {
             layers = {

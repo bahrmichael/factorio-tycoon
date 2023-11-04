@@ -191,7 +191,9 @@ local function areBasicNeedsMet(city, needs)
     local n = needs or city.stats.basic_needs
 
     for _, amounts in pairs(n) do
-        if (amounts == nil or amounts.provided == nil or amounts.provided == 0) then
+        if amounts ~= nil and amounts.required == 0 then
+            return true
+        elseif (amounts == nil or amounts.provided == nil or amounts.provided == 0) then
             return false
         elseif amounts.provided < amounts.required then
             return false

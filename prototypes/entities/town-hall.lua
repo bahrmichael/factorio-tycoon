@@ -2,7 +2,7 @@ data:extend{
     {
         type = "container",
         name = "tycoon-town-hall",
-        icon = "__tycoon__/graphics/entity/town-hall/town-hall.png",
+        icon = "__tycoon__/graphics/icons/town-hall.png",
         icon_size = 64,
         max_health = 10000,
         -- This has to be set in the runtime code
