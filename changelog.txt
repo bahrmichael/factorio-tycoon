@@ -3,6 +3,7 @@ Version: unreleased
 Date: 04. 11. 2023
   Bugfixes:
     - Added missing icon for the town hall.
+    - The town hall now shows basic needs as "Supplied" when there are no citizens that require anything yet.
 ---------------------------------------------------------------------------------------------------
 Version: 0.1.6
 Date: 03. 11. 2023
