@@ -192,7 +192,7 @@ local function areBasicNeedsMet(city, needs, forGui)
 
     for _, amounts in pairs(n) do
         if forGui and amounts ~= nil and amounts.required == 0 then
-            return true
+            -- noop
         elseif (amounts == nil or amounts.provided == nil or amounts.provided == 0) then
             return false
         elseif amounts.provided < amounts.required then
