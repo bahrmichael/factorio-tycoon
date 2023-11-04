@@ -36,7 +36,7 @@ local function listSpecialCityBuildings(city, name)
     return result
 end
 
---- @param currentCity string
+--- @param city City
 --- @return string | nil name
 local function getRandomCityName(city)
     if #(global.tycoon_cities or {}) == 0 then
@@ -73,7 +73,7 @@ local function spawnPassengers(city)
             local selectedTrainStation = trainStations[city.generator(#trainStations)]
             if selectedTrainStation ~= nil and selectedTrainStation.valid then
 
-                local passengerLimit = (global.tycoon_train_station_limits or {})[selectedTrainStation.unit_number] or 100
+                local passengerLimit = (global.tycoon_train_station_limits or {})[selectedTrainStation.unit_number] or 80
                 local departingPassengers = 0
                 for name, count in pairs(selectedTrainStation.get_inventory(1).get_contents()) do
                     if name ~= "tycoon-passenger-" .. string.lower(city.name) and string.find(name, "tycoon-passenger-", 1, true) then

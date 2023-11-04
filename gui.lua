@@ -367,7 +367,7 @@ local function addTrainStationView(trainStationUnitNumber, anchor, city)
 
     if not global.tycoon_train_station_limits[trainStationUnitNumber] then
         -- 100 is the inventory_size of the passenger-train-station entity
-        global.tycoon_train_station_limits[trainStationUnitNumber] = 100
+        global.tycoon_train_station_limits[trainStationUnitNumber] = 80
     end
 
     local flow = anchor.add{type = "flow", direction = "vertical"}
