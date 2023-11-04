@@ -93,9 +93,9 @@ data:extend{
         category = "crafting",
         enabled = false,
         ingredients = {
-            { type = "item", name = "concrete", amount = 100 },
-            { type = "item", name = "steel-plate", amount = 50 },
-            { type = "item", name = "advanced-circuit", amount = 5 },
+            { type = "item", name = "concrete", amount = 500 },
+            { type = "item", name = "steel-plate", amount = 200 },
+            { type = "item", name = "advanced-circuit", amount = 50 },
         },
         result = "tycoon-urban-planning-center",
         result_count = 1,
