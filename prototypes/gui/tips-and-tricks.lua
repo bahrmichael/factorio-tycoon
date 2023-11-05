@@ -99,4 +99,26 @@ data:extend({
             technology = "tycoon-multiple-cities"
         },
     },
+    {
+        type = "tips-and-tricks-item",
+        name = "tycoon-public-transportation",
+        category = "tycoon",
+        order = "a[tycoon]-g-a",
+        indent = 1,
+        trigger = {
+            type = "research",
+            technology = "tycoon-public-transportation"
+        },
+    },
+    {
+        type = "tips-and-tricks-item",
+        name = "tycoon-passenger-train-stations",
+        category = "tycoon",
+        order = "a[tycoon]-g-b",
+        indent = 1,
+        trigger = {
+            type = "research",
+            technology = "tycoon-public-transportation"
+        },
+    },
   })
