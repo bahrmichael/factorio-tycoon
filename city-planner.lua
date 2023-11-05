@@ -344,7 +344,7 @@ local function addMoreCities()
     local newCityPosition = findNewCityPosition()
     if newCityPosition ~= nil then
         local cityName = addCity(newCityPosition)
-        game.print({"", "[color=orange]Factorio Tycoon:[/color] ", {"tycooon-new-city", cityName}})
+        game.print({"", "[color=orange]Factorio Tycoon:[/color] ", {"tycooon-new-city", cityName}, ": ", "[gps=" .. (newCityPosition.x + 1.5 * Constants.CELL_SIZE) .. "," .. (newCityPosition.y + 1.5 * Constants.CELL_SIZE) .. "]"})
 
         -- sort the centers with most currency first, so that we need to remove from fewer centers
         table.sort(urbanPlanningCenters, function (a, b)
