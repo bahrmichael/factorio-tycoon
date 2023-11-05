@@ -1,6 +1,7 @@
 local Consumption = require("consumption")
 local Constants = require("constants")
 local CityPlanner = require("city-planner")
+local Consumption = require("consumption")
 
 -- This array is ordered from most expensive to cheapest, so that
 -- we do expensive upgrades first (instead of just letting the road always expand).
@@ -449,6 +450,62 @@ local function addUrbanPlanningCenterView(anchor)
     end
 end
 
+local function addCitiesOverview(anchor)
+    local tbl = anchor.add{type = "table", column_count = 4, draw_horizontal_lines = true}
+    local c1 = tbl.add{type = "label", caption = "Name"}
+    c1.style.width = 100
+    local c2 = tbl.add{type = "label", caption = "Citizens"}
+    c2.style.width = 100
+    local c3 = tbl.add{type = "label", caption = "Fully Supplied"}
+    c3.style.width = 100
+    local c4 = tbl.add{type = "label", caption = ""}
+    c4.style.width = 100
+    for i, city in ipairs(global.tycoon_cities) do
+        local needsMet = Consumption.areBasicNeedsMet(city, nil, true)
+        local color = "red"
+        local text = "tycoon-no"
+        if needsMet then
+            color = "green"
+            text = "tycoon-yes"
+        end
+        tbl.add{type = "label", caption = {"", "[font=default-bold]", city.name, "[/font]"}}
+        tbl.add{type = "label", caption = countCitizens(city)}
+        tbl.add{type = "label", caption = {"", "[color=".. color .."]", {text}, "[/color]"}}
+        tbl.add{type = "button", caption = "Show Details", name = "multiple_cities_select_tab:" .. i, tags = {selected_tab = i + 1}}
+    end
+end
+
+local function addMultipleCitiesOverview(anchor)
+    local flow_title_bar = anchor.add{type="flow", direction="horizontal"}
+    flow_title_bar.add{type = "label", caption = {"", "[font=default-bold]", {"tycoon-gui-cities-overview"}, "[/font]"}}
+    local close_button = flow_title_bar.add{
+        type="sprite-button", 
+        sprite="utility/close_white",
+        hovered_sprite="utility/close_black", 
+        clicked_sprite="utility/close_black", 
+        style="frame_action_button", -- needed to keep the icon small
+        name="close_multiple_cities_overview"
+    }
+
+    local tabbed_pane = anchor.add{type="tabbed-pane", name = "multiple_cities_overview_tabbed_pane"}
+    local tab_all_cities = tabbed_pane.add{type="tab", caption={"", {"tycoon-gui-all-cities"}}}
+    local overviewContainer = tabbed_pane.add{type = "flow", direction = "vertical"}
+    overviewContainer.style.padding = {10, 10, 10, 10}
+    tabbed_pane.add_tab(tab_all_cities, overviewContainer)
+    addCitiesOverview(overviewContainer)
+
+    for i, city in ipairs(global.tycoon_cities or {}) do
+        local tab_city = tabbed_pane.add{type="tab", caption=city.name}
+
+        local cityContainer = tabbed_pane.add{type = "flow", direction = "vertical"}
+        tabbed_pane.add_tab(tab_city, cityContainer)
+        addCityView(city, cityContainer)
+        
+    end
+
+    tabbed_pane.selected_tab_index = 1
+end
+
 local GUI = {
     addHousingView = addHousingView,
     addBasicNeedsView = addBasicNeedsView,
@@ -456,6 +513,7 @@ local GUI = {
     addCityView = addCityView,
     addTrainStationView = addTrainStationView,
     addUrbanPlanningCenterView = addUrbanPlanningCenterView,
+    addMultipleCitiesOverview = addMultipleCitiesOverview,
 }
 
 return GUI

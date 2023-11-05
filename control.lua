@@ -2,7 +2,7 @@ local Queue = require "queue"
 local City = require("city")
 local Consumption = require("consumption")
 local Constants = require("constants")
-local GUI = require("gui")
+local Gui = require("gui")
 local GridUtil = require("grid-util")
 local CityPlanning = require("city-planner")
 local Passengers = require("passengers")
@@ -512,7 +512,22 @@ script.on_event(defines.events.on_research_finished, function(event)
 end)
 
 script.on_event(defines.events.on_lua_shortcut, function(event)
-    game.print("Multiple cities overview is not implemented yet.")
+    local player = game.players[event.player_index]
+
+    local guiKey = "multiple_cities_overview"
+    local gui = player.gui.center[guiKey]
+    if gui ~= nil then
+        -- clear any previous gui so that we can fully reconstruct it
+        gui.destroy()
+    end
+
+    local frame = player.gui.center.add{
+        type = "frame",
+        name = guiKey,
+        direction = "vertical"
+    }
+
+    Gui.addMultipleCitiesOverview(frame)
 end)
 
  -- todo: show construction material supply
@@ -540,7 +555,7 @@ script.on_event(defines.events.on_gui_opened, function (gui)
         local anchor = {gui = defines.relative_gui_type.container_gui, name = "tycoon-town-hall", position = defines.relative_gui_position.right}
         cityGui = player.gui.relative.add{type = "frame", anchor = anchor, caption = city.name, direction = "vertical", name = guiKey}
 
-        GUI.addCityView(city, cityGui)
+        Gui.addCityView(city, cityGui)
     elseif gui.entity ~= nil and gui.entity.name == "tycoon-passenger-train-station" then
         local player = game.players[gui.player_index]
         local unit_number = gui.entity.unit_number
@@ -556,7 +571,7 @@ script.on_event(defines.events.on_gui_opened, function (gui)
         trainStationGui = player.gui.relative.add{type = "frame", anchor = anchor, caption = {"", {"tycoon-gui-train-station-view"}}, direction = "vertical", name = guiKey}
 
         local cityId = ((global.tycoon_entity_meta_info or {})[unit_number] or {}).cityId
-        GUI.addTrainStationView(unit_number, trainStationGui, findCityById(cityId))
+        Gui.addTrainStationView(unit_number, trainStationGui, findCityById(cityId))
     elseif gui.entity ~= nil and gui.entity.name == "tycoon-urban-planning-center" then
         local player = game.players[gui.player_index]
 
@@ -570,7 +585,7 @@ script.on_event(defines.events.on_gui_opened, function (gui)
         local anchor = {gui = defines.relative_gui_type.container_gui, name = "tycoon-urban-planning-center", position = defines.relative_gui_position.right}
         urbanPlanningCenterGui = player.gui.relative.add{type = "frame", anchor = anchor, caption = {"", {"entity-name.tycoon-urban-planning-center"}}, direction = "vertical", name = guiKey}
 
-        GUI.addUrbanPlanningCenterView(urbanPlanningCenterGui)
+        Gui.addUrbanPlanningCenterView(urbanPlanningCenterGui)
     end
 end)
 
@@ -598,6 +613,13 @@ script.on_event(defines.events.on_gui_click, function(event)
             table.insert(parts, substring)
         end
         player.open_technology_gui("tycoon-" .. parts[2])
+    elseif element.name == "close_multiple_cities_overview" then
+        element.parent.parent.destroy()
+    elseif string.find(element.name, "multiple_cities_select_tab:", 1, true) then
+        local selectedTab = element.tags.selected_tab
+        local guiKey = "multiple_cities_overview"
+        local gui = player.gui.center[guiKey]
+        gui.children[2].selected_tab_index = selectedTab
     end
 end)
 
