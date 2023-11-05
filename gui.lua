@@ -483,7 +483,7 @@ local function addCitiesOverview(anchor)
     c1.style.width = 100
     local c2 = tbl.add{type = "label", caption = "Citizens"}
     c2.style.width = 100
-    local c3 = tbl.add{type = "label", caption = "Fully Supplied"}
+    local c3 = tbl.add{type = "label", caption = "Basic Needs Supplied"}
     c3.style.width = 100
     local c4 = tbl.add{type = "label", caption = ""}
     c4.style.width = 100

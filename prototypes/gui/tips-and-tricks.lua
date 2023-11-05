@@ -92,7 +92,18 @@ data:extend({
         type = "tips-and-tricks-item",
         name = "tycoon-fund-new-cities",
         category = "tycoon",
-        order = "a[tycoon]-f",
+        order = "a[tycoon]-f-a",
+        indent = 1,
+        trigger = {
+            type = "research",
+            technology = "tycoon-multiple-cities"
+        },
+    },
+    {
+        type = "tips-and-tricks-item",
+        name = "tycoon-cities-overview",
+        category = "tycoon",
+        order = "a[tycoon]-f-b",
         indent = 1,
         trigger = {
             type = "research",
