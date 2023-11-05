@@ -1061,12 +1061,14 @@ end
 
 commands.add_command("tycoon", nil, function(command)
     if command.player_index ~= nil and command.parameter == "spawn_city" then
-        local position = game.surfaces[1].find_non_colliding_position("tycoon-town-center-virtual", {#global.tycoon_cities * 2 * Constants.CITY_RADIUS, #global.tycoon_cities * 2 * Constants.CITY_RADIUS}, 200, 5, true)
-        position.x = math.floor(position.x)
-        position.y = math.floor(position.y)
+        local position = CityPlanning.findNewCityPosition()
+        if position == nil then
+            game.print("couldn't find new city position")
+            return
+        end
         local cityName = CityPlanning.addCity(position)
         
-        game.print("Created city: " .. cityName)
+        game.print("Created city " .. cityName .. " at " .. " x=" .. position.x .. " y=" .. position.y)
         
         local cityIndex = #global.tycoon_cities
         local city = global.tycoon_cities[cityIndex]

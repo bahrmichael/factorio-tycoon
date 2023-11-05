@@ -68,7 +68,10 @@ local function findNewCityPosition()
                                 limit = 1
                             }
                             if #playerEntities == 0 then
-                                return newCityPosition
+                                return {
+                                    x = math.floor(newCityPosition.x),
+                                    y = math.floor(newCityPosition.y),
+                                }
                             end
                         end
                     end
@@ -285,10 +288,7 @@ local function addCity(position)
             town_hall = nil,
             other = {}
         },
-        center = {
-            x = position.x,
-            y = position.y,
-        },
+        center = position,
         name = cityName,
         stats = {
             basic_needs = {},
@@ -367,4 +367,5 @@ return {
     addMoreCities = addMoreCities,
     getRequiredFundsForNextCity = getRequiredFundsForNextCity,
     getTotalAvailableFunds = getTotalAvailableFunds,
+    findNewCityPosition = findNewCityPosition,
 }
