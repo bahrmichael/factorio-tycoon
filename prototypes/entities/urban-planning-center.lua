@@ -17,8 +17,8 @@ data:extend{
         repair_sound = {filename = "__base__/sound/manual-repair-simple.ogg"},
         open_sound = {filename = "__base__/sound/machine-open.ogg", volume = 0.85},
         close_sound = {filename = "__base__/sound/machine-close.ogg", volume = 0.75},
-        collision_box = { { -2.9, -2.9}, {2.9, 1.9} },
-        selection_box = { { -2.9, -2.9}, {2.9, 1.9} },
+        collision_box = { { -2.9, -1.9}, {2.9, 1.9} },
+        selection_box = { { -2.9, -1.9}, {2.9, 1.9} },
         picture = {
             layers = {
                 {

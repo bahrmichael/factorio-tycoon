@@ -26,8 +26,8 @@ data:extend{
                     priority = "high",
                     width = 200,
                     height = 200,
-                    scale = 0.8,
-                    shift = {0, 0}
+                    scale = 0.75,
+                    shift = {0.1, -0.5}
                 },
             }
         },
