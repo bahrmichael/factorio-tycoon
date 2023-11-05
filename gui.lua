@@ -366,7 +366,7 @@ local function addTrainStationView(trainStationUnitNumber, anchor, city)
     end
 
     if not global.tycoon_train_station_limits[trainStationUnitNumber] then
-        -- 100 is the inventory_size of the passenger-train-station entity
+        -- 100 is the inventory_size of the passenger-train-station entity, filling up 80% is a good default to not immediately get stuck
         global.tycoon_train_station_limits[trainStationUnitNumber] = 80
     end
 
@@ -384,6 +384,23 @@ local function addTrainStationView(trainStationUnitNumber, anchor, city)
         text = "" .. global.tycoon_train_station_limits[trainStationUnitNumber],
         name = "train_station_limit:" .. trainStationUnitNumber
     }
+
+    flow.add{type = "line", direction = "horizontal"}
+    flow.add{type = "label", caption = {"", {"tycoon-gui-select-departures"}}}
+    for i, c in ipairs(global.tycoon_cities) do
+        if city.name == c.name then
+            flow.add{type = "checkbox", caption = c.name, state = false, enabled = false}
+        else
+            local state = true
+            if global.tycoon_train_station_passenger_filters ~= nil and global.tycoon_train_station_passenger_filters[trainStationUnitNumber] ~= nil and global.tycoon_train_station_passenger_filters[trainStationUnitNumber][c.id] ~= nil then
+                state = global.tycoon_train_station_passenger_filters[trainStationUnitNumber][c.id]
+            end
+            flow.add{type = "checkbox", caption = c.name, state = state, tags = {
+                destination_city_id = c.id,
+                train_station_unit_number = trainStationUnitNumber
+            }}
+        end
+    end
 end
 
 local function addCityView(city, anchor)

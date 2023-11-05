@@ -36,9 +36,23 @@ local function listSpecialCityBuildings(city, name)
     return result
 end
 
+-- Return the first index with the given value (or nil if not found).
+--- @param array any[]
+--- @param value any
+--- @return number | nil Index The index of the element in the array, or nil if there's no match.
+local function indexOf(array, value)
+    for i, v in ipairs(array) do
+        if v == value then
+            return i
+        end
+    end
+    return nil
+end
+
 --- @param city City
+--- @param excludedNames string[] | nil
 --- @return string | nil name
-local function getRandomCityName(city)
+local function getRandomCityName(city, excludedNames)
     if #(global.tycoon_cities or {}) == 0 then
         return nil
     end
@@ -46,7 +60,13 @@ local function getRandomCityName(city)
     for i = 1, 10, 1 do
         local r = global.tycoon_cities[city.generator(#global.tycoon_cities)].name
         if r ~= city.name then
-            return r
+            if excludedNames ~= nil and #excludedNames > 0 then
+                if not indexOf(excludedNames, r) then
+                    return r
+                end
+            else
+                return r
+            end
         end
     end
     return nil
@@ -85,7 +105,17 @@ local function spawnPassengers(city)
                 end
 
                 -- todo: check if train station has enough space, otherwise distribute passengers
-                local destination = getRandomCityName(city)
+
+                -- global.tycoon_train_station_passenger_filters[train_station_unit_number][destination_city_id]
+                local excludedCityNames = {}
+                if global.tycoon_train_station_passenger_filters ~= nil and global.tycoon_train_station_passenger_filters[selectedTrainStation.unit_number] ~= nil then
+                    for cityId, state in pairs(global.tycoon_train_station_passenger_filters[selectedTrainStation.unit_number]) do
+                        if state ~= false then
+                            table.insert(excludedCityNames, global.tycoon_cities[cityId].name)
+                        end
+                    end
+                end
+                local destination = getRandomCityName(city, excludedCityNames)
                 if destination == nil then
                     return
                 end
@@ -100,7 +130,7 @@ local function spawnPassengers(city)
 
                 for i = 1, #selectedTrainStation.get_inventory(1), 1 do
                     local p = selectedTrainStation.get_inventory(1)[i]
-                    if p ~= nil and p.valid and p.valid_for_read and p.name == passenger and p.tags.created == nil then
+                    if p ~= nil and p.valid and p.valid_for_read and p.name == passenger and (p.tags or {}).created == nil then
                         p.set_tag("created", game.tick)
                         p.set_tag("origin", string.lower(city.name))
                         p.set_tag("destination", string.lower(destination))

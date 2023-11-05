@@ -1025,6 +1025,20 @@ script.on_nth_tick(Constants.MORE_CITIES_TICKS, function ()
     CityPlanning.addMoreCities()
 end)
 
+script.on_event(defines.events.on_gui_checked_state_changed, function(event)
+    local element = event.element
+    local tags = element.tags
+    local destination_city_id = tags.destination_city_id
+    local train_station_unit_number = tags.train_station_unit_number
+    if global.tycoon_train_station_passenger_filters == nil then
+        global.tycoon_train_station_passenger_filters = {}
+    end
+    if global.tycoon_train_station_passenger_filters[train_station_unit_number] == nil then
+        global.tycoon_train_station_passenger_filters[train_station_unit_number] = {}
+    end
+    global.tycoon_train_station_passenger_filters[train_station_unit_number][destination_city_id] = element.state
+end)
+
 local function spawnSuppliedBuilding(city, entityName, supplyName, supplyAmount)
 
     local position = game.surfaces[1].find_non_colliding_position(entityName, city.center, 200, 5, true)
@@ -1047,7 +1061,7 @@ end
 
 commands.add_command("tycoon", nil, function(command)
     if command.player_index ~= nil and command.parameter == "spawn_city" then
-        local position = game.surfaces[1].find_non_colliding_position("tycoon-town-center-virtual", {#global.tycoon_cities * 50, #global.tycoon_cities * 50}, 200, 5, true)
+        local position = game.surfaces[1].find_non_colliding_position("tycoon-town-center-virtual", {#global.tycoon_cities * 2 * Constants.CITY_RADIUS, #global.tycoon_cities * 2 * Constants.CITY_RADIUS}, 200, 5, true)
         position.x = math.floor(position.x)
         position.y = math.floor(position.y)
         local cityName = CityPlanning.addCity(position)
