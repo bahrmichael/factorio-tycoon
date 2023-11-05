@@ -511,23 +511,23 @@ script.on_event(defines.events.on_research_finished, function(event)
     end
 end)
 
-script.on_event(defines.events.on_lua_shortcut, function(event)
+script.on_event({defines.events.on_lua_shortcut, "tycoon-cities-overview"}, function(event)
     local player = game.players[event.player_index]
 
     local guiKey = "multiple_cities_overview"
     local gui = player.gui.center[guiKey]
     if gui ~= nil then
-        -- clear any previous gui so that we can fully reconstruct it
+        -- If there already was a gui, then we need to close it
         gui.destroy()
+    else
+        local frame = player.gui.center.add{
+            type = "frame",
+            name = guiKey,
+            direction = "vertical"
+        }
+
+        Gui.addMultipleCitiesOverview(frame)
     end
-
-    local frame = player.gui.center.add{
-        type = "frame",
-        name = guiKey,
-        direction = "vertical"
-    }
-
-    Gui.addMultipleCitiesOverview(frame)
 end)
 
  -- todo: show construction material supply
