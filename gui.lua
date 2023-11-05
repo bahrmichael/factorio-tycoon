@@ -361,6 +361,33 @@ local function addCityOverview(city, anchor)
     tbl.add{type = "label", caption = getOverallConstructionMaterialsCaption(city)}
 end
 
+local function canCreatePassengerForCity(train_station_numer, destination_city_id)
+    
+    -- If the player has not set any filters for this station (i.e. they are nil or none are false), then we can display new cities as accepted
+    -- If any city has been disabled, then we won't allow new cities to automatically show up and produce passengers
+
+    local areAllFiltersPositive = true
+    if global.tycoon_train_station_passenger_filters ~= nil and global.tycoon_train_station_passenger_filters[train_station_numer] ~= nil then
+        for _, c in ipairs(global.tycoon_cities) do
+            if global.tycoon_train_station_passenger_filters[train_station_numer][c.id] == false then
+                areAllFiltersPositive = false
+                break
+            end
+        end
+    end
+
+    if areAllFiltersPositive then
+        return true
+    end
+
+    -- If the station does not know how to filter a station yet and not all filters are positive, then set the new one to negative
+    if global.tycoon_train_station_passenger_filters[train_station_numer][destination_city_id] == nil then
+        global.tycoon_train_station_passenger_filters[train_station_numer][destination_city_id] = areAllFiltersPositive
+    end
+
+    return global.tycoon_train_station_passenger_filters[train_station_numer][destination_city_id]
+end
+
 local function addTrainStationView(trainStationUnitNumber, anchor, city)
     if not global.tycoon_train_station_limits then
         global.tycoon_train_station_limits = {}
@@ -388,18 +415,18 @@ local function addTrainStationView(trainStationUnitNumber, anchor, city)
 
     flow.add{type = "line", direction = "horizontal"}
     flow.add{type = "label", caption = {"", {"tycoon-gui-select-departures"}}}
+
     for i, c in ipairs(global.tycoon_cities) do
         if city.name == c.name then
             flow.add{type = "checkbox", caption = c.name, state = false, enabled = false}
         else
-            local state = true
-            if global.tycoon_train_station_passenger_filters ~= nil and global.tycoon_train_station_passenger_filters[trainStationUnitNumber] ~= nil and global.tycoon_train_station_passenger_filters[trainStationUnitNumber][c.id] ~= nil then
-                state = global.tycoon_train_station_passenger_filters[trainStationUnitNumber][c.id]
-            end
-            flow.add{type = "checkbox", caption = c.name, state = state, tags = {
-                destination_city_id = c.id,
-                train_station_unit_number = trainStationUnitNumber
-            }}
+            flow.add{type = "checkbox", caption = c.name, 
+                state = canCreatePassengerForCity(trainStationUnitNumber, c.id),
+                tags = {
+                    destination_city_id = c.id,
+                    train_station_unit_number = trainStationUnitNumber
+                }
+            }
         end
     end
 end

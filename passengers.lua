@@ -110,7 +110,7 @@ local function spawnPassengers(city)
                 local excludedCityNames = {}
                 if global.tycoon_train_station_passenger_filters ~= nil and global.tycoon_train_station_passenger_filters[selectedTrainStation.unit_number] ~= nil then
                     for cityId, state in pairs(global.tycoon_train_station_passenger_filters[selectedTrainStation.unit_number]) do
-                        if state ~= false then
+                        if state == false then
                             table.insert(excludedCityNames, global.tycoon_cities[cityId].name)
                         end
                     end
@@ -121,8 +121,8 @@ local function spawnPassengers(city)
                 end
                 local passenger = "tycoon-passenger-" .. string.lower(destination)
                 local insertedPassengerCount = selectedTrainStation.insert{name = passenger, count = newPassengerCount}
-                for _, player in ipairs(game.players) do
-                    player.create_local_flying_text{
+                for player_index, _ in pairs(game.players) do
+                    game.players[player_index].create_local_flying_text{
                         text = {"", {"tycoon-passengers-new", insertedPassengerCount}},
                         position = selectedTrainStation.position,
                     }
