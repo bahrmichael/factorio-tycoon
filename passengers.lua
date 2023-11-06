@@ -1,10 +1,15 @@
 local Constants = require("constants")
 
 --- @param city City
-local function countCitizens(city)
+--- @param filter string | nil
+local function countCitizens(city, filter)
     local total = 0
-    for _, count in pairs(city.citizens) do
-        total = total + count
+    for tier, count in pairs(city.citizens) do
+        if filter == nil then
+            total = total + count
+        elseif filter == tier then
+            total = total + count
+        end
     end
     return total
 end
@@ -78,15 +83,15 @@ local function spawnPassengers(city)
         return
     end
 
-    local citizenCount = countCitizens(city)
-    local factor = 0.01
-    if citizenCount < 10 then
-        factor = 1
-    elseif citizenCount < 100 then
-        factor = 0.1
-    end
+    local residentialCount = countCitizens(city, "residential")
+    local highriseCount = countCitizens(city, "highrise")
 
-    local newPassengerCount = math.floor(citizenCount * factor * city.generator())
+    local citizenCount = countCitizens(city)
+    -- This function gives us a value that scales to 2/3 at x=1000 and to 0.9 at 5000
+    local citizenFactor = citizenCount / (citizenCount + 500)
+
+    -- Residential housing have 20 citizens and highrise have 100. That means we generate up to 1 per residential and up to 5 per highrise house.
+    local newPassengerCount = math.floor((residentialCount * 0.05 + highriseCount * 0.05) * citizenFactor * city.generator())
     if newPassengerCount > 0 then
         local trainStations = listSpecialCityBuildings(city, "tycoon-passenger-train-station")
         if #trainStations > 0 then
@@ -100,7 +105,7 @@ local function spawnPassengers(city)
                         departingPassengers = departingPassengers + count
                     end
                 end
-                if departingPassengers >= passengerLimit then
+                if (departingPassengers + newPassengerCount) >= passengerLimit then
                     return
                 end
 

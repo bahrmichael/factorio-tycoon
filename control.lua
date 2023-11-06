@@ -1027,7 +1027,7 @@ script.on_init(function()
         -- /c game. player. insert{ name="tycoon-cow", count=100 }
 end)
 
-script.on_nth_tick(30, function()
+script.on_nth_tick(120, function()
     if #(global.tycoon_cities or {}) > 0 then
         for _, city in ipairs(global.tycoon_cities) do
             Passengers.clearPassengers(city)
