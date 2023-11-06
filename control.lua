@@ -1037,14 +1037,11 @@ script.on_nth_tick(30, function()
     end
 
     global.tycoon_cities = {}
-    local position = game.surfaces[1].find_non_colliding_position("tycoon-town-center-virtual", {0, 0}, 200, 5, true)
-    position.x = math.floor(position.x) - Constants.CELL_SIZE * 1
-    position.y = math.floor(position.y) - Constants.CELL_SIZE * 1
-    CityPlanning.addCity(position)
+    CityPlanning.addMoreCities(true, true)
 end)
 
 script.on_nth_tick(Constants.MORE_CITIES_TICKS, function ()
-    CityPlanning.addMoreCities()
+    CityPlanning.addMoreCities(false, false)
 end)
 
 script.on_event(defines.events.on_gui_checked_state_changed, function(event)
@@ -1083,14 +1080,7 @@ end
 
 commands.add_command("tycoon", nil, function(command)
     if command.player_index ~= nil and command.parameter == "spawn_city" then
-        local position = CityPlanning.findNewCityPosition()
-        if position == nil then
-            game.print("couldn't find new city position")
-            return
-        end
-        local cityName = CityPlanning.addCity(position)
-        
-        game.print("Created city " .. cityName .. " at " .. " x=" .. position.x .. " y=" .. position.y)
+        CityPlanning.addMoreCities(false, true)
         
         local cityIndex = #global.tycoon_cities
         local city = global.tycoon_cities[cityIndex]

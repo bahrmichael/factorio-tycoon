@@ -29,7 +29,8 @@ local function calculateDistance(p1, p2)
     return math.sqrt(dx * dx + dy * dy)
 end
 
-local MIN_DISTANCE = Constants.CITY_RADIUS * 2 + 200
+-- With an additional space of 200 the cities still spawned relatively close to each other, so I raised it to 400
+local MIN_DISTANCE = Constants.CITY_RADIUS * 2 + 400
 local COST_PER_CITY = 1000
 
 local function isInRangeOfCity(city, position)
@@ -46,32 +47,66 @@ local function isInRangeOfAnyCity(position)
     return false
 end
 
-local function findNewCityPosition()
+local function findNewCityPosition(isInitialTown)
+    local scorings = {}
     -- make up to 10 attempts
     for i = 1, 10, 1 do
         local chunk = game.surfaces[1].get_random_chunk()
         if chunk ~= nil then
             if game.forces.player.is_chunk_charted(game.surfaces[1], chunk) then
                 local position = { x = chunk.x * 32, y = chunk.y * 32 }
-                if not isInRangeOfAnyCity(position) then
+                if isInitialTown or not isInRangeOfAnyCity(position) then
                     local newCityPosition = game.surfaces[1].find_non_colliding_position("tycoon-town-center-virtual", position, Constants.CITY_RADIUS, 5, true)
                     if newCityPosition ~= nil then
-                        local isChunkCharted = game.forces.player.is_chunk_charted(game.surfaces[1], {
+                        local isChunkCharted = isInitialTown or game.forces.player.is_chunk_charted(game.surfaces[1], {
                             x = math.floor(newCityPosition.x / 32),
                             y = math.floor(newCityPosition.y / 32),
                         })
                         if isChunkCharted then
-                            local playerEntities = game.surfaces[1].find_entities_filtered{
-                                position = newCityPosition,
-                                radius = Constants.CITY_RADIUS,
-                                force = game.forces.player,
-                                limit = 1
-                            }
-                            if #playerEntities == 0 then
-                                return {
+                            local skip = false
+                            local record = {
+                                position = {
                                     x = math.floor(newCityPosition.x),
                                     y = math.floor(newCityPosition.y),
+                                },
+                            }
+                            if not isInitialTown then
+                                local playerEntities = game.surfaces[1].find_entities_filtered{
+                                    position = newCityPosition,
+                                    radius = Constants.CITY_RADIUS,
+                                    force = game.forces.player,
+                                    limit = 1
                                 }
+                                skip = #playerEntities > 0
+                            end
+                            if not skip then
+                                local radius = 50 / i + 18
+                                local tiles = game.surfaces[1].find_tiles_filtered{
+                                    position = newCityPosition,
+                                    radius = radius, -- The initial grid is 6x3=18, so 50 allows for 32 more, or 16 on each side, which is nearly 3 more cells. That should give the city enough space to grow outwards.
+                                    name = {
+                                        "deepwater",
+                                        "deepwater-green",
+                                        "nuclear-ground",
+                                        "out-of-map",
+                                        "water",
+                                        "water-green",
+                                        "water-shallow",
+                                        "water-mud",
+                                        "water-wube",
+                                    },
+                                }
+                                local entities = game.surfaces[1].find_entities_filtered({
+                                    position = newCityPosition,
+                                    radius = radius, -- The initial grid is 6x3=18, so 50 allows for 32 more, or 16 on each side, which is nearly 3 more cells. That should give the city enough space to grow outwards.
+                                    name={"character", "tycoon-town-hall"},
+                                    type={"tree", "simple-entity", "fish"},
+                                    invert=true
+                                })
+                                record.entities = #entities
+                                record.tiles = #tiles
+
+                                table.insert(scorings, record)
                             end
                         end
                     end
@@ -79,7 +114,29 @@ local function findNewCityPosition()
             end
         end
     end
-    return nil
+    
+    local tilesFactor = 3 / game.surfaces[1].map_gen_settings.water -- water is a percentage value
+    local autoplaceTotal = 0
+    local autoplaceCounter = 0
+    for _, value in pairs(game.surfaces[1].map_gen_settings.autoplace_controls) do
+        autoplaceTotal = autoplaceTotal + value.frequency
+        autoplaceCounter = autoplaceCounter + 1
+    end
+    local entitiesFactor = 2 / (autoplaceTotal / autoplaceCounter)
+    local distanceWeight = 0
+    if isInitialTown then
+        distanceWeight = 2
+    end
+    local function weight(s)
+        return math.pow(s.position.y, distanceWeight)
+            + math.pow(s.position.x, distanceWeight)
+            + math.pow(s.entities, entitiesFactor)
+            + math.pow(s.tiles, tilesFactor)
+    end
+    table.sort(scorings, function(a, b)
+        return weight(a) < weight(b)
+    end)
+    return (scorings[1] or {}).position
 end
 
 local function initialGrid()
@@ -137,7 +194,7 @@ local function initialGrid()
     }
 end
 
-local function initializeCity(city, position)
+local function initializeCity(city)
     city.grid = initialGrid()
 
     local function clearCell(y, x)
@@ -300,7 +357,7 @@ local function addCity(position)
             highrise = 0,
         },
     })
-    initializeCity(global.tycoon_cities[cityId], position)
+    initializeCity(global.tycoon_cities[cityId])
     Consumption.updateNeeds(global.tycoon_cities[cityId])
 
     return cityName
@@ -325,40 +382,59 @@ local function getTotalAvailableFunds()
     return totalAvailableFunds
 end
 
-local function addMoreCities()
-    if not (game.forces.player.technologies["tycoon-multiple-cities"] or {}).researched then
-        return
+local function addMoreCities(isInitialCity, skipPayment)
+    
+    if global.tycoon_cities == nil then
+        global.tycoon_cities = {}
+    end
+    if #global.tycoon_cities >= #DataConstants.CityNames then
+        if not global.tycoon_city_limit_warning_6 then
+            game.print({"", "[color=orange]Factorio Tycoon:[/color] ", "Currently you can only build up to " .. #DataConstants.CityNames .. " cities. Feel free to use the currency for research going forward."})
+            global.tycoon_city_limit_warning_6 = true
+        end
+        return false
     end
 
-    local urbanPlanningCenters = game.surfaces[1].find_entities_filtered{
-        name = "tycoon-urban-planning-center"
-    }
+    if not skipPayment then
+        if not (game.forces.player.technologies["tycoon-multiple-cities"] or {}).researched then
+            return false
+        end
 
-    local totalAvailableFunds = getTotalAvailableFunds()
-    local requiredFunds = getRequiredFundsForNextCity()
+        local totalAvailableFunds = getTotalAvailableFunds()
+        local requiredFunds = getRequiredFundsForNextCity()
 
-    if requiredFunds > totalAvailableFunds then
-        return
+        if requiredFunds > totalAvailableFunds then
+            return false
+        end
     end
 
-    local newCityPosition = findNewCityPosition()
+    local newCityPosition = findNewCityPosition(isInitialCity)
     if newCityPosition ~= nil then
         local cityName = addCity(newCityPosition)
         game.print({"", "[color=orange]Factorio Tycoon:[/color] ", {"tycooon-new-city", cityName}, ": ", "[gps=" .. (newCityPosition.x + 1.5 * Constants.CELL_SIZE) .. "," .. (newCityPosition.y + 1.5 * Constants.CELL_SIZE) .. "]"})
 
-        -- sort the centers with most currency first, so that we need to remove from fewer centers
-        table.sort(urbanPlanningCenters, function (a, b)
-            return a.get_item_count("tycoon-currency") > b.get_item_count("tycoon-currency")
-        end)
-        for _, c in ipairs(urbanPlanningCenters) do
-            local availableCount = c.get_item_count("tycoon-currency")
-            local removed = c.remove_item({name = "tycoon-currency", count = math.min(requiredFunds, availableCount)})
-            requiredFunds = requiredFunds - removed
-            if requiredFunds <= 0 then
-                break
+        if not skipPayment then
+            local urbanPlanningCenters = game.surfaces[1].find_entities_filtered{
+                name = "tycoon-urban-planning-center"
+            } or {}
+            -- sort the centers with most currency first, so that we need to remove from fewer centers
+            table.sort(urbanPlanningCenters, function (a, b)
+                return a.get_item_count("tycoon-currency") > b.get_item_count("tycoon-currency")
+            end)
+            for _, c in ipairs(urbanPlanningCenters) do
+                local availableCount = c.get_item_count("tycoon-currency")
+                local removed = c.remove_item({name = "tycoon-currency", count = math.min(requiredFunds, availableCount)})
+                requiredFunds = requiredFunds - removed
+                if requiredFunds <= 0 then
+                    break
+                end
             end
         end
+
+        return true
     end
+
+    return false
 
 end
 
