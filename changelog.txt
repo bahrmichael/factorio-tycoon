@@ -1,9 +1,40 @@
 ---------------------------------------------------------------------------------------------------
-Version: unreleased
-Date: 04. 11. 2023
+Version: 0.2.0
+Date: 07. 11. 2023
+  Major Features:
+    - This version should not break any savegames. It may however break some of the supply chains or power supply that you've set up. Read more below.
+    - BREAKING: Wind turbines have been removed. Their intent was an easy kick-starting of remote primary industries, which can be done better with 
+      solar panels now. Please replace them with solar panels if necessary.
+    - BREAKING: The town hall's inventory and its items have been removed. There was no mod-related purpose for it since dropping the story, and 
+      there were issues with third party mod inserters.
+    - BREAKING: The city's range to access supply buildings has been decreased from previosul 1,000 tiles to now 150 tiles. 150 is still a pretty large area, and
+      shouldn't cause issues for most savegames. You can see the range as a green overlay when you are about to place a supply building such as a market. If you built
+      supply buildings outside of the updated city's range, you have to relocate them closer to the town hall.
+    - BREAKING: Cities from savegames started before 0.2 will build houses not properly aligned in their cells. This shouldn't break anything, 
+      but I wanted to give you a heads up. This is not going to be fixed for older savegames.
+    - You can now fund new cities by researching the multiple cities technology, building an urban planning center, and providing it with enough currency. 
+      To spawn a new city, there must be enough explored, unobstructed area on the map. You can learn more about that in the tips and tricks which will show up 
+      when you research multiple cities. Currently you can have up to 6 cities.
+    - You can use the multiple cities overview to keep an eye on the cities' supply even if you're working somewhere else. 
+      Use the default hotkey CTRL + T or the shortcut (which you can select near the deconstruction tool) to open the overview.
+    - Once you have multiple cities with residential or highrise housing, cities will spawn passengers in train stations. Research the technology public transportation
+      to build train stations. You don't necessarily need to transport passengers with trains, but it's a good fit for a public transportation network. You can learn 
+      more about that in the tips and tricks which will show up when you public transportation.
+  Features:
+    - When you place a supply building, you will now see a green overlay that shows you the city's range (150 tiles). Supply buildings or train stations need to be in this
+      range for the city to access it.
+    - Instead of just calling it City 1, there are now Factorio-themed city names. You're welcome to contribute more!
+  Changes:
+    - The recipe to milk cows has been extracted from husbandry into its own technology. It made a bit more sense to me to have that researchable closer to when you need to bottle milk.
+      Savegames from before 0.2 which already had bottling researched, have this new tech researched by default.
+    - When a new city spawns (including the initial one) you can now see a location marker on the map, and the location is also visible in the chat. Click on the location to see the town hall on the map.
+  Balancing:
+    - Updated the amount of science needed for Tycoon technologies.
   Bugfixes:
     - Added missing icon for the town hall.
     - The town hall now shows basic needs as "Supplied" when there are no citizens that require anything yet.
+    - Previously the mod sometimes only interacted with the first player, which may have caused issues in multiplayer games. This has been fixed, but I'm not sure how
+      well this mod works with multiplayer yet.
 ---------------------------------------------------------------------------------------------------
 Version: 0.1.6
 Date: 03. 11. 2023

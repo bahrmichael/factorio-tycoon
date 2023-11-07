@@ -5,6 +5,7 @@ data:extend{
       icon = "__tycoon__/graphics/icons/water-tower.png",
       icon_size = 64,
       max_health = 200,
+      flags = { "placeable-player", "player-creation"},
       minable = {
         mining_time = 1,
         result = "tycoon-water-tower"

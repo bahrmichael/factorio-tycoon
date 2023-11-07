@@ -17,17 +17,24 @@ local function logRoadEnds(roadEnds)
     log(printable)
 end
 
-local function logGrid(grid)
-    if global.tycoon_enable_debug_logging then
-        log('-- grid --')
+local function logGrid(grid, logFn)
+    local hasCustomLogging = true
+    if logFn == nil then
+        logFn = log
+        hasCustomLogging = false
+    end
+    if global.tycoon_enable_debug_logging or hasCustomLogging then
+        if not hasCustomLogging then
+            logFn('-- grid --')
+        end
         local s = #grid
         for y = 1, s, 1 do
-            local printRow = ""
+            local printRow = y .. ": "
             local row = grid[y]
             for x = 1, s, 1 do
                 local cell = row[x]
                 if cell.type == "unused" then
-                    printRow = printRow .. ". "
+                    printRow = printRow .. " .  "
                 elseif cell.type == "building" then
                     printRow = printRow .. "H "
                 elseif cell.type == "road" then
@@ -36,9 +43,11 @@ local function logGrid(grid)
                     printRow = printRow .. "_ "
                 end
             end
-            log(printRow)
+            logFn(printRow)
         end
-        log('-- grid --')
+        if not hasCustomLogging then
+            logFn('-- grid --')
+        end
     end
 end
 

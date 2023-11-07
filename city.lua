@@ -1,6 +1,8 @@
 DEBUG = require("debug")
 local Queue = require("queue")
 local Constants = require("constants")
+local GridUtil = require("grid-util")
+local Util = require("util")
 
 --- @class Coordinates
 --- @field x number
@@ -66,52 +68,6 @@ local Constants = require("constants")
 ---| "only-straight-rail"
 ---| "blocked"
 
---- @param p1 Coordinates
---- @param p2 Coordinates
---- @return number The distance between the two points.
-local function calculateDistance(p1, p2)
-    local dx = p2.x - p1.x
-    local dy = p2.y - p1.y
-    return math.sqrt(dx * dx + dy * dy)
-end
-
---- @param city City
---- @param coordinates Coordinates
---- @param sendWarningForMethod string | nil
---- @return Cell | nil cell
-local function safeGridAccess(city, coordinates, sendWarningForMethod)
-    local row = city.grid[coordinates.y]
-    if row == nil then
-        if sendWarningForMethod ~= nil then
-            game.print({"", {"tycoon-grid-access-warning", {"tycoon-grid-access-row"}, sendWarningForMethod}})
-        end
-        return nil
-    end
-    local cell = row[coordinates.x]
-    if cell == nil then
-        if sendWarningForMethod ~= nil then
-            game.print({"", {"tycoon-grid-access-warning", {"tycoon-grid-access-row"}, sendWarningForMethod}})
-        end
-        return nil
-    end
-    return cell
-end
-
---- @param grid Cell[][]
-local function getGridSize(grid)
-    return #grid
-end
-
---- @param city City
-local function getOffsetX(city)
-    return -1 * (getGridSize(city.grid) - 1) / 2 + city.center.x
-end
-
---- @param city City
-local function getOffsetY(city)
-    return -1 * (getGridSize(city.grid) - 1) / 2 + city.center.y
-end
-
 --- @param coordinates Coordinates
 --- @return string key
 local function buildCoordinatesKey(coordinates)
@@ -127,7 +83,7 @@ local function getCachedDistance(coordinates, offsetY, offsetX, cityCenter)
     if cachedDistances[key] ~= nil then
         return cachedDistances[key]
     else
-        local distance = calculateDistance({
+        local distance = Util.calculateDistance({
             y = (coordinates.y + offsetY) * Constants.CELL_SIZE,
             x = (coordinates.x + offsetX) * Constants.CELL_SIZE,
         }, cityCenter)
@@ -158,51 +114,43 @@ local function getSurroundingCoordinates(y, x, size, allowDiagonal)
    return c
 end
 
--- Return the first index with the given value (or nil if not found).
---- @param array any[]
---- @param value any
---- @return number | nil Index The index of the element in the array, or nil if there's no match.
-local function indexOf(array, value)
-    for i, v in ipairs(array) do
-        if v == value then
-            return i
-        end
-    end
-    return nil
-end
-
-local defaultRemovableEntities = {
-    "rock-",
-    "sand-rock-",
-    "dead-grey-trunk",
-    "tree-"
-}
-
 --- @param area any
 --- @param ignorables string[] | nil
 local function removeColldingEntities(area, ignorables)
-    local printEntities = game.surfaces[1].find_entities_filtered({area=area})
+    local printEntities = game.surfaces[1].find_entities_filtered({
+        area=area,
+        type = {"tree", "simple-entity"}
+    })
     for _, entity in pairs(printEntities) do
-        for _, removable in pairs(defaultRemovableEntities) do
-            if entity.valid and string.find(entity.name, removable, 1, true) then
-                if ignorables ~= nil and #ignorables > 0 and indexOf(ignorables, entity.name) ~= nil then
-                    -- noop, skip ignorables
-                else
-                    entity.destroy()
-                end
-            end
+        if ignorables ~= nil and #ignorables > 0 and Util.indexOf(ignorables, entity.name) ~= nil then
+            -- noop, skip ignorables
+        else
+            entity.destroy()
         end
     end
 end
 
 local function hasCliffsOrWater(area)
-    local tiles = game.surfaces[1].find_tiles_filtered{
+    local water = game.surfaces[1].find_tiles_filtered{
         area = area,
-        -- todo: add shallo water and others
-        name = {"water", "deepwater", "cliff"},
+        name = {
+            "deepwater",
+            "deepwater-green",
+            "out-of-map",
+            "water",
+            "water-green",
+            "water-shallow",
+            "water-mud",
+            "water-wube",
+        },
         limit = 1
     }
-    return #tiles > 0
+    local cliffs = game.surfaces[1].find_entities_filtered{
+        area = area,
+        name = { "cliff" },
+        limit = 1
+    }
+    return #water > 0 or #cliffs > 0
 end
 
 --- @param area any
@@ -235,10 +183,7 @@ end
 --- @param additionalIgnorables string[] | nil
 --- @return CollidableStatus
 local function checkForCollidables(city, coordinates, additionalIgnorables)
-    local startCoordinates = {
-        y = (coordinates.y + getOffsetY(city)) * Constants.CELL_SIZE,
-        x = (coordinates.x + getOffsetX(city)) * Constants.CELL_SIZE,
-    }
+    local startCoordinates = GridUtil.translateCityGridToTileCoordinates(city, coordinates)
     local area = {
         {startCoordinates.x, startCoordinates.y},
         {startCoordinates.x + Constants.CELL_SIZE, startCoordinates.y + Constants.CELL_SIZE}
@@ -283,7 +228,7 @@ end
 
  --- @param city City
  local function expand_grid(city)
-    local old_size = getGridSize(city.grid)
+    local old_size = GridUtil.getGridSize(city.grid)
     local new_size = old_size + 2  -- Expand by 1 on each side
 
     -- Shift rows downward to keep center
@@ -312,7 +257,7 @@ end
 local function hasSurroundingRoad(city, coordinates)
     local surroundsOfUnused = getSurroundingCoordinates(coordinates.y, coordinates.x, 1, false)
     for _, s in ipairs(surroundsOfUnused) do
-        local surroundingCell = safeGridAccess(city, s)
+        local surroundingCell = GridUtil.safeGridAccess(city, s)
         if surroundingCell ~= nil and surroundingCell.type == "road" then
             DEBUG.log("y=" .. coordinates.y .. " x=" .. coordinates.x .. " has road neighbour: y=" .. s.y .. " x=" .. s.x)
             return true
@@ -401,10 +346,7 @@ end
 --- @param direction Direction
 --- @return boolean
 local function areStraightRailsOrthogonal(city, coordinates, direction)
-    local startCoordinates = {
-        y = (coordinates.y + getOffsetY(city)) * Constants.CELL_SIZE,
-        x = (coordinates.x + getOffsetX(city)) * Constants.CELL_SIZE,
-    }
+    local startCoordinates = GridUtil.translateCityGridToTileCoordinates(city, coordinates)
     local area = {
         {startCoordinates.x, startCoordinates.y},
         {startCoordinates.x + Constants.CELL_SIZE, startCoordinates.y + Constants.CELL_SIZE}
@@ -460,7 +402,7 @@ local function testRoadDirection(city, roadEnd, lookoutDirections)
         end
 
         -- This should never be fail, because the upstream function is supposed to expand the grid if the position is on the outsides
-        local neighbourCell = safeGridAccess(city, neighbourPosition, "testRoadDirection")
+        local neighbourCell = GridUtil.safeGridAccess(city, neighbourPosition, "testRoadDirection")
         if neighbourCell == nil then
             return false
         end
@@ -481,7 +423,7 @@ local function testRoadDirection(city, roadEnd, lookoutDirections)
             DEBUG.log("Test result: False, because building")
             return false
         elseif neighbourCell.type == "road" then
-            if indexOf(neighbourCell.roadSockets, invertDirection(direction)) ~= nil then
+            if Util.indexOf(neighbourCell.roadSockets, invertDirection(direction)) ~= nil then
                 DEBUG.log("Test result: False, because road with inverted direction")
                 return false
             end
@@ -506,7 +448,7 @@ local function testRoadDirection(city, roadEnd, lookoutDirections)
             continueInDirection(neighbourPosition, neighboursSideDirections[2], 1),
         }
         for _, position in ipairs(neighboursSideNeighbours) do
-            local cell = safeGridAccess(city, position)
+            local cell = GridUtil.safeGridAccess(city, position)
             if cell ~= nil and cell.type == "road" then
                 local sockets = cell.roadSockets or {}
                 for _, socket in ipairs(sockets) do
@@ -589,7 +531,7 @@ local function pickRoadExpansion(city, roadEnd)
             local straightStreetLength = 10
             for i = 1, straightStreetLength, 1 do
                 local previousCell = continueInDirection(roadEnd.coordinates, invertDirection(roadEnd.direction), i)
-                local cell = safeGridAccess(city, previousCell)
+                local cell = GridUtil.safeGridAccess(city, previousCell)
                 if cell == nil then
                     -- We reached the end of the grid. The road doesn't go beyond here.
                     break
@@ -757,7 +699,7 @@ local function addBuildingLocations(city, recentCoordinates)
                 -- Skip locations that are at the edge of the grid or beyond
             else
                     -- Only check cells that are unused and may have a building built there
-                local cell = safeGridAccess(city, value)
+                local cell = GridUtil.safeGridAccess(city, value)
                 local isUnused = cell ~= nil and cell.type == "unused"
                 if isUnused then
 
@@ -765,15 +707,15 @@ local function addBuildingLocations(city, recentCoordinates)
                     local surroundsOfUnused = getSurroundingCoordinates(value.y, value.x, 1, false)
                     local hasSurroundingRoadEnd = false
                     for _, s in ipairs(surroundsOfUnused) do
-                        if indexOf(recentCoordinates, s) ~= nil then
+                        if Util.indexOf(recentCoordinates, s) ~= nil then
                             hasSurroundingRoadEnd = true
                             break
                         end
                     end
                     if not hasSurroundingRoadEnd then
                         if hasSurroundingRoad(city, value) then
-                            local offsetY = getOffsetY(city)
-                            local offsetX = getOffsetX(city)
+                            local offsetY = GridUtil.getOffsetY(city)
+                            local offsetX = GridUtil.getOffsetX(city)
                             local cityCenter = {
                                 x = city.center.x + Constants.CELL_SIZE,
                                 y = city.center.y + Constants.CELL_SIZE,
@@ -785,7 +727,7 @@ local function addBuildingLocations(city, recentCoordinates)
                             -- Because we use getSurroundingCoordinates with allowDiagonal=false above, we only need to count 4 houses or roads
                             local surroundCount = 0
                             for _, s in ipairs(surroundsOfUnused) do
-                                local surroundingCell = safeGridAccess(city, s)
+                                local surroundingCell = GridUtil.safeGridAccess(city, s)
                                 if surroundingCell ~= nil and surroundingCell.type == "building" then
                                     surroundCount = surroundCount + 1
                                 end
@@ -807,10 +749,7 @@ end
 
 --- @param cellCoordinates Coordinates
 local function isCellFree(city, cellCoordinates)
-    local startCoordinates = {
-        y = (cellCoordinates.y + getOffsetY(city)) * Constants.CELL_SIZE,
-        x = (cellCoordinates.x + getOffsetX(city)) * Constants.CELL_SIZE,
-    }
+    local startCoordinates = GridUtil.translateCityGridToTileCoordinates(city, cellCoordinates)
     local area = {
         {x = startCoordinates.x, y = startCoordinates.y},
         {x = startCoordinates.x + Constants.CELL_SIZE, y = startCoordinates.y + Constants.CELL_SIZE}
@@ -824,7 +763,7 @@ end
 local function isConnectedToRoad(city, coordinates)
     local surrounds = getSurroundingCoordinates(coordinates.y, coordinates.x, 1, false)
     for _, s in ipairs(surrounds) do
-        local c = safeGridAccess(city, s)
+        local c = GridUtil.safeGridAccess(city, s)
         if c ~= nil and c.type == "road" then
             return true
         end
@@ -834,12 +773,17 @@ end
 
 --- @param city City
 --- @param buildingConstruction BuildingConstruction
+--- @param queueIndex string
 --- @param allowedCoordinates Coordinates[] | nil
 --- @return boolean started
-local function startConstruction(city, buildingConstruction, queue, allowedCoordinates)
-    if queue == nil then
-        queue = Queue.new()
+local function startConstruction(city, buildingConstruction, queueIndex, allowedCoordinates)
+    if city[queueIndex] == nil then
+        city[queueIndex] = Queue.new()
     end
+
+    city[queueIndex] = Queue.removeDuplicates(city[queueIndex], function(v)
+        return v.x .. "-" .. v.y
+    end)
 
     -- Make up to 10 attempts to find a location where we can start a construction site
     local attempts = 10
@@ -851,32 +795,29 @@ local function startConstruction(city, buildingConstruction, queue, allowedCoord
         if allowedCoordinates ~= nil then
             coordinates = table.remove(allowedCoordinates)
         else
-            coordinates = Queue.popleft(queue)
+            coordinates = Queue.popleft(city[queueIndex])
             if coordinates == nil then
                 -- If there are no more entries left in the queue, then abort
                 return false
             end
         end
 
-        local startCoordinates = {
-            y = (coordinates.y + getOffsetY(city)) * Constants.CELL_SIZE,
-            x = (coordinates.x + getOffsetX(city)) * Constants.CELL_SIZE,
-        }
+        local startCoordinates = GridUtil.translateCityGridToTileCoordinates(city, coordinates)
         local area = {
             {x = startCoordinates.x, y = startCoordinates.y},
             {x = startCoordinates.x + Constants.CELL_SIZE, y = startCoordinates.y + Constants.CELL_SIZE}
         }
 
-        local cell = safeGridAccess(city, coordinates)
+        local cell = GridUtil.safeGridAccess(city, coordinates)
 
         if coordinates.x <= 1 or coordinates.y <= 1 or coordinates.y >= #city.grid or coordinates.x > #city.grid then
             -- If it's at the edge of the grid, then put it back
-            Queue.pushright(queue, coordinates)
+            Queue.pushright(city[queueIndex], coordinates)
         elseif cell == nil then
             -- noop, if the grid has not been expanded this far, then don't try to build a building here
             -- this should insert the coordinates at the end of the list, so that
             -- the next iteration will pick a different element from the beginning of the list
-            Queue.pushright(queue, coordinates)
+            Queue.pushright(city[queueIndex], coordinates)
         elseif cell.type ~= "unused" then
             -- If this location already has a road or building, then don't attempt to build
             -- here again.
@@ -885,10 +826,10 @@ local function startConstruction(city, buildingConstruction, queue, allowedCoord
             -- noop, if there are collidables than retry later
             -- this should insert the coordinates at the end of the list, so that
             -- the next iteration will pick a different element from the beginning of the list
-            Queue.pushright(queue, coordinates)
+            Queue.pushright(city[queueIndex], coordinates)
         elseif buildingConstruction.buildingType == "simple" and not isConnectedToRoad(city, coordinates) then
             -- Don't build buildings if there is no road connection yet
-            Queue.pushright(queue, coordinates)
+            Queue.pushright(city[queueIndex], coordinates)
         elseif buildingConstruction.buildingType == "garden" and isConnectedToRoad(city, coordinates) then
             -- Don't build gardens if there's a road right next to it
         else
@@ -929,8 +870,8 @@ end
 --- @param coordinates Coordinates
 local function isCharted(city, coordinates)
     local chunkPosition = {
-        y = math.floor((coordinates.y + getOffsetY(city)) * Constants.CELL_SIZE / 32),
-        x = math.floor((coordinates.x + getOffsetX(city)) * Constants.CELL_SIZE / 32),
+        y = math.floor((GridUtil.getOffsetY(city) + coordinates.y * Constants.CELL_SIZE) / 32),
+        x = math.floor((GridUtil.getOffsetX(city) + coordinates.x * Constants.CELL_SIZE) / 32),
     }
     return game.forces.player.is_chunk_charted(game.surfaces[1], chunkPosition)
 end
@@ -940,6 +881,21 @@ local function incraseCoordinates(coordinates, city)
     -- Debugged a case where the new value would be above the current grid size --> coordinates.x > #city.grid
     coordinates.x = coordinates.x + 1
     coordinates.y = coordinates.y + 1
+end
+
+local function clearAreaAndPrintTiles(city, coordinates, map)
+    local currentCellStartCoordinates = GridUtil.translateCityGridToTileCoordinates(city, {
+        x = coordinates.x,
+        y = coordinates.y,
+    })
+    printTiles(currentCellStartCoordinates, map, "concrete")
+
+    local currentArea = {
+        {currentCellStartCoordinates.x, currentCellStartCoordinates.y},
+        {currentCellStartCoordinates.x + Constants.CELL_SIZE, currentCellStartCoordinates.y + Constants.CELL_SIZE}
+    }
+    removeColldingEntities(currentArea, streetIgnorables)
+
 end
 
 --- @param city City
@@ -962,9 +918,9 @@ local function growAtRandomRoadEnd(city)
     DEBUG.log('Coordinates: y=' .. roadEnd.coordinates.y .. " x=" .. roadEnd.coordinates.x)
 
     if roadEnd.coordinates.x <= 1
-     or roadEnd.coordinates.x >= getGridSize(city.grid)
+     or roadEnd.coordinates.x >= GridUtil.getGridSize(city.grid)
      or roadEnd.coordinates.y <= 1
-     or roadEnd.coordinates.y >= getGridSize(city.grid)
+     or roadEnd.coordinates.y >= GridUtil.getGridSize(city.grid)
      then
         -- We need to put the item back first, so that the expansion is applied to it properly
         Queue.pushleft(city.roadEnds, roadEnd)
@@ -972,7 +928,9 @@ local function growAtRandomRoadEnd(city)
         DEBUG.logRoadEnds(city.roadEnds)
         -- When expanding the grid I noticed that there sometimes were duplicates, which may have multiplied the coordinate shift (e.g. 3 duplicates meant that x/y for each would be shifted by 3 cells)
         -- No idea why there are duplicates or why the multiplication happens, but removing duplicates helped as well
-        Queue.removeDuplicates(city.roadEnds)
+        Queue.removeDuplicates(city.roadEnds, function(v)
+            return v.coordinates.x .. "-" .. v.coordinates.y .. "-" .. v.direction
+        end)
         expand_grid(city)
         -- Since we extended the grid (and inserted a top/left row/colum) all roadEnd coordinates need to shift one
         if city.roadEnds ~= nil then
@@ -1015,19 +973,10 @@ local function growAtRandomRoadEnd(city)
         DEBUG.log('Picked Expansion Directions: ' .. #pickedExpansionDirections .. " (" .. table.concat(pickedExpansionDirections, ",") .. ")")
         -- For each direction, fill the current cell with the direction and the neighbour with the inverse direction
         for _, direction in ipairs(pickedExpansionDirections) do
-            local currentCellStartCoordinates = {
-                y = (roadEnd.coordinates.y + getOffsetY(city)) * Constants.CELL_SIZE,
-                x = (roadEnd.coordinates.x + getOffsetX(city)) * Constants.CELL_SIZE,
-            }
 
-            local currentArea = {
-                {currentCellStartCoordinates.x, currentCellStartCoordinates.y},
-                {currentCellStartCoordinates.x + Constants.CELL_SIZE, currentCellStartCoordinates.y + Constants.CELL_SIZE}
-            }
-            removeColldingEntities(currentArea, streetIgnorables)
+            clearAreaAndPrintTiles(city, roadEnd.coordinates, getMap(direction))
 
-            printTiles(currentCellStartCoordinates, getMap(direction), "concrete")
-            local currentCell = safeGridAccess(city, roadEnd.coordinates, "processPickedExpansionDirectionCurrent")
+            local currentCell = GridUtil.safeGridAccess(city, roadEnd.coordinates, "processPickedExpansionDirectionCurrent")
             if currentCell == nil then
                 return nil
             end
@@ -1035,7 +984,7 @@ local function growAtRandomRoadEnd(city)
             if currentCell.roadSockets == nil then
                 currentCell.roadSockets = {}
             end
-            if indexOf(currentCell.roadSockets, direction) == nil then
+            if Util.indexOf(currentCell.roadSockets, direction) == nil then
                 table.insert(currentCell.roadSockets, direction)
             end
 
@@ -1049,32 +998,23 @@ local function growAtRandomRoadEnd(city)
             elseif direction == "west" then
                 neighbourPosition = {x = roadEnd.coordinates.x - 1, y = roadEnd.coordinates.y}
             end
-            local neighbourCellStartCoordinates = {
-                y = (neighbourPosition.y + getOffsetY(city)) * Constants.CELL_SIZE,
-                x = (neighbourPosition.x + getOffsetX(city)) * Constants.CELL_SIZE,
-            }
-            
-            local neighourArea = {
-                {neighbourCellStartCoordinates.x, neighbourCellStartCoordinates.y},
-                {neighbourCellStartCoordinates.x + Constants.CELL_SIZE, neighbourCellStartCoordinates.y + Constants.CELL_SIZE}
-            }
-            removeColldingEntities(neighourArea, streetIgnorables)
-            
-            local neighourSocket = invertDirection(direction)
-            printTiles(neighbourCellStartCoordinates, getMap(neighourSocket), "concrete")
-            local neighbourCell = safeGridAccess(city, neighbourPosition, "processPickedExpansionDirectionNeighbour")
+
+            local neighbourSocket = invertDirection(direction)
+            clearAreaAndPrintTiles(city, neighbourPosition, getMap(neighbourSocket))
+
+            local neighbourCell = GridUtil.safeGridAccess(city, neighbourPosition, "processPickedExpansionDirectionNeighbour")
             if neighbourCell == nil then
                 return nil
             end
 
             if neighbourCell.type == "road" then
-                if indexOf(neighbourCell.roadSockets, neighourSocket) == nil then
-                    table.insert(neighbourCell.roadSockets, neighourSocket)
+                if Util.indexOf(neighbourCell.roadSockets, neighbourSocket) == nil then
+                    table.insert(neighbourCell.roadSockets, neighbourSocket)
                 end
             elseif neighbourCell.type == "unused" then
                 city.grid[neighbourPosition.y][neighbourPosition.x] = {
                     type = "road",
-                    roadSockets = {neighourSocket}
+                    roadSockets = {neighbourSocket}
                 }
                 -- When creating a new road cell, then we also mark that as a roadEnd to later continue from
                 DEBUG.log('Add roadEnd: ' .. neighbourPosition.y .. "/" .. neighbourPosition.x)
@@ -1120,7 +1060,7 @@ local function findReadyExcavationPit(excavationPits, buildingTypes)
 
     for i, e in ipairs(excavationPits) do
         if e.createdAtTick + e.buildingConstruction.constructionTimeInTicks < game.tick then
-            if indexOf(completableBuildingTypes, e.buildingConstruction.buildingType) ~= nil then
+            if Util.indexOf(completableBuildingTypes, e.buildingConstruction.buildingType) ~= nil then
                 return table.remove(excavationPits, i)
             end
         end
@@ -1165,15 +1105,12 @@ local function completeConstruction(city, buildingTypes)
         return nil
     end
     local coordinates = excavationPit.coordinates
-    local cell = safeGridAccess(city, coordinates, "completeConstruction")
+    local cell = GridUtil.safeGridAccess(city, coordinates, "completeConstruction")
     if cell ~= nil and cell.entity ~= nil then
         cell.entity.destroy()
     end
 
-    local startCoordinates = {
-        y = (coordinates.y + getOffsetY(city)) * Constants.CELL_SIZE,
-        x = (coordinates.x + getOffsetX(city)) * Constants.CELL_SIZE,
-    }
+    local startCoordinates = GridUtil.translateCityGridToTileCoordinates(city, coordinates)
     printTiles(startCoordinates, {
         "111111",
         "111111",
@@ -1186,8 +1123,9 @@ local function completeConstruction(city, buildingTypes)
     local entity
     if entityName == "simple" or entityName == "residential" or entityName == "highrise" then
         local xModifier, yModifier = 0, 0
-        if entityName == "residential" then
-            xModifier = 0
+        if entityName == "simple" then
+            -- no shift
+        elseif entityName == "residential" then
             yModifier = -0.5
         end
         local position = {x = startCoordinates.x + Constants.CELL_SIZE / 2 + xModifier, y = startCoordinates.y + Constants.CELL_SIZE / 2 + yModifier}
@@ -1217,14 +1155,14 @@ local function completeConstruction(city, buildingTypes)
 
         local neighboursOfCompletedHouse = getSurroundingCoordinates(coordinates.y, coordinates.x, 1, false)
         for _, n in ipairs(neighboursOfCompletedHouse) do
-            local neighbourCell = safeGridAccess(city, n)
+            local neighbourCell = GridUtil.safeGridAccess(city, n)
             if neighbourCell ~= nil and neighbourCell.type == "unused" then
                 local surroundsOfUnused = getSurroundingCoordinates(n.y, n.x, 1, false)
                 -- Test if this cell is surrounded by houses, if yes then place a garden
                 -- Because we use getSurroundingCoordinates with allowDiagonal=false above, we only need to count 4 houses or roads
                 local surroundCount = 0
                 for _, s in ipairs(surroundsOfUnused) do
-                    local surroundingCell = safeGridAccess(city, s)
+                    local surroundingCell = GridUtil.safeGridAccess(city, s)
                     if surroundingCell ~= nil and surroundingCell.type == "building" then
                         surroundCount = surroundCount + 1
                     end
@@ -1243,9 +1181,14 @@ local function completeConstruction(city, buildingTypes)
             move_stuck_players = true
         }
     else
+        local yModifier, xModifier = 0, 0
+        if entityName == "tycoon-treasury" then
+            xModifier = -0.5
+            yModifier = 0
+        end
         entity = game.surfaces[1].create_entity{
             name = entityName,
-            position = {x = startCoordinates.x + Constants.CELL_SIZE / 2, y = startCoordinates.y  + Constants.CELL_SIZE / 2},
+            position = {x = startCoordinates.x + Constants.CELL_SIZE / 2 + xModifier, y = startCoordinates.y  + Constants.CELL_SIZE / 2 + yModifier},
             force = "player",
             move_stuck_players = true
         }
@@ -1296,7 +1239,7 @@ local function hasEmptySurroundingSpace(city, coordinates, size)
     assert(y ~= nil and x ~= nil, "Coordinates must not be nil, but received ".. tostring(coordinates))
     for i = -1 * size, size, 1 do
         for j = -1 * size, size, 1 do
-            local cell = safeGridAccess(city, {y = y+i, x = x+j})
+            local cell = GridUtil.safeGridAccess(city, {y = y+i, x = x+j})
             if cell == nil or cell.type == "unused" then
                 return true
             end
@@ -1311,7 +1254,7 @@ end
 local function findUpgradableCells(city, limit, upgradeTo)
     local upgradeCells = {}
     for _, coordinates in ipairs(city.houseLocations) do
-        local cell = safeGridAccess(city, coordinates, "findUpgradableCells")
+        local cell = GridUtil.safeGridAccess(city, coordinates, "findUpgradableCells")
         if cell ~= nil and cell.type == "building" and cell.buildingType ~= nil then
             local upgradePath = upgradePaths[cell.buildingType]
             if upgradePath ~= nil and upgradePath.nextStage == upgradeTo then
@@ -1338,23 +1281,10 @@ local function findUpgradableCells(city, limit, upgradeTo)
     return upgradeCells
 end
 
-local function sortUpgradeCells(city, upgradeCells)
-    local cityCenter = {
-        x = city.center.x + Constants.CELL_SIZE,
-        y = city.center.y + Constants.CELL_SIZE,
-    }
-
-    local offsetY = getOffsetY(city)
-    local offsetX = getOffsetX(city)
-
-    table.sort(upgradeCells, function (a, b)
-        local distanceA = getCachedDistance(a.coordinates, offsetY, offsetX, cityCenter)
-        local distanceB = getCachedDistance(b.coordinates, offsetY, offsetX, cityCenter)
-        return distanceA < distanceB
-    end)
-end
-
 local function clearCell(city, upgradeCell)
+    if global.tycoon_house_lights[upgradeCell.cell.entity.unit_number] then
+        global.tycoon_house_lights[upgradeCell.cell.entity.unit_number].destroy()
+    end
     upgradeCell.cell.entity.destroy()
     -- We need to clear the cell as well, so that the construction has available space
     city.grid[upgradeCell.coordinates.y][upgradeCell.coordinates.x] = {
@@ -1362,8 +1292,28 @@ local function clearCell(city, upgradeCell)
     }
     city.buildingCounts[upgradeCell.upgradePath.previousStage] = city.buildingCounts[upgradeCell.upgradePath.previousStage] - 1
     if city.houseLocations ~= nil then
-        table.remove(city.houseLocations, indexOf(city.houseLocations, upgradeCell.coordinates))
+        table.remove(city.houseLocations, Util.indexOf(city.houseLocations, upgradeCell.coordinates))
     end
+end
+
+local function hasPlayerEntities(city, cell)
+    local startCoordinates = GridUtil.translateCityGridToTileCoordinates(city, cell.coordinates)
+    local area = {
+        {x = startCoordinates.x, y = startCoordinates.y},
+        {x = startCoordinates.x + Constants.CELL_SIZE, y = startCoordinates.y + Constants.CELL_SIZE}
+    }
+    local playerEntities = game.surfaces[1].find_entities_filtered({
+        area=area,
+        force=game.forces.player,
+        limit=1
+    })
+    local countNonHouses = 0
+    for _, v in ipairs(playerEntities) do
+        if not string.find(v.name, "tycoon-house-", 1, true) then
+            countNonHouses = countNonHouses + 1
+        end
+    end
+    return countNonHouses > 0
 end
 
 --- @param city City
@@ -1376,9 +1326,12 @@ local function upgradeHouse(city, newStage)
         return false
     end
 
-    sortUpgradeCells(city, upgradeCells)
+    local upgradeCell = upgradeCells[city.generator(#upgradeCells)]
+    -- If the player has built entities in this cell in the meantime, we can either not upgrade or destroy their entities. Staying safe and not upgrading is probably better.
+    if hasPlayerEntities(city, upgradeCell) then
+        return false
+    end
 
-    local upgradeCell = upgradeCells[1]
     clearCell(city, upgradeCell)
 
     local upgradePath = upgradeCell.upgradePath
@@ -1386,7 +1339,7 @@ local function upgradeHouse(city, newStage)
     startConstruction(city, {
         buildingType = upgradePath.nextStage,
         constructionTimeInTicks = city.generator(upgradePath.upgradeDurationInSeconds[1] * 60, upgradePath.upgradeDurationInSeconds[2] * 60),
-    }, city.buildingLocationQueue, {upgradeCell.coordinates})
+    }, "buildingLocationQueue", {upgradeCell.coordinates})
 
     return true
 end

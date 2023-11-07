@@ -1,3 +1,5 @@
+local Constants = require("constants")
+
 --- @class BasicNeed
 --- @field provided number
 --- @field required number
@@ -131,7 +133,7 @@ local function listSpecialCityBuildings(city, name)
         entities = game.surfaces[1].find_entities_filtered{
             name=name,
             position=city.special_buildings.town_hall.position,
-            radius=1000
+            radius=Constants.CITY_RADIUS
         }
         city.special_buildings.other[name] = entities
     end
@@ -183,14 +185,14 @@ end
 
 --- @param city City
 --- @param needs any | nil
-local function areBasicNeedsMet(city, needs)
+local function areBasicNeedsMet(city, needs, forGui)
     updateProvidedAmounts(city)
 
     local n = needs or city.stats.basic_needs
 
     for _, amounts in pairs(n) do
-        if amounts ~= nil and amounts.required == 0 then
-            return true
+        if forGui and amounts ~= nil and amounts.required == 0 then
+            -- noop
         elseif (amounts == nil or amounts.provided == nil or amounts.provided == 0) then
             return false
         elseif amounts.provided < amounts.required then
@@ -296,7 +298,7 @@ local function consumeBasicNeeds(city)
 
     if #markets >= 1 then
         for resource, amounts in pairs(city.stats.basic_needs) do
-            if resource ~= "water" then
+            if resource ~= "water" and amounts.required > 0 then
                 consumeItem({
                     name = resource,
                     required = amounts.required

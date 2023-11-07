@@ -1,251 +1,25 @@
 local Queue = require "queue"
-SEGMENTS = require("segments")
-CITY = require("city")
-CONSUMPTION = require("consumption")
+local City = require("city")
+local Consumption = require("consumption")
 local Constants = require("constants")
-local GUI = require("gui")
+local Gui = require("gui")
+local GridUtil = require("grid-util")
+local CityPlanning = require("city-planner")
+local Passengers = require("passengers")
+local Util = require("util")
 
 local primary_industry_names = {"tycoon-apple-farm", "tycoon-wheat-farm", "tycoon-fishery"}
-
---- @param coordinates Coordinates
---- @param sendWarningForMethod string | nil
---- @return any | nil cell
-local function safeGridAccess(city, coordinates, sendWarningForMethod)
-    local row = city.grid[coordinates.y]
-    if row == nil then
-        if sendWarningForMethod ~= nil then
-            game.print({"", {"tycoon-grid-access-warning", {"tycoon-grid-access-row"}, sendWarningForMethod}})
-        end
-        return nil
-    end
-    local cell = row[coordinates.x]
-    if cell == nil then
-        if sendWarningForMethod ~= nil then
-            game.print({"", {"tycoon-grid-access-warning", {"tycoon-grid-access-row"}, sendWarningForMethod}})
-        end
-        return nil
-    end
-    return cell
-end
-
-local function getGridSize(grid)
-    return #grid
-end
-
-local function getOffsetX(city)
-    return -1 * (getGridSize(city.grid) - 1) / 2 + (city.center.x or 0)
-end
-
-local function getOffsetY(city)
-    return -1 * (getGridSize(city.grid) - 1) / 2 + (city.center.y or 0)
-end
-
-local function printTiles(startY, startX, map, tileName)
-    local x, y = startX, startY
-    for _, value in ipairs(map) do
-        for i = 1, #value do
-            local char = string.sub(value, i, i)
-            if char == "1" then
-                game.surfaces[1].set_tiles({{name = tileName, position = {x, y}}})
-            end
-            x = x + 1
-        end
-        x = startX
-        y = y + 1
-    end
-end
-
-local function translateStarterCell(cell)
-    if cell == "intersection" then
-        cell = {
-            type = "road",
-            roadSockets = {"south", "north", "east", "west"}
-        }
-    elseif cell == "linear.horizontal" then
-        cell = {
-            type = "road",
-            roadSockets = {"east", "west"}
-        }
-    elseif cell == "linear.vertical" then
-        cell = {
-            type = "road",
-            roadSockets = {"south", "north"}
-        }
-    elseif cell == "town-hall" then
-        cell = {
-            type = "building"
-        }
-    else
-        cell = {
-            type = "road",
-            roadSockets = {"south", "north", "east", "west"}
-        }
-        -- assert(false, "Should not reach this branch in translateStarterCell.")
-    end
-    return cell
-end
-
-local function initializeCity(city)
-    city.grid = {
-        {{"corner.rightToBottom"},    {"linear.horizontal"}, {"corner.bottomToLeft"}},
-        {{"linear.vertical"}, {"town-hall"},         {"linear.vertical"}},
-        {{"corner.topToRight"},    {"linear.horizontal"}, {"corner.leftToTop"}},
-    }
-
-    local position = game.surfaces[1].find_non_colliding_position("tycoon-town-center-virtual", {0, 0}, 200, 5, true)
-    city.center.x = position.x
-    city.center.y = position.y
-
-    local function clearCell(y, x)
-        local area = {
-            -- Add 1 tile of border around it, so that it looks a bit nicer
-            {x - 1, y - 1},
-            {x + Constants.CELL_SIZE + 1, y + Constants.CELL_SIZE + 1}
-        }
-        local removables = game.surfaces[1].find_entities_filtered({
-            area=area,
-            name={"character", "tycoon-town-hall"},
-            invert=true
-        })
-        for _, entity in ipairs(removables) do
-            if entity.valid then
-                entity.destroy()
-            end
-        end
-    end
-
-    for y = 1, getGridSize(city.grid) do
-        for x = 1, getGridSize(city.grid) do
-            local cell = safeGridAccess(city, {x=x, y=y}, "initializeCity")
-            if cell ~= nil then
-                local map = SEGMENTS.getMapForKey(cell[1])
-                local startCoordinates = {
-                    y = (y + getOffsetY(city)) * Constants.CELL_SIZE,
-                    x = (x + getOffsetX(city)) * Constants.CELL_SIZE,
-                }
-                clearCell(startCoordinates.y, startCoordinates.x)
-                if map ~= nil then
-                    printTiles(startCoordinates.y, startCoordinates.x, map, "concrete")
-                end
-                if cell[1] == "town-hall" then
-                    local townHall = game.surfaces[1].create_entity{
-                        name = "tycoon-town-hall",
-                        position = {x = startCoordinates.x - 1 + Constants.CELL_SIZE / 2, y = startCoordinates.y - 1 + Constants.CELL_SIZE / 2},
-                        force = "neutral",
-                        move_stuck_players = true
-                    }
-                    game.surfaces[1].create_entity{
-                        name = "hiddenlight-60",
-                        position = {x = startCoordinates.x - 1 + Constants.CELL_SIZE / 2, y = startCoordinates.y - 1 + Constants.CELL_SIZE / 2},
-                        force = "neutral",
-                    }
-                    townHall.destructible = false
-                    city.special_buildings.town_hall = townHall
-                    global.tycoon_city_buildings[townHall.unit_number] = {
-                        cityId = city.id,
-                        entity_name = townHall.name,
-                        entity = townHall
-                    }
-                end
-            end
-        end
-    end
-
-
-    for i = 1, #city.grid, 1 do
-        for j = 1, #city.grid, 1 do
-            local c = safeGridAccess(city, {y=i, x=j})
-            -- todo: rather replace this with a proper initial grid (no need for translation then)
-            assert(c ~= nil or #c == 0, "Failed to translate starter cells of city.")
-            city.grid[i][j] = translateStarterCell(c[1])
-        end
-    end
-
-    local possibleRoadEnds = {
-        {
-            coordinates = {
-                x = 1,
-                y = 1,
-            },
-            direction = "west"
-        },
-        {
-            coordinates = {
-                x = 1,
-                y = 1,
-            },
-            direction = "north"
-        },
-
-        {
-            coordinates = {
-                x = 3,
-                y = 1,
-            },
-            direction = "east"
-        },
-        {
-            coordinates = {
-                x = 3,
-                y = 1,
-            },
-            direction = "north"
-        },
-
-        {
-            coordinates = {
-                x = 3,
-                y = 3,
-            },
-            direction = "east"
-        },
-        {
-            coordinates = {
-                x = 3,
-                y = 3,
-            },
-            direction = "south"
-        },
-
-        {
-            coordinates = {
-                x = 1,
-                y = 3,
-            },
-            direction = "west"
-        },
-        {
-            coordinates = {
-                x = 1,
-                y = 3,
-            },
-            direction = "south"
-        },
-    }
-
-    city.roadEnds = Queue.new()
-
-    -- We're adding some randomness here
-    -- Instead of adding 8 road connections to the town center, we pick between 4 and 8.
-    -- This makes individual towns feel a bit more diverse.
-    local roadEndCount = city.generator(4, 8)
-    for i = 1, roadEndCount, 1 do
-        Queue.pushright(city.roadEnds, table.remove(possibleRoadEnds, city.generator(#possibleRoadEnds)))
-    end
-
-    table.insert(city.priority_buildings, {name = "tycoon-treasury", priority = 10})
-end
 
 local function growCitizenCount(city, count, tier)
     if city.citizens[tier] == nil then
         city.citizens[tier] = 0
     end
     city.citizens[tier] = city.citizens[tier] + count
-    CONSUMPTION.updateNeeds(city)
+    Consumption.updateNeeds(city)
 end
 
 local function invalidateSpecialBuildingsList(city, name)
-    assert(city.special_buildings ~= nil, "The special buildings should never be nil. There has been one error though, so I added this assetion.")
+    assert(city.special_buildings ~= nil, "The special buildings should never be nil. There has been one error though, so I added this assertion.")
 
     if city.special_buildings.other[name] ~= nil then
         city.special_buildings.other[name] = nil
@@ -393,10 +167,10 @@ end
 script.on_event(defines.events.on_built_entity, function(event)
     local entity = event.created_entity
 
-    if isSupplyBuilding(entity.name) then
-        local nearbyTownHall = game.surfaces[1].find_entities_filtered{position=entity.position, radius=1000, name="tycoon-town-hall", limit=1}
+    if isSupplyBuilding(entity.name) or entity.name == "tycoon-passenger-train-station" then
+        local nearbyTownHall = game.surfaces[1].find_entities_filtered{position=entity.position, radius=Constants.CITY_RADIUS, name="tycoon-town-hall", limit=1}
         if #nearbyTownHall == 0 then
-            game.players[1].print("You just built a city supply building outside of any town hall's range. Please build it within 1000 tiles of a city.")
+            game.players[event.player_index].print("You just built a city building outside of any town hall's range. Please build it near a town hall.")
             return
         end
 
@@ -407,6 +181,13 @@ script.on_event(defines.events.on_built_entity, function(event)
         assert(city ~= nil, "When building an entity we found a cityId, but there is no city for it.")
 
         invalidateSpecialBuildingsList(city, entity.name)
+
+        if global.tycoon_entity_meta_info == nil then
+            global.tycoon_entity_meta_info = {}
+        end
+        global.tycoon_entity_meta_info[entity.unit_number] = {
+            cityId = cityId
+        }
     end
     
 end)
@@ -439,9 +220,9 @@ script.on_event({
         return
     end
 
-    if isSupplyBuilding(building.entity_name) then
+    if isSupplyBuilding(building.entity_name) or building.entity_name == "tycoon-passenger-train-station" then
         
-        local nearbyTownHall = game.surfaces[1].find_entities_filtered{position=building.entity.position, radius=1000, name="tycoon-town-hall", limit=1}
+        local nearbyTownHall = game.surfaces[1].find_entities_filtered{position=building.entity.position, radius=Constants.CITY_RADIUS, name="tycoon-town-hall", limit=1}
         if #nearbyTownHall == 0 then
             -- If there's no town hall in range then it probably was destroyed
             -- todo: how should we handle that situation? Is the whole city gone?
@@ -540,8 +321,8 @@ script.on_event(defines.events.on_chunk_charted, function (chunk)
                 -- Don't go below 50 though
                 minDistance = math.max(200 * game.surfaces[1].map_gen_settings.water, 50)
             end
-            local nearbySameProduction = game.surfaces[1].find_entities_filtered{position=position, radius=minDistance, name=industryName, limit=1}
-            if #nearbySameProduction == 0 then
+            local nearbyBlockingEntities = game.surfaces[1].find_entities_filtered{position=position, radius=minDistance, name=industryName, limit=1}
+            if #nearbyBlockingEntities == 0 then
                 local p = placePrimaryIndustryAtPosition(position, industryName)
                 addToGlobalPrimaryIndustries(p)
             end
@@ -664,6 +445,40 @@ local function getBuildables(city, stores)
     return buildables
 end
 
+script.on_event(defines.events.on_player_cursor_stack_changed, function(event)
+    local player = game.players[event.player_index]
+    if (player or {}).cursor_stack ~= nil then
+        if player.cursor_stack.valid_for_read and (player.cursor_stack.name == "tycoon-passenger-train-station" or player.cursor_stack.name == "tycoon-market" or player.cursor_stack.name == "tycoon-hardware-store" or player.cursor_stack.name == "tycoon-water-tower") then
+
+            -- Clear renderings if there are any. Otherwise we may increase the alpha value making it brighter.
+            rendering.clear("tycoon")
+
+            for _, city in ipairs(global.tycoon_cities or {}) do
+
+                local r = rendering.draw_circle{
+                    color = {0.1, 0.2, 0.1, 0.01},
+                    -- todo: add tech that increases this range, but only up to 250 which is the max for building cities all over the map
+                    radius = Constants.CITY_RADIUS,
+                    filled = true,
+                    target = city.special_buildings.town_hall,
+                    surface = game.surfaces[1],
+                    draw_on_ground = true,
+                }
+
+                if global.tycoon_player_renderings == nil then
+                    global.tycoon_player_renderings = {}
+                end
+                if global.tycoon_player_renderings[event.player_index] == nil then
+                    global.tycoon_player_renderings[event.player_index] = {}
+                end
+                table.insert(global.tycoon_player_renderings, r)
+            end
+        else
+            rendering.clear("tycoon")
+        end
+    end
+end)
+
 script.on_event(defines.events.on_research_finished, function(event)
     if global.tycoon_primary_industries == nil then
         return
@@ -682,6 +497,25 @@ script.on_event(defines.events.on_research_finished, function(event)
     end
 end)
 
+script.on_event({defines.events.on_lua_shortcut, "tycoon-cities-overview"}, function(event)
+    local player = game.players[event.player_index]
+
+    local guiKey = "multiple_cities_overview"
+    local gui = player.gui.center[guiKey]
+    if gui ~= nil then
+        -- If there already was a gui, then we need to close it
+        gui.destroy()
+    else
+        local frame = player.gui.center.add{
+            type = "frame",
+            name = guiKey,
+            direction = "vertical"
+        }
+
+        Gui.addMultipleCitiesOverview(frame)
+    end
+end)
+
  -- todo: show construction material supply
 script.on_event(defines.events.on_gui_opened, function (gui)
     if gui.entity ~= nil and gui.entity.name == "tycoon-town-hall" then
@@ -690,9 +524,14 @@ script.on_event(defines.events.on_gui_opened, function (gui)
         local city = findCityByTownHallUnitNumber(unit_number)
         assert(city ~= nil, "Could not find the city for town hall unit number ".. unit_number)
 
-        CONSUMPTION.updateNeeds(city)
+        Consumption.updateNeeds(city)
 
-        local guiKey = "city_overview_" .. city.id
+        -- For backwards compatibility
+        if player.gui.relative["city_overview_1"] then
+            player.gui.relative["city_overview_1"].destroy()
+        end
+
+        local guiKey = "city_overview"
         local cityGui = player.gui.relative[guiKey]
         if cityGui ~= nil then
             -- clear any previous gui so that we can fully reconstruct it
@@ -700,31 +539,69 @@ script.on_event(defines.events.on_gui_opened, function (gui)
         end
 
         local anchor = {gui = defines.relative_gui_type.container_gui, name = "tycoon-town-hall", position = defines.relative_gui_position.right}
-        cityGui = player.gui.relative.add{type = "frame", anchor = anchor, caption = {"", {"tycoon-gui-city-overview"}}, direction = "vertical", name = guiKey}
+        cityGui = player.gui.relative.add{type = "frame", anchor = anchor, caption = city.name, direction = "vertical", name = guiKey}
 
-        GUI.addCityView(city, cityGui)
+        Gui.addCityView(city, cityGui)
+    elseif gui.entity ~= nil and gui.entity.name == "tycoon-passenger-train-station" then
+        local player = game.players[gui.player_index]
+        local unit_number = gui.entity.unit_number
+
+        local guiKey = "train_station_view"
+        local trainStationGui = player.gui.relative[guiKey]
+        if trainStationGui ~= nil then
+            -- clear any previous gui so that we can fully reconstruct it
+            trainStationGui.destroy()
+        end
+
+        local anchor = {gui = defines.relative_gui_type.container_gui, name = "tycoon-passenger-train-station", position = defines.relative_gui_position.right}
+        trainStationGui = player.gui.relative.add{type = "frame", anchor = anchor, caption = {"", {"tycoon-gui-train-station-view"}}, direction = "vertical", name = guiKey}
+
+        local cityId = ((global.tycoon_entity_meta_info or {})[unit_number] or {}).cityId
+        Gui.addTrainStationView(unit_number, trainStationGui, findCityById(cityId))
+    elseif gui.entity ~= nil and gui.entity.name == "tycoon-urban-planning-center" then
+        local player = game.players[gui.player_index]
+
+        local guiKey = "urban_planning_center_view"
+        local urbanPlanningCenterGui = player.gui.relative[guiKey]
+        if urbanPlanningCenterGui ~= nil then
+            -- clear any previous gui so that we can fully reconstruct it
+            urbanPlanningCenterGui.destroy()
+        end
+
+        local anchor = {gui = defines.relative_gui_type.container_gui, name = "tycoon-urban-planning-center", position = defines.relative_gui_position.right}
+        urbanPlanningCenterGui = player.gui.relative.add{type = "frame", anchor = anchor, caption = {"", {"entity-name.tycoon-urban-planning-center"}}, direction = "vertical", name = guiKey}
+
+        Gui.addUrbanPlanningCenterView(urbanPlanningCenterGui)
     end
 end)
 
+script.on_event(defines.events.on_gui_text_changed, function(event)
+    if string.find(event.element.name, "train_station_limit", 1, true) then
+        local trainStationUnitNumber = tonumber(Util.splitString(event.element.name, delimiter)[2])
+        global.tycoon_train_station_limits[trainStationUnitNumber] = math.min(tonumber(event.text) or 0, 100)
+    end
+end)
 
 script.on_event(defines.events.on_gui_click, function(event)
     local player = game.players[event.player_index]
     local element = event.element
 
     if string.find(element.name, "tycoon_open_tech:", 1, true) then
-        local delimiter = ":"
-        local parts = {} -- To store the split parts
-        for substring in element.name:gmatch("[^" .. delimiter .. "]+") do
-            table.insert(parts, substring)
-        end
-        player.open_technology_gui("tycoon-" .. parts[2])
+        player.open_technology_gui("tycoon-" .. Util.splitString(element.name, ":")[2])
+    elseif element.name == "close_multiple_cities_overview" then
+        element.parent.parent.destroy()
+    elseif string.find(element.name, "multiple_cities_select_tab:", 1, true) then
+        local selectedTab = element.tags.selected_tab
+        local guiKey = "multiple_cities_overview"
+        local gui = player.gui.center[guiKey]
+        gui.children[2].selected_tab_index = selectedTab
     end
 end)
 
 script.on_nth_tick(600, function()
-    for _, city in ipairs(global.tycoon_cities) do
+    for _, city in ipairs(global.tycoon_cities or {}) do
         if city.special_buildings.town_hall ~= nil and city.special_buildings.town_hall.valid then
-            CONSUMPTION.consumeBasicNeeds(city)
+            Consumption.consumeBasicNeeds(city)
         end
     end
 end)
@@ -754,7 +631,7 @@ local function canUpgradeToResidential(city)
         return false
     end
 
-    local needsMet = CONSUMPTION.areBasicNeedsMet(city, getNeeds(city, "residential"))
+    local needsMet = Consumption.areBasicNeedsMet(city, getNeeds(city, "residential"))
     if not needsMet then
         return false
     end
@@ -783,7 +660,7 @@ local function canUpgradeToHighrise(city)
         return false
     end
 
-    local needsMet = CONSUMPTION.areBasicNeedsMet(city, getNeeds(city, "highrise"))
+    local needsMet = Consumption.areBasicNeedsMet(city, getNeeds(city, "highrise"))
     if not needsMet then
         return false
     end
@@ -799,7 +676,7 @@ local function newCityGrowth(city, suppliedTiers)
     assert(city.grid ~= nil and #city.grid > 1, "Expected grid to be initialized and larger than 1x1.")
 
     -- Attempt to complete constructions first
-    local completedConstructionBuildingType = CITY.completeConstruction(city, suppliedTiers)
+    local completedConstructionBuildingType = City.completeConstruction(city, suppliedTiers)
     if completedConstructionBuildingType ~= nil then
         if completedConstructionBuildingType == "simple" then
             growCitizenCount(city, citizenCounts["simple"], "simple")
@@ -825,40 +702,40 @@ local function newCityGrowth(city, suppliedTiers)
         local isBuilt
         if key == "specialBuildings" and #(city.priority_buildings or {}) > 0 then
             local prioBuilding = table.remove(city.priority_buildings, 1)
-            isBuilt = CITY.startConstruction(city, {
+            isBuilt = City.startConstruction(city, {
                 buildingType = prioBuilding.name,
                 -- Special buildings should be completed very quickly.
                 -- Here we just wait 2 seconds by default.
                 constructionTimeInTicks = 120,
-            }, city.buildingLocationQueue)
+            }, "buildingLocationQueue")
             if not isBuilt then
                 table.insert(city.priority_buildings, 1, prioBuilding)
             end
         elseif key == "highrise" and canUpgradeToHighrise(city) then
-            isBuilt = CITY.upgradeHouse(city, "highrise")
+            isBuilt = City.upgradeHouse(city, "highrise")
             if isBuilt then
                 growCitizenCount(city, -1 * citizenCounts["residential"], "residential")
             end
         elseif key == "residential" and canUpgradeToResidential(city) then
-            isBuilt = CITY.upgradeHouse(city, "residential")
+            isBuilt = City.upgradeHouse(city, "residential")
             if isBuilt then
                 growCitizenCount(city, -1 * citizenCounts["simple"], "simple")
             end
         elseif key == "simple" and canBuildSimpleHouse(city) then
-            isBuilt = CITY.startConstruction(city, {
+            isBuilt = City.startConstruction(city, {
                 buildingType = "simple",
                 constructionTimeInTicks = city.generator(600, 1200)
-            }, city.buildingLocationQueue)
+            }, "buildingLocationQueue")
         end
         -- Keep the road construction outside the above if block,
         -- so that the roads can expand if no building has been constructed
         -- We can't add this to the buildables check, or the iteration will never get there
         if not isBuilt then
             if city.gardenLocationQueue ~= nil and city.generator() < 0.25 and Queue.count(city.gardenLocationQueue, true) > 0 then
-                CITY.startConstruction(city, {
+                City.startConstruction(city, {
                     buildingType = "garden",
                     constructionTimeInTicks = 60 -- city.generator(300, 600)
-                }, city.gardenLocationQueue)
+                }, "gardenLocationQueue")
             else
                 -- The city should not grow its road network too much if there are (valid) possibleBuildingLocations
                 -- todo: how do we separate out invalid ones?
@@ -866,16 +743,16 @@ local function newCityGrowth(city, suppliedTiers)
                 local possibleBuildingLocationsCount = Queue.count(city.buildingLocationQueue)
                 if city.generator() < (#city.grid / possibleBuildingLocationsCount) and excavationPitCount < #city.grid then
                     -- todo: add check that road resources are available
-                    local coordinates = CITY.growAtRandomRoadEnd(city)
+                    local coordinates = City.growAtRandomRoadEnd(city)
                     if coordinates ~= nil then
-                        CITY.updatepossibleBuildingLocations(city, coordinates)
+                        City.updatepossibleBuildingLocations(city, coordinates)
                         isBuilt = true
                     end
                 end
             end
         else
             for _, item in ipairs(resources) do
-                CONSUMPTION.consumeItem(item, hardwareStores, city, true)
+                Consumption.consumeItem(item, hardwareStores, city, true)
             end
             break
         end
@@ -902,6 +779,7 @@ end
 local function placeInitialAppleFarm(city)
     local waterTiles = game.surfaces[1].find_tiles_filtered{
         position = city.center,
+        -- 1000 is the max range that the search algorithm may extend to, it's not related to the city radius
         radius = math.min(global.tycoon_initial_apple_farm_radius or 100, 1000),
         name={"water", "deepwater"},
         limit = 1,
@@ -913,12 +791,22 @@ local function placeInitialAppleFarm(city)
     local waterPosition = waterTiles[1].position
     local coordinates = interpolateCoordinates(city.center, waterPosition, 0.5)
     local position = game.surfaces[1].find_non_colliding_position("tycoon-apple-farm", coordinates, 200, 5, true)
+    -- make sure this doesn't spawn too close to town halls
+    local townHalls = game.surfaces[1].find_entities_filtered{
+        position = position,
+        radius = 50,
+        name = "tycoon-town-hall",
+        limit = 1
+    }
+    if #townHalls > 0 then
+        return nil
+    end
     return placePrimaryIndustryAtPosition(position, "tycoon-apple-farm")
 end
 
 local function spawnPrimaryIndustries()
 
-    if not global.tycoon_has_initial_apple_farm then
+    if not global.tycoon_has_initial_apple_farm and #(global.tycoon_cities or {}) > 0 then
         local p = placeInitialAppleFarm(global.tycoon_cities[1])
         if p ~= nil or (global.tycoon_initial_apple_farm_radius or 100) > 1000 then
             addToGlobalPrimaryIndustries(p)
@@ -940,6 +828,18 @@ local function spawnPrimaryIndustries()
                 y = primaryIndustry.startCoordinates.y
             end
             local position = game.surfaces[1].find_non_colliding_position(primaryIndustry.name, {x, y}, 200, 5, true)
+
+            -- make sure this doesn't spawn too close to existing player entities
+            local playerEntities = game.surfaces[1].find_entities_filtered{
+                position = position,
+                radius = 50,
+                force = game.forces.player,
+                limit = 1
+            }
+            if #playerEntities > 0 then
+                return
+            end
+
             local entity = placePrimaryIndustryAtPosition(position, primaryIndustry.name)
             if entity ~= nil then
                 table.remove(global.tycoon_new_primary_industries, i)
@@ -973,7 +873,7 @@ local function getSurroundingCoordinates(y, x, size, allowDiagonal)
 
 --- @param city City
 local function rediscoverUnusedFields(city)
-    local gridSize = getGridSize(city.grid)
+    local gridSize = GridUtil.getGridSize(city.grid)
     if gridSize < 10 then
         return
     end
@@ -983,22 +883,28 @@ local function rediscoverUnusedFields(city)
     local outerRadius = gridSize - innerRadius
     for y = innerRadius, innerRadius * 2, 1 do
         for x = innerRadius, innerRadius * 2, 1 do
-            local cell = safeGridAccess(city, {x=x, y=y})
-            if cell ~= nil and cell.type == "unused" and CITY.isCellFree(city, {x=x, y=y}) then
+            local cell = GridUtil.safeGridAccess(city, {x=x, y=y})
+            if cell ~= nil and cell.type == "unused" and City.isCellFree(city, {x=x, y=y}) then
                 local surroundsOfUnused = getSurroundingCoordinates(y, x, 1, false)
                 -- Test if this cell is surrounded by houses, if yes then place a garden
                 -- Because we use getSurroundingCoordinates with allowDiagonal=false above, we only need to count 4 houses or roads
                 local surroundCount = 0
                 for _, s in ipairs(surroundsOfUnused) do
-                    local surroundingCell = safeGridAccess(city, s)
+                    local surroundingCell = GridUtil.safeGridAccess(city, s)
                     if surroundingCell ~= nil and surroundingCell.type == "building" then
                         surroundCount = surroundCount + 1
                     end
                 end
                 -- Sometimes there are also 2 unused cells within a housing group. We probably need a better check, but for now we'll just build gardens when there are 3 houses.
                 if surroundCount >= 3 then
+                    if city.gardenLocationQueue == nil then
+                        city.gardenLocationQueue = Queue.new()
+                    end
                     Queue.pushright(city.gardenLocationQueue, {x=x, y=y})
                 else
+                    if city.buildingLocationQueue == nil then
+                        city.buildingLocationQueue = Queue.new()
+                    end
                     Queue.pushright(city.buildingLocationQueue, {x=x, y=y})
                 end
 
@@ -1015,7 +921,7 @@ local function rediscoverUnusedFields(city)
 end
 
 script.on_nth_tick(1200, function()
-    for _, city in ipairs(global.tycoon_cities) do
+    for _, city in ipairs(global.tycoon_cities or {}) do
         rediscoverUnusedFields(city)
     end
 end)
@@ -1049,13 +955,13 @@ script.on_nth_tick(Constants.CITY_GROWTH_TICKS, function(event)
         if city.special_buildings.town_hall ~= nil and city.special_buildings.town_hall.valid then
 
             local suppliedTiers = {}
-            if CONSUMPTION.areBasicNeedsMet(city, getNeeds(city, "simple")) then
+            if Consumption.areBasicNeedsMet(city, getNeeds(city, "simple")) then
                 table.insert(suppliedTiers, "simple")
             end
-            if CONSUMPTION.areBasicNeedsMet(city, getNeeds(city, "residential")) then
+            if Consumption.areBasicNeedsMet(city, getNeeds(city, "residential")) then
                 table.insert(suppliedTiers, "residential")
             end
-            if CONSUMPTION.areBasicNeedsMet(city, getNeeds(city, "highrise")) then
+            if Consumption.areBasicNeedsMet(city, getNeeds(city, "highrise")) then
                 table.insert(suppliedTiers, "highrise")
             end
             if #suppliedTiers > 0 then
@@ -1068,7 +974,7 @@ script.on_nth_tick(Constants.CITY_GROWTH_TICKS, function(event)
                 local tag = game.forces.player.add_chart_tag(game.surfaces[1],
                     {
                         position = {x = city.special_buildings.town_hall.position.x, y = city.special_buildings.town_hall.position.y},
-                        text = city.name .. " Town Center"
+                        text = city.name
                     }
                 )
                 city.tag = tag
@@ -1083,39 +989,6 @@ script.on_init(function()
 
     global.tycoon_city_buildings = {}
 
-    local cityId = 1
-    local generatorSalt = cityId * 1337
-    global.tycoon_cities = {{
-        id = cityId,
-        generator = game.create_random_generator(game.surfaces[1].map_gen_settings.seed + generatorSalt),
-        grid = {},
-        pending_cells = {},
-        priority_buildings = {},
-        special_buildings = {
-            town_hall = nil,
-            other = {}
-        },
-        center = {
-            x = 8,
-            y = -3,
-        },
-        hasTag = false,
-        name = "Your First City",
-        stats = {
-            basic_needs = {},
-            construction_materials = {}
-        },
-        citizens = {
-            simple = 0,
-            residential = 0,
-            highrise = 0,
-        },
-        constructionProbability = 1.0,
-    }}
-    initializeCity(global.tycoon_cities[1])
-    CONSUMPTION.updateNeeds(global.tycoon_cities[1])
-
-    -- global.tycoon_cities = {}
     -- for i = 1, 8, 1 do
     --     game.surfaces[1].create_entity{
     --         name = "tycoon-house-highrise-" .. i,
@@ -1127,4 +1000,102 @@ script.on_init(function()
         -- /c game. player. insert{ name="stone", count=1000 }
         -- /c game. player. insert{ name="tycoon-water-tower", count=1 }
         -- /c game. player. insert{ name="tycoon-cow", count=100 }
+end)
+
+script.on_nth_tick(Constants.PASSENGER_SPAWNING_TICKS, function()
+    if #(global.tycoon_cities or {}) > 0 then
+        for _, city in ipairs(global.tycoon_cities) do
+            Passengers.clearPassengers(city)
+            Passengers.spawnPassengers(city)
+        end
+        return
+    end
+end)
+
+script.on_nth_tick(Constants.INITIAL_CITY_TICK, function ()
+    if global.tycoon_cities == nil then
+        global.tycoon_cities = {}
+    end
+
+    if #global.tycoon_cities == 0 then
+        CityPlanning.addMoreCities(true, true)
+    end
+end)
+
+script.on_nth_tick(Constants.MORE_CITIES_TICKS, function ()
+    if global.tycoon_cities == nil then
+        global.tycoon_cities = {}
+    end
+
+    if #global.tycoon_cities > 0 then
+        CityPlanning.addMoreCities(false, false)
+    end
+end)
+
+script.on_event(defines.events.on_gui_checked_state_changed, function(event)
+    local element = event.element
+    local tags = element.tags
+    local destination_city_id = tags.destination_city_id
+    local train_station_unit_number = tags.train_station_unit_number
+    if global.tycoon_train_station_passenger_filters == nil then
+        global.tycoon_train_station_passenger_filters = {}
+    end
+    if global.tycoon_train_station_passenger_filters[train_station_unit_number] == nil then
+        global.tycoon_train_station_passenger_filters[train_station_unit_number] = {}
+    end
+    global.tycoon_train_station_passenger_filters[train_station_unit_number][destination_city_id] = element.state
+end)
+
+local function spawnSuppliedBuilding(city, entityName, supplyName, supplyAmount)
+
+    local position = game.surfaces[1].find_non_colliding_position(entityName, city.center, 200, 5, true)
+    position.x = math.floor(position.x)
+    position.y = math.floor(position.y) + 20
+
+    local e = game.surfaces[1].create_entity{
+        name = entityName,
+        position = position,
+        force = "neutral",
+        move_stuck_players = true
+    }
+
+    if supplyName == "water" then
+        e.insert_fluid{name = "water", amount = supplyAmount}
+    else
+        e.insert{name = supplyName, count = supplyAmount}
+    end
+end
+
+commands.add_command("tycoon", nil, function(command)
+    if command.player_index ~= nil and command.parameter == "spawn_city" then
+        CityPlanning.addMoreCities(false, true)
+        
+        local cityIndex = #global.tycoon_cities
+        local city = global.tycoon_cities[cityIndex]
+        spawnSuppliedBuilding(city, "tycoon-market", "tycoon-apple", 1000)
+        spawnSuppliedBuilding(city, "tycoon-hardware-store", "stone-brick", 1000)
+        spawnSuppliedBuilding(city, "tycoon-hardware-store", "iron-plate", 1000)
+        spawnSuppliedBuilding(city, "tycoon-water-tower", "water", 10000)
+    elseif command.player_index ~= nil and command.parameter == "position" then
+        local player = game.players[command.player_index]
+        player.print('x='..player.character.position.x..' y='..player.character.position.y)
+    elseif command.parameter == "grow-1" then
+        local c = City.growAtRandomRoadEnd(global.tycoon_cities[1])
+        if c == nil then
+            game.print("City 1 expanded grid to size " .. #global.tycoon_cities[1].grid)
+        else
+            game.print("new road in cit 1: x=" .. c.x .. " y=" .. c.y)
+        end
+    elseif command.parameter == "grow-2" then
+        local c = City.growAtRandomRoadEnd(global.tycoon_cities[2])
+        if c == nil then
+            game.print("City 2 expanded grid to size " .. #global.tycoon_cities[1].grid)
+        else
+            game.print("new road in city 2: x=" .. c.x .. " y=" .. c.y)
+        end
+    elseif command.parameter == "grid" then
+        DEBUG.logGrid(global.tycoon_cities[1].grid, game.print)
+    else
+        game.print("Unknown command: tycoon " .. (command.parameter or ""))
+    end
 end)
