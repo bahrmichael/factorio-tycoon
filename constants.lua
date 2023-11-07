@@ -7,6 +7,8 @@ local CONSTANTS = {
     CITY_RADIUS = 150,
     -- Minimum ticks until we try adding another city
     MORE_CITIES_TICKS = OneSecond * 60,
+    INITIAL_CITY_TICK = 30,
+    PASSENGER_SPAWNING_TICKS = OneSecond * 2,
 }
 
 return CONSTANTS

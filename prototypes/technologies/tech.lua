@@ -29,10 +29,6 @@ data:extend{
         effects = {
             {
                 type = "unlock-recipe",
-                recipe = "tycoon-milk-cow",
-            },
-            {
-                type = "unlock-recipe",
                 recipe = "tycoon-building-stable",
             },
             {

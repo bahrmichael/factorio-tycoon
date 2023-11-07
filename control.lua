@@ -10,21 +10,6 @@ local Util = require("util")
 
 local primary_industry_names = {"tycoon-apple-farm", "tycoon-wheat-farm", "tycoon-fishery"}
 
-local function printTiles(startY, startX, map, tileName)
-    local x, y = startX, startY
-    for _, value in ipairs(map) do
-        for i = 1, #value do
-            local char = string.sub(value, i, i)
-            if char == "1" then
-                game.surfaces[1].set_tiles({{name = tileName, position = {x, y}}})
-            end
-            x = x + 1
-        end
-        x = startX
-        y = y + 1
-    end
-end
-
 local function growCitizenCount(city, count, tier)
     if city.citizens[tier] == nil then
         city.citizens[tier] = 0
@@ -614,7 +599,7 @@ script.on_event(defines.events.on_gui_click, function(event)
 end)
 
 script.on_nth_tick(600, function()
-    for _, city in ipairs(global.tycoon_cities) do
+    for _, city in ipairs(global.tycoon_cities or {}) do
         if city.special_buildings.town_hall ~= nil and city.special_buildings.town_hall.valid then
             Consumption.consumeBasicNeeds(city)
         end
@@ -936,7 +921,7 @@ local function rediscoverUnusedFields(city)
 end
 
 script.on_nth_tick(1200, function()
-    for _, city in ipairs(global.tycoon_cities) do
+    for _, city in ipairs(global.tycoon_cities or {}) do
         rediscoverUnusedFields(city)
     end
 end)
@@ -1017,7 +1002,7 @@ script.on_init(function()
         -- /c game. player. insert{ name="tycoon-cow", count=100 }
 end)
 
-script.on_nth_tick(120, function()
+script.on_nth_tick(Constants.PASSENGER_SPAWNING_TICKS, function()
     if #(global.tycoon_cities or {}) > 0 then
         for _, city in ipairs(global.tycoon_cities) do
             Passengers.clearPassengers(city)
@@ -1025,13 +1010,26 @@ script.on_nth_tick(120, function()
         end
         return
     end
+end)
 
-    global.tycoon_cities = {}
-    CityPlanning.addMoreCities(true, true)
+script.on_nth_tick(Constants.INITIAL_CITY_TICK, function ()
+    if global.tycoon_cities == nil then
+        global.tycoon_cities = {}
+    end
+
+    if #global.tycoon_cities == 0 then
+        CityPlanning.addMoreCities(true, true)
+    end
 end)
 
 script.on_nth_tick(Constants.MORE_CITIES_TICKS, function ()
-    CityPlanning.addMoreCities(false, false)
+    if global.tycoon_cities == nil then
+        global.tycoon_cities = {}
+    end
+
+    if #global.tycoon_cities > 0 then
+        CityPlanning.addMoreCities(false, false)
+    end
 end)
 
 script.on_event(defines.events.on_gui_checked_state_changed, function(event)

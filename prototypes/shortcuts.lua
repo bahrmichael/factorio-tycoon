@@ -1,8 +1,8 @@
 data:extend({
 	{
     type = "shortcut",
-    name = "tycoon-cities-overview", 
-    toggleable = false,
+    name = "tycoon-cities-overview",
+    technology_to_unlock = "tycoon-multiple-cities",
     localised_name = { "shortcut.tycoon-cities-overview"},
     icon = {
       filename = "__tycoon__/graphics/shortcut_open_x32.png",
@@ -11,7 +11,7 @@ data:extend({
       scale = 1,
       flags = {"icon"}
     },
-    order = "a[tycoon]-a[town-overview]",
+    order = "a[tycoon]-a[cities-overview]",
     action = "lua",
     associated_control_input = "tycoon-cities-overview",
 	}
