@@ -389,6 +389,11 @@ local function canCreatePassengerForCity(train_station_numer, destination_city_i
 end
 
 local function addTrainStationView(trainStationUnitNumber, anchor, city)
+    if not city then
+        anchor.add{type = "label", caption = {"", {"tycoon-gui-train-station-is-missing-city" }}}
+        return
+    end
+
     if not global.tycoon_train_station_limits then
         global.tycoon_train_station_limits = {}
     end
@@ -416,12 +421,13 @@ local function addTrainStationView(trainStationUnitNumber, anchor, city)
     flow.add{type = "line", direction = "horizontal"}
     flow.add{type = "label", caption = {"", {"tycoon-gui-select-departures"}}}
 
-    for i, c in ipairs(global.tycoon_cities) do
+    for _, c in ipairs(global.tycoon_cities or {}) do
         if city.name == c.name then
             flow.add{type = "checkbox", caption = c.name, state = false, enabled = false}
         else
             flow.add{type = "checkbox", caption = c.name, 
                 state = canCreatePassengerForCity(trainStationUnitNumber, c.id),
+                name = "train_station_gui_checkbox:" .. string.lower(c.name),
                 tags = {
                     destination_city_id = c.id,
                     train_station_unit_number = trainStationUnitNumber

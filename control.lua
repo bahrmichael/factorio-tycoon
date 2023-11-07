@@ -1033,17 +1033,23 @@ script.on_nth_tick(Constants.MORE_CITIES_TICKS, function ()
 end)
 
 script.on_event(defines.events.on_gui_checked_state_changed, function(event)
+
     local element = event.element
+    if not string.find(element.name, "train_station_gui_checkbox", 1, true) then
+        return
+    end
     local tags = element.tags
     local destination_city_id = tags.destination_city_id
     local train_station_unit_number = tags.train_station_unit_number
-    if global.tycoon_train_station_passenger_filters == nil then
-        global.tycoon_train_station_passenger_filters = {}
+    if destination_city_id and train_station_unit_number then
+        if global.tycoon_train_station_passenger_filters == nil then
+            global.tycoon_train_station_passenger_filters = {}
+        end
+        if global.tycoon_train_station_passenger_filters[train_station_unit_number] == nil then
+            global.tycoon_train_station_passenger_filters[train_station_unit_number] = {}
+        end
+        global.tycoon_train_station_passenger_filters[train_station_unit_number][destination_city_id] = element.state
     end
-    if global.tycoon_train_station_passenger_filters[train_station_unit_number] == nil then
-        global.tycoon_train_station_passenger_filters[train_station_unit_number] = {}
-    end
-    global.tycoon_train_station_passenger_filters[train_station_unit_number][destination_city_id] = element.state
 end)
 
 local function spawnSuppliedBuilding(city, entityName, supplyName, supplyAmount)

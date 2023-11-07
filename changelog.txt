@@ -1,4 +1,10 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.2.1
+Date: 07. 11. 2023
+  Bugfixes:
+    - Fix an issue where the game would crash when inspecting a train station outside of a city's range.
+    - Fix an issue where the game would crash if you click on a checkbox other the the train station filters.
+---------------------------------------------------------------------------------------------------
 Version: 0.2.0
 Date: 07. 11. 2023
   Major Features:
