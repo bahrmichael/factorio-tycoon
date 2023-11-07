@@ -6,6 +6,7 @@ local Gui = require("gui")
 local GridUtil = require("grid-util")
 local CityPlanning = require("city-planner")
 local Passengers = require("passengers")
+local Util = require("util")
 
 local primary_industry_names = {"tycoon-apple-farm", "tycoon-wheat-farm", "tycoon-fishery"}
 
@@ -591,15 +592,9 @@ end)
 
 script.on_event(defines.events.on_gui_text_changed, function(event)
     if string.find(event.element.name, "train_station_limit", 1, true) then
-        local delimiter = ":"
-        local parts = {} -- To store the split parts
-        for substring in event.element.name:gmatch("[^" .. delimiter .. "]+") do
-            table.insert(parts, substring)
-        end
-        local trainStationUnitNumber = tonumber(parts[2])
+        local trainStationUnitNumber = tonumber(Util.splitString(event.element.name, delimiter)[2])
         global.tycoon_train_station_limits[trainStationUnitNumber] = math.min(tonumber(event.text) or 0, 100)
     end
-    -- game.print(event.number)
 end)
 
 script.on_event(defines.events.on_gui_click, function(event)
@@ -607,12 +602,7 @@ script.on_event(defines.events.on_gui_click, function(event)
     local element = event.element
 
     if string.find(element.name, "tycoon_open_tech:", 1, true) then
-        local delimiter = ":"
-        local parts = {} -- To store the split parts
-        for substring in element.name:gmatch("[^" .. delimiter .. "]+") do
-            table.insert(parts, substring)
-        end
-        player.open_technology_gui("tycoon-" .. parts[2])
+        player.open_technology_gui("tycoon-" .. Util.splitString(element.name, ":")[2])
     elseif element.name == "close_multiple_cities_overview" then
         element.parent.parent.destroy()
     elseif string.find(element.name, "multiple_cities_select_tab:", 1, true) then

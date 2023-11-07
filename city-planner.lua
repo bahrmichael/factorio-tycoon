@@ -4,6 +4,7 @@ local Consumption = require("consumption")
 local Constants = require("constants")
 local DataConstants = require("data-constants")
 local Queue = require("queue")
+local Util = require("util")
 
 local function printTiles(startY, startX, map, tileName)
     local x, y = startX, startY
@@ -20,21 +21,12 @@ local function printTiles(startY, startX, map, tileName)
     end
 end
 
---- @param p1 Coordinates
---- @param p2 Coordinates
---- @return number The distance between the two points.
-local function calculateDistance(p1, p2)
-    local dx = p2.x - p1.x
-    local dy = p2.y - p1.y
-    return math.sqrt(dx * dx + dy * dy)
-end
-
 -- With an additional space of 200 the cities still spawned relatively close to each other, so I raised it to 400
 local MIN_DISTANCE = Constants.CITY_RADIUS * 2 + 400
 local COST_PER_CITY = 1000
 
 local function isInRangeOfCity(city, position)
-    local distance = calculateDistance(city.center, position)
+    local distance = Util.calculateDistance(city.center, position)
     return distance < MIN_DISTANCE
 end
 
@@ -87,7 +79,6 @@ local function findNewCityPosition(isInitialTown)
                                     name = {
                                         "deepwater",
                                         "deepwater-green",
-                                        "nuclear-ground",
                                         "out-of-map",
                                         "water",
                                         "water-green",
@@ -364,7 +355,6 @@ local function addCity(position)
 end
 
 local function getRequiredFundsForNextCity()
-    -- improve this function to scale up
     return math.pow(#(global.tycoon_cities or {}), 2) * COST_PER_CITY
 end
 
@@ -439,7 +429,6 @@ local function addMoreCities(isInitialCity, skipPayment)
 end
 
 return {
-    addCity = addCity,
     addMoreCities = addMoreCities,
     getRequiredFundsForNextCity = getRequiredFundsForNextCity,
     getTotalAvailableFunds = getTotalAvailableFunds,

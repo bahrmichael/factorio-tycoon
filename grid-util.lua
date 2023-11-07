@@ -4,8 +4,6 @@ local function getGridSize(grid)
     return #grid
 end
 
-
-
 --- @param coordinates Coordinates
 --- @param sendWarningForMethod string | nil
 --- @return any | nil cell

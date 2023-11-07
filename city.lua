@@ -2,6 +2,7 @@ DEBUG = require("debug")
 local Queue = require("queue")
 local Constants = require("constants")
 local GridUtil = require("grid-util")
+local Util = require("util")
 
 --- @class Coordinates
 --- @field x number
@@ -67,15 +68,6 @@ local GridUtil = require("grid-util")
 ---| "only-straight-rail"
 ---| "blocked"
 
---- @param p1 Coordinates
---- @param p2 Coordinates
---- @return number The distance between the two points.
-local function calculateDistance(p1, p2)
-    local dx = p2.x - p1.x
-    local dy = p2.y - p1.y
-    return math.sqrt(dx * dx + dy * dy)
-end
-
 --- @param coordinates Coordinates
 --- @return string key
 local function buildCoordinatesKey(coordinates)
@@ -91,7 +83,7 @@ local function getCachedDistance(coordinates, offsetY, offsetX, cityCenter)
     if cachedDistances[key] ~= nil then
         return cachedDistances[key]
     else
-        local distance = calculateDistance({
+        local distance = Util.calculateDistance({
             y = (coordinates.y + offsetY) * Constants.CELL_SIZE,
             x = (coordinates.x + offsetX) * Constants.CELL_SIZE,
         }, cityCenter)
@@ -122,51 +114,43 @@ local function getSurroundingCoordinates(y, x, size, allowDiagonal)
    return c
 end
 
--- Return the first index with the given value (or nil if not found).
---- @param array any[]
---- @param value any
---- @return number | nil Index The index of the element in the array, or nil if there's no match.
-local function indexOf(array, value)
-    for i, v in ipairs(array) do
-        if v == value then
-            return i
-        end
-    end
-    return nil
-end
-
-local defaultRemovableEntities = {
-    "rock-",
-    "sand-rock-",
-    "dead-grey-trunk",
-    "tree-"
-}
-
 --- @param area any
 --- @param ignorables string[] | nil
 local function removeColldingEntities(area, ignorables)
-    local printEntities = game.surfaces[1].find_entities_filtered({area=area})
+    local printEntities = game.surfaces[1].find_entities_filtered({
+        area=area,
+        type = {"tree", "simple-entity"}
+    })
     for _, entity in pairs(printEntities) do
-        for _, removable in pairs(defaultRemovableEntities) do
-            if entity.valid and string.find(entity.name, removable, 1, true) then
-                if ignorables ~= nil and #ignorables > 0 and indexOf(ignorables, entity.name) ~= nil then
-                    -- noop, skip ignorables
-                else
-                    entity.destroy()
-                end
-            end
+        if ignorables ~= nil and #ignorables > 0 and Util.indexOf(ignorables, entity.name) ~= nil then
+            -- noop, skip ignorables
+        else
+            entity.destroy()
         end
     end
 end
 
 local function hasCliffsOrWater(area)
-    local tiles = game.surfaces[1].find_tiles_filtered{
+    local water = game.surfaces[1].find_tiles_filtered{
         area = area,
-        -- todo: add shallo water and others
-        name = {"water", "deepwater", "cliff"},
+        name = {
+            "deepwater",
+            "deepwater-green",
+            "out-of-map",
+            "water",
+            "water-green",
+            "water-shallow",
+            "water-mud",
+            "water-wube",
+        },
         limit = 1
     }
-    return #tiles > 0
+    local cliffs = game.surfaces[1].find_entities_filtered{
+        area = area,
+        name = { "cliff" },
+        limit = 1
+    }
+    return ##water > 0 or #cliffs > 0
 end
 
 --- @param area any
@@ -439,7 +423,7 @@ local function testRoadDirection(city, roadEnd, lookoutDirections)
             DEBUG.log("Test result: False, because building")
             return false
         elseif neighbourCell.type == "road" then
-            if indexOf(neighbourCell.roadSockets, invertDirection(direction)) ~= nil then
+            if Util.indexOf(neighbourCell.roadSockets, invertDirection(direction)) ~= nil then
                 DEBUG.log("Test result: False, because road with inverted direction")
                 return false
             end
@@ -723,7 +707,7 @@ local function addBuildingLocations(city, recentCoordinates)
                     local surroundsOfUnused = getSurroundingCoordinates(value.y, value.x, 1, false)
                     local hasSurroundingRoadEnd = false
                     for _, s in ipairs(surroundsOfUnused) do
-                        if indexOf(recentCoordinates, s) ~= nil then
+                        if Util.indexOf(recentCoordinates, s) ~= nil then
                             hasSurroundingRoadEnd = true
                             break
                         end
@@ -1000,7 +984,7 @@ local function growAtRandomRoadEnd(city)
             if currentCell.roadSockets == nil then
                 currentCell.roadSockets = {}
             end
-            if indexOf(currentCell.roadSockets, direction) == nil then
+            if Util.indexOf(currentCell.roadSockets, direction) == nil then
                 table.insert(currentCell.roadSockets, direction)
             end
 
@@ -1024,7 +1008,7 @@ local function growAtRandomRoadEnd(city)
             end
 
             if neighbourCell.type == "road" then
-                if indexOf(neighbourCell.roadSockets, neighbourSocket) == nil then
+                if Util.indexOf(neighbourCell.roadSockets, neighbourSocket) == nil then
                     table.insert(neighbourCell.roadSockets, neighbourSocket)
                 end
             elseif neighbourCell.type == "unused" then
@@ -1076,7 +1060,7 @@ local function findReadyExcavationPit(excavationPits, buildingTypes)
 
     for i, e in ipairs(excavationPits) do
         if e.createdAtTick + e.buildingConstruction.constructionTimeInTicks < game.tick then
-            if indexOf(completableBuildingTypes, e.buildingConstruction.buildingType) ~= nil then
+            if Util.indexOf(completableBuildingTypes, e.buildingConstruction.buildingType) ~= nil then
                 return table.remove(excavationPits, i)
             end
         end
@@ -1321,7 +1305,7 @@ local function clearCell(city, upgradeCell)
     }
     city.buildingCounts[upgradeCell.upgradePath.previousStage] = city.buildingCounts[upgradeCell.upgradePath.previousStage] - 1
     if city.houseLocations ~= nil then
-        table.remove(city.houseLocations, indexOf(city.houseLocations, upgradeCell.coordinates))
+        table.remove(city.houseLocations, Util.indexOf(city.houseLocations, upgradeCell.coordinates))
     end
 end
 

@@ -478,16 +478,17 @@ local function addUrbanPlanningCenterView(anchor)
 end
 
 local function addCitiesOverview(anchor)
+    local columnWidth = 100
     local tbl = anchor.add{type = "table", column_count = 4, draw_horizontal_lines = true}
     local c1 = tbl.add{type = "label", caption = "Name"}
-    c1.style.width = 100
+    c1.style.width = columnWidth
     local c2 = tbl.add{type = "label", caption = "Citizens"}
-    c2.style.width = 100
+    c2.style.width = columnWidth
     local c3 = tbl.add{type = "label", caption = "Basic Needs Supplied"}
-    c3.style.width = 100
+    c3.style.width = columnWidth
     local c4 = tbl.add{type = "label", caption = ""}
-    c4.style.width = 100
-    for i, city in ipairs(global.tycoon_cities) do
+    c4.style.width = columnWidth
+    for i, city in ipairs(global.tycoon_cities or {}) do
         local needsMet = Consumption.areBasicNeedsMet(city, nil, true)
         local color = "red"
         local text = "tycoon-no"

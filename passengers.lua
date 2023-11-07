@@ -1,4 +1,5 @@
 local Constants = require("constants")
+local Util = require("util")
 
 --- @param city City
 --- @param filter string | nil
@@ -41,19 +42,6 @@ local function listSpecialCityBuildings(city, name)
     return result
 end
 
--- Return the first index with the given value (or nil if not found).
---- @param array any[]
---- @param value any
---- @return number | nil Index The index of the element in the array, or nil if there's no match.
-local function indexOf(array, value)
-    for i, v in ipairs(array) do
-        if v == value then
-            return i
-        end
-    end
-    return nil
-end
-
 --- @param city City
 --- @param excludedNames string[] | nil
 --- @return string | nil name
@@ -66,7 +54,7 @@ local function getRandomCityName(city, excludedNames)
         local r = global.tycoon_cities[city.generator(#global.tycoon_cities)].name
         if r ~= city.name then
             if excludedNames ~= nil and #excludedNames > 0 then
-                if not indexOf(excludedNames, r) then
+                if not Util.indexOf(excludedNames, r) then
                     return r
                 end
             else
@@ -111,7 +99,6 @@ local function spawnPassengers(city)
 
                 -- todo: check if train station has enough space, otherwise distribute passengers
 
-                -- global.tycoon_train_station_passenger_filters[train_station_unit_number][destination_city_id]
                 local excludedCityNames = {}
                 if global.tycoon_train_station_passenger_filters ~= nil and global.tycoon_train_station_passenger_filters[selectedTrainStation.unit_number] ~= nil then
                     for cityId, state in pairs(global.tycoon_train_station_passenger_filters[selectedTrainStation.unit_number]) do
@@ -153,15 +140,6 @@ local function findCityByName(name)
         end
     end
     return nil
-end
-
---- @param p1 Coordinates
---- @param p2 Coordinates
---- @return number The distance between the two points.
-local function calculateDistance(p1, p2)
-    local dx = p2.x - p1.x
-    local dy = p2.y - p1.y
-    return math.sqrt(dx * dx + dy * dy)
 end
 
 local function getCredits(passenger)
