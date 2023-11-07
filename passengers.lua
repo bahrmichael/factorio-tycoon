@@ -151,7 +151,7 @@ local function getCredits(passenger)
         return 0
     end
     
-    local distance = calculateDistance(originCity.center, destinationCity.center)
+    local distance = Util.calculateDistance(originCity.center, destinationCity.center)
     local ticksNeeded = game.tick - passenger.created
     -- With vanilla, robot research brings them to 9 tiles per second when level 6 is researched (the first one that needs space science).
     local fullRewardForDistance = math.ceil(distance / 100)

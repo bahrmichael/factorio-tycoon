@@ -150,7 +150,7 @@ local function hasCliffsOrWater(area)
         name = { "cliff" },
         limit = 1
     }
-    return ##water > 0 or #cliffs > 0
+    return #water > 0 or #cliffs > 0
 end
 
 --- @param area any
@@ -1281,23 +1281,10 @@ local function findUpgradableCells(city, limit, upgradeTo)
     return upgradeCells
 end
 
-local function sortUpgradeCells(city, upgradeCells)
-    local cityCenter = {
-        x = city.center.x + Constants.CELL_SIZE,
-        y = city.center.y + Constants.CELL_SIZE,
-    }
-
-    local offsetY = GridUtil.getOffsetY(city)
-    local offsetX = GridUtil.getOffsetX(city)
-
-    table.sort(upgradeCells, function (a, b)
-        local distanceA = getCachedDistance(a.coordinates, offsetY, offsetX, cityCenter)
-        local distanceB = getCachedDistance(b.coordinates, offsetY, offsetX, cityCenter)
-        return distanceA < distanceB
-    end)
-end
-
 local function clearCell(city, upgradeCell)
+    if global.tycoon_house_lights[upgradeCell.cell.entity.unit_number] then
+        global.tycoon_house_lights[upgradeCell.cell.entity.unit_number].destroy()
+    end
     upgradeCell.cell.entity.destroy()
     -- We need to clear the cell as well, so that the construction has available space
     city.grid[upgradeCell.coordinates.y][upgradeCell.coordinates.x] = {
