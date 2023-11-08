@@ -1,4 +1,9 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.2.5
+Date: 08. 11. 2023
+  Bugfixes:
+    - Fixed an issue where the Tycoon Cities Overview would open when other mods' shortcuts are toggled.
+---------------------------------------------------------------------------------------------------
 Version: 0.2.4
 Date: 08. 11. 2023
   Bugfixes:

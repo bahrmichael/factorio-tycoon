@@ -498,21 +498,24 @@ script.on_event(defines.events.on_research_finished, function(event)
 end)
 
 script.on_event({defines.events.on_lua_shortcut, "tycoon-cities-overview"}, function(event)
-    local player = game.players[event.player_index]
+    -- First is the clickable shortcut, second is the hotkey
+    if event.prototype_name == "tycoon-cities-overview" or event.input_name == "tycoon-cities-overview" then
+        local player = game.players[event.player_index]
 
-    local guiKey = "multiple_cities_overview"
-    local gui = player.gui.center[guiKey]
-    if gui ~= nil then
-        -- If there already was a gui, then we need to close it
-        gui.destroy()
-    else
-        local frame = player.gui.center.add{
-            type = "frame",
-            name = guiKey,
-            direction = "vertical"
-        }
+        local guiKey = "multiple_cities_overview"
+        local gui = player.gui.center[guiKey]
+        if gui ~= nil then
+            -- If there already was a gui, then we need to close it
+            gui.destroy()
+        else
+            local frame = player.gui.center.add{
+                type = "frame",
+                name = guiKey,
+                direction = "vertical"
+            }
 
-        Gui.addMultipleCitiesOverview(frame)
+            Gui.addMultipleCitiesOverview(frame)
+        end
     end
 end)
 
