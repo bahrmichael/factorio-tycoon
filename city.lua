@@ -1282,7 +1282,7 @@ local function findUpgradableCells(city, limit, upgradeTo)
 end
 
 local function clearCell(city, upgradeCell)
-    if global.tycoon_house_lights[upgradeCell.cell.entity.unit_number] then
+    if global.tycoon_house_lights ~= nil and global.tycoon_house_lights[upgradeCell.cell.entity.unit_number] then
         global.tycoon_house_lights[upgradeCell.cell.entity.unit_number].destroy()
     end
     upgradeCell.cell.entity.destroy()
