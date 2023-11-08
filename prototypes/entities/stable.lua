@@ -5,7 +5,7 @@ data:extend{
         icon = "__tycoon__/graphics/icons/stable.png",
         icon_size = 64,
         max_health = 200,
-        flags = { "placeable-player", "player-creation"},
+        flags = { "placeable-player", "player-creation" },
         minable = {mining_time = 1, result = "tycoon-stable"},
         fluid_boxes = {
             {
@@ -30,7 +30,7 @@ data:extend{
             },
         },
         collision_box = { { -6.9, -6.9}, {6.9, 6.9} },
-        collision_mask = { "player-layer", "water-tile", "resource-layer", "item-layer", "ghost-layer", "object-layer", "train-layer", "rail-layer", "transport-belt-layer" },
+        collision_mask = { "player-layer", "water-tile", "resource-layer", "item-layer", "object-layer", "train-layer", "rail-layer", "transport-belt-layer" },
         selection_box = { { -6.9, -6.9}, {6.9, 6.9} },
         window_bounding_box = { { -0.125, 0.6875 }, { 0.1875, 1.1875 } },
         animation = {
