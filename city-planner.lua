@@ -364,7 +364,7 @@ local function getTotalAvailableFunds()
     }
 
     local totalAvailableFunds = 0
-    for _, c in ipairs(urbanPlanningCenters) do
+    for _, c in ipairs(urbanPlanningCenters or {}) do
         local availableFunds = c.get_item_count("tycoon-currency")
         totalAvailableFunds = totalAvailableFunds + availableFunds
     end
@@ -385,13 +385,13 @@ local function addMoreCities(isInitialCity, skipPayment)
         return false
     end
 
+
+    local totalAvailableFunds = getTotalAvailableFunds()
+    local requiredFunds = getRequiredFundsForNextCity()
     if not skipPayment then
         if not (game.forces.player.technologies["tycoon-multiple-cities"] or {}).researched then
             return false
         end
-
-        local totalAvailableFunds = getTotalAvailableFunds()
-        local requiredFunds = getRequiredFundsForNextCity()
 
         if requiredFunds > totalAvailableFunds then
             return false
