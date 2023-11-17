@@ -17,6 +17,18 @@ data:extend{
     },
     {
         type = "recipe",
+        name = "tycoon-chicken-to-meat",
+        category = "tycoon-butchery",
+        energy_required = 10,
+        enabled = true,
+        ingredients = {
+            { type = "item", name = "tycoon-chicken", amount = 1 },
+        },
+        result = "tycoon-meat",
+        result_count = 10,
+    },
+    {
+        type = "recipe",
         name = "tycoon-fish-to-fish-filet",
         category = "tycoon-butchery",
         energy_required = 15,

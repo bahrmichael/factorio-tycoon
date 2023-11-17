@@ -20,6 +20,21 @@ data:extend{
     },
     {
         type = "recipe",
+        name = "tycoon-grow-chicken-with-grain",
+        category = "tycoon-husbandry",
+        subgroup = "tycoon-intermediate-products",
+        order = "a[tycoon]-d[chicken]",
+        energy_required = 30,
+        enabled = true,
+        ingredients = {
+            { type = "fluid", name = "water", amount = 200 },
+            { type = "item", name = "tycoon-grain", amount = 50 },
+        },
+        result = "tycoon-chicken",
+        result_count = 10,
+    },
+    {
+        type = "recipe",
         name = "tycoon-milk-cow",
         category = "tycoon-husbandry",
         icon = "__tycoon__/graphics/icons/milk.png",
@@ -36,6 +51,26 @@ data:extend{
         results = {
             { type = "item", name = "tycoon-cow", amount = 1, probability = 0.98 },
             { type = "fluid", name = "tycoon-milk", amount = 100 },
+        },
+    },
+    {
+        type = "recipe",
+        name = "tycoon-egg",
+        category = "tycoon-husbandry",
+        icon = "__tycoon__/graphics/icons/egg.png",
+        icon_size = 64,
+        energy_required = 30,
+        subgroup = "tycoon-intermediate-products",
+        order = "a[tycoon]-e[egg]",
+        enabled = true,
+        ingredients = {
+            { type = "fluid", name = "water", amount = 100 },
+            { type = "item", name = "tycoon-chicken", amount = 10 },
+            { type = "item", name = "tycoon-grain", amount = 50 },
+        },
+        results = {
+            { type = "item", name = "tycoon-chicken", amount = 10, probability = 0.95 },
+            { type = "item", name = "tycoon-egg", amount = 30 },
         },
     },
 }
