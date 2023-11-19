@@ -348,18 +348,19 @@ local function getNeeds(city, tier)
     elseif tier == "residential" then
         return {
             water = city.stats.basic_needs.water,
-            ["tycoon-apple"] = city.stats.basic_needs["tycoon-apple"],
+            ["tycoon-milk-bottle"] = city.stats.basic_needs["tycoon-milk-bottle"],
             ["tycoon-meat"] = city.stats.basic_needs["tycoon-meat"],
             ["tycoon-bread"] = city.stats.basic_needs["tycoon-bread"],
+            ["tycoon-fish-filet"] = city.stats.basic_needs["tycoon-fish-filet"],
         }
     elseif tier == "highrise" then
         return {
             water = city.stats.basic_needs.water,
-            ["tycoon-apple"] = city.stats.basic_needs["tycoon-apple"],
-            ["tycoon-meat"] = city.stats.basic_needs["tycoon-meat"],
-            ["tycoon-bread"] = city.stats.basic_needs["tycoon-bread"],
-            ["tycoon-fish-filet"] = city.stats.basic_needs["tycoon-fish-filet"],
-            ["tycoon-milk-bottle"] = city.stats.basic_needs["tycoon-milk-bottle"],
+            ["tycoon-smoothie"] = city.stats.basic_needs["tycoon-smoothie"],
+            ["tycoon-apple-cake"] = city.stats.basic_needs["tycoon-apple-cake"],
+            ["tycoon-cheese"] = city.stats.basic_needs["tycoon-cheese"],
+            ["tycoon-burger"] = city.stats.basic_needs["tycoon-burger"],
+            ["tycoon-dumpling"] = city.stats.basic_needs["tycoon-dumpling"],
         }
     else
         assert(false, "Unknown tier for getNeeds: " .. tier)
@@ -601,6 +602,7 @@ script.on_event(defines.events.on_gui_click, function(event)
     end
 end)
 
+-- todo: this consumes every 10 seconds, while the town hall gui says something about "each minute"
 script.on_nth_tick(600, function()
     for _, city in ipairs(global.tycoon_cities or {}) do
         if city.special_buildings.town_hall ~= nil and city.special_buildings.town_hall.valid then

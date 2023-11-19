@@ -28,7 +28,7 @@ local basicNeeds = {
     residential = {
         {
             amount = 2,
-            resource = "tycoon-apple",
+            resource = "tycoon-milk-bottle",
         },
         {
             amount = 2,
@@ -37,36 +37,34 @@ local basicNeeds = {
         {
             amount = 4,
             resource = "tycoon-bread",
-        }
-    },
-    highrise = {
-        {
-            amount = 1,
-            resource = "tycoon-apple",
-        },
-        {
-            amount = 2,
-            resource = "tycoon-meat",
-        },
-        {
-            amount = 3,
-            resource = "tycoon-bread",
         },
         {
             amount = 2,
             resource = "tycoon-fish-filet",
         },
+    },
+    highrise = {
         {
             amount = 1,
-            resource = "tycoon-milk-bottle",
+            resource = "tycoon-smoothie",
+        },
+        {
+            amount = 2,
+            resource = "tycoon-apple-cake",
+        },
+        {
+            amount = 3,
+            resource = "tycoon-cheese",
+        },
+        {
+            amount = 1,
+            resource = "tycoon-burger",
+        },
+        {
+            amount = 1,
+            resource = "tycoon-dumpling",
         }
     }
-}
-
-local basicNeedIncrements = {
-    default = {"water", "tycoon-apple"},
-    residential = {"tycoon-meat", "tycoon-bread"},
-    highrise = {"tycoon-fish-filet", "tycoon-milk-bottle"}
 }
 
 --- @param city City
@@ -213,6 +211,12 @@ local resourcePrices = {
     ["tycoon-milk-bottle"] = 5 / kwPerCurrency,
     ["tycoon-bread"] = 4 / kwPerCurrency,
     ["tycoon-fish-filet"] = 4 / kwPerCurrency,
+    -- todo: balance the new basic needs
+    ["tycoon-smoothie"] = 4 / kwPerCurrency,
+    ["tycoon-apple-cake"] = 4 / kwPerCurrency,
+    ["tycoon-cheese"] = 4 / kwPerCurrency,
+    ["tycoon-burger"] = 4 / kwPerCurrency,
+    ["tycoon-dumpling"] = 4 / kwPerCurrency,
     stone = 3 / kwPerCurrency,
     ["iron-plate"] = 8 / kwPerCurrency,
     ["steel-plate"] = 64,
@@ -337,6 +341,5 @@ return {
     areBasicNeedsMet = areBasicNeedsMet,
     updateNeeds = updateNeeds,
     consumeBasicNeeds = consumeBasicNeeds,
-    consumeItem = consumeItem,
-    basicNeedIncrements = basicNeedIncrements
+    consumeItem = consumeItem
 }

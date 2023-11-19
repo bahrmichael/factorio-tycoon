@@ -268,8 +268,8 @@ end
 
 local basicNeeds = {
     simple = {"water", "tycoon-apple"},
-    residential = {"water", "tycoon-apple", "tycoon-meat", "tycoon-bread"},
-    highrise = {"water", "tycoon-apple", "tycoon-meat", "tycoon-bread", "tycoon-fish-filet", "tycoon-milk-bottle"}
+    residential = {"water", "tycoon-milk-bottle", "tycoon-meat", "tycoon-bread", "tycoon-fish-filet"},
+    highrise = {"water", "tycoon-smoothie", "tycoon-apple-cake", "tycoon-cheese", "tycoon-burger", "tycoon-dumpling" }
 }
 
 local constructionNeeds = {
