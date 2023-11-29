@@ -335,19 +335,15 @@ script.on_event(defines.events.on_chunk_charted, function (chunk)
     end
 end)
 
--- local function findCityByEntityUnitNumber(unitNumber)
---     local entity = (global.tycoon_entities or {})[unitNumber]
-
---     return entity
-
-
---     for _, city in ipairs(global.tycoon_cities) do
---         if city.special_buildings.town_hall ~= nil and city.special_buildings.town_hall.unit_number == townHallUnitNumber then
---             return city
---         end
---     end
---     return nil
--- end
+local function findCityByEntityUnitNumber(unitNumber)
+    local metaInfo = (global.tycoon_entity_meta_info or {})[unitNumber]
+    if metaInfo == nil then
+        return "Unknown"
+    end
+    local cityId = metaInfo.cityId
+    local cityName = ((global.tycoon_cities or {})[cityId] or {}).name
+    return cityName or "Unknown"
+end
 
 local function findCityByTownHallUnitNumber(townHallUnitNumber)
     for _, city in ipairs(global.tycoon_cities) do
@@ -603,10 +599,21 @@ script.on_event(defines.events.on_gui_opened, function (gui)
         local player = game.players[gui.player_index]
         
         local unit_number = gui.entity.unit_number
-        local city = findCityByTownHallUnitNumber(unit_number)
-        assert(city ~= nil, "Could not find the city for town hall unit number ".. unit_number)
+        local cityName = findCityByEntityUnitNumber(unit_number)
+    
+        game.print("City name: " .. cityName)
 
-        game.print("hello!")
+        local guiKey = "supply_building_view"
+        local supplyBuildingView = player.gui.relative[guiKey]
+        if supplyBuildingView ~= nil then
+            -- clear any previous gui so that we can fully reconstruct it
+            supplyBuildingView.destroy()
+        end
+
+        local anchor = {gui = defines.relative_gui_type.container_gui, name = gui.entity.name, position = defines.relative_gui_position.right}
+        supplyBuildingView = player.gui.relative.add{type = "frame", anchor = anchor, caption = {"", {"entity-name." .. gui.entity.name}}, direction = "vertical", name = guiKey}
+
+        Gui.addSupplyBuildingOverview(supplyBuildingView, cityName)
     end
 end)
 
