@@ -4,6 +4,7 @@ Date: 29. 11. 2023
   Bugfixes:
     - Stable can now be placed on resource patches.
     - Fixed an issue where the game could crash when completing productivity research.
+    - Cities now consume food every minute, instead of previously every 10 seconds. Now the town hall GUI is correct.
 ---------------------------------------------------------------------------------------------------
 Version: 0.2.7
 Date: 16. 11. 2023

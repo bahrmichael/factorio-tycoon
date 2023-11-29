@@ -610,7 +610,7 @@ script.on_event(defines.events.on_gui_click, function(event)
     end
 end)
 
-script.on_nth_tick(600, function()
+script.on_nth_tick(Constants.CITY_CONSUMPTION_TICKS, function()
     for _, city in ipairs(global.tycoon_cities or {}) do
         if city.special_buildings.town_hall ~= nil and city.special_buildings.town_hall.valid then
             Consumption.consumeBasicNeeds(city)
