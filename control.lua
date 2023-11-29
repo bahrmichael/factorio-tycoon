@@ -600,8 +600,6 @@ script.on_event(defines.events.on_gui_opened, function (gui)
         
         local unit_number = gui.entity.unit_number
         local cityName = findCityByEntityUnitNumber(unit_number)
-    
-        game.print("City name: " .. cityName)
 
         local guiKey = "supply_building_view"
         local supplyBuildingView = player.gui.relative[guiKey]
