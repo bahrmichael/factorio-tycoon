@@ -127,14 +127,18 @@ local function placePrimaryIndustryAtPosition(position, entityName)
                 force = "neutral",
                 move_stuck_players = true
             }
-            -- or any other primary industry that has productivity research
-            if entity.name == "tycoon-apple-farm" then
-                local level = findHighestProductivityLevel("tycoon-apple-farm-productivity")
-                local recipe = "tycoon-grow-apples-with-water-" .. level + 1
-                entity.set_recipe(recipe)
+            if entity ~= nil then
+                -- or any other primary industry that has productivity research
+                if entity.name == "tycoon-apple-farm" then
+                    local level = findHighestProductivityLevel("tycoon-apple-farm-productivity")
+                    local recipe = "tycoon-grow-apples-with-water-" .. level + 1
+                    entity.set_recipe(recipe)
+                end
+                entity.recipe_locked = true
+                return entity
+            else
+                game.print("Factorio Error: The mod has encountered an issue when placing primary industries. Please report this to the developer. You can continue playing.")
             end
-            entity.recipe_locked = true
-            return entity
         end
     end
     return nil
@@ -207,6 +211,7 @@ local citizenCounts = {
 script.on_event({
     defines.events.on_player_mined_entity,
     defines.events.on_robot_mined_entity,
+    -- Register entities with script.register_on_entity_destroyed(entity) so that this event fires.
     defines.events.on_entity_destroyed,
 }, function(event)
     if global.tycoon_city_buildings == nil then
@@ -489,9 +494,13 @@ script.on_event(defines.events.on_research_finished, function(event)
 
     if string.find(name, "tycoon-apple-farm-productivity", 1, true) then
         local new_recipe = research.effects[1].recipe
-        for _, farm in ipairs(global.tycoon_primary_industries["tycoon-apple-farm"] or {}) do
-            farm.set_recipe(new_recipe)
-            farm.recipe_locked = true
+        for i, farm in ipairs(global.tycoon_primary_industries["tycoon-apple-farm"] or {}) do
+            if farm.valid then
+                farm.set_recipe(new_recipe)
+                farm.recipe_locked = true
+            else
+                table.remove(global.tycoon_primary_industries["tycoon-apple-farm"], i)
+            end
         end
         game.forces.player.recipes["tycoon-grow-apples-with-water-" .. research.level].enabled = false
     end

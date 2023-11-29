@@ -3,6 +3,7 @@ Version: 0.2.8
 Date: 29. 11. 2023
   Bugfixes:
     - Stable can now be placed on resource patches.
+    - Fixed an issue where the game could crash when completing productivity research.
 ---------------------------------------------------------------------------------------------------
 Version: 0.2.7
 Date: 16. 11. 2023
