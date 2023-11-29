@@ -203,6 +203,10 @@ local function addBasicNeedsView(rootGui, basicNeeds, city, waterTowers, markets
                 displayedMissingSuppliers[missingSupplier] = true
             end
         else
+            -- This check is mostly for backwards compatibility. A game crashed when I tried to open the gui after changing the resources that citizens need.
+            if city.stats.basic_needs[resource] == nil then
+                Consumption.updateNeeds(city)
+            end
             local amounts = city.stats.basic_needs[resource]
 
             local itemName = resource
