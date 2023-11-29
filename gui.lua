@@ -534,10 +534,17 @@ local function addMultipleCitiesOverview(anchor)
         local cityContainer = tabbed_pane.add{type = "flow", direction = "vertical"}
         tabbed_pane.add_tab(tab_city, cityContainer)
         addCityView(city, cityContainer)
-        
     end
 
     tabbed_pane.selected_tab_index = 1
+end
+
+local function addSupplyBuildingOverview(anchor, cityName)
+    if cityName == "Unknown" then
+        anchor.add{type = "label", caption = {"", {"tycoon-supply-building-not-connected"}}}
+    else
+        anchor.add{type = "label", caption = {"", {"tycoon-supply-building-city", cityName}}}
+    end
 end
 
 local GUI = {
@@ -548,6 +555,7 @@ local GUI = {
     addTrainStationView = addTrainStationView,
     addUrbanPlanningCenterView = addUrbanPlanningCenterView,
     addMultipleCitiesOverview = addMultipleCitiesOverview,
+    addSupplyBuildingOverview = addSupplyBuildingOverview,
 }
 
 return GUI

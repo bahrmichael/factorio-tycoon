@@ -127,14 +127,18 @@ local function placePrimaryIndustryAtPosition(position, entityName)
                 force = "neutral",
                 move_stuck_players = true
             }
-            -- or any other primary industry that has productivity research
-            if entity.name == "tycoon-apple-farm" then
-                local level = findHighestProductivityLevel("tycoon-apple-farm-productivity")
-                local recipe = "tycoon-grow-apples-with-water-" .. level + 1
-                entity.set_recipe(recipe)
+            if entity ~= nil then
+                -- or any other primary industry that has productivity research
+                if entity.name == "tycoon-apple-farm" then
+                    local level = findHighestProductivityLevel("tycoon-apple-farm-productivity")
+                    local recipe = "tycoon-grow-apples-with-water-" .. level + 1
+                    entity.set_recipe(recipe)
+                end
+                entity.recipe_locked = true
+                return entity
+            else
+                game.print("Factorio Error: The mod has encountered an issue when placing primary industries. Please report this to the developer. You can continue playing.")
             end
-            entity.recipe_locked = true
-            return entity
         end
     end
     return nil
@@ -207,6 +211,7 @@ local citizenCounts = {
 script.on_event({
     defines.events.on_player_mined_entity,
     defines.events.on_robot_mined_entity,
+    -- Register entities with script.register_on_entity_destroyed(entity) so that this event fires.
     defines.events.on_entity_destroyed,
 }, function(event)
     if global.tycoon_city_buildings == nil then
@@ -329,6 +334,16 @@ script.on_event(defines.events.on_chunk_charted, function (chunk)
         end
     end
 end)
+
+local function findCityByEntityUnitNumber(unitNumber)
+    local metaInfo = (global.tycoon_entity_meta_info or {})[unitNumber]
+    if metaInfo == nil then
+        return "Unknown"
+    end
+    local cityId = metaInfo.cityId
+    local cityName = ((global.tycoon_cities or {})[cityId] or {}).name
+    return cityName or "Unknown"
+end
 
 local function findCityByTownHallUnitNumber(townHallUnitNumber)
     for _, city in ipairs(global.tycoon_cities) do
@@ -489,9 +504,13 @@ script.on_event(defines.events.on_research_finished, function(event)
 
     if string.find(name, "tycoon-apple-farm-productivity", 1, true) then
         local new_recipe = research.effects[1].recipe
-        for _, farm in ipairs(global.tycoon_primary_industries["tycoon-apple-farm"] or {}) do
-            farm.set_recipe(new_recipe)
-            farm.recipe_locked = true
+        for i, farm in ipairs(global.tycoon_primary_industries["tycoon-apple-farm"] or {}) do
+            if farm.valid then
+                farm.set_recipe(new_recipe)
+                farm.recipe_locked = true
+            else
+                table.remove(global.tycoon_primary_industries["tycoon-apple-farm"], i)
+            end
         end
         game.forces.player.recipes["tycoon-grow-apples-with-water-" .. research.level].enabled = false
     end
@@ -575,6 +594,24 @@ script.on_event(defines.events.on_gui_opened, function (gui)
         urbanPlanningCenterGui = player.gui.relative.add{type = "frame", anchor = anchor, caption = {"", {"entity-name.tycoon-urban-planning-center"}}, direction = "vertical", name = guiKey}
 
         Gui.addUrbanPlanningCenterView(urbanPlanningCenterGui)
+        
+    elseif gui.entity ~= nil and isSupplyBuilding(gui.entity.name) then
+        local player = game.players[gui.player_index]
+        
+        local unit_number = gui.entity.unit_number
+        local cityName = findCityByEntityUnitNumber(unit_number)
+
+        local guiKey = "supply_building_view"
+        local supplyBuildingView = player.gui.relative[guiKey]
+        if supplyBuildingView ~= nil then
+            -- clear any previous gui so that we can fully reconstruct it
+            supplyBuildingView.destroy()
+        end
+
+        local anchor = {gui = defines.relative_gui_type.container_gui, name = gui.entity.name, position = defines.relative_gui_position.right}
+        supplyBuildingView = player.gui.relative.add{type = "frame", anchor = anchor, caption = {"", {"entity-name." .. gui.entity.name}}, direction = "vertical", name = guiKey}
+
+        Gui.addSupplyBuildingOverview(supplyBuildingView, cityName)
     end
 end)
 
@@ -601,7 +638,7 @@ script.on_event(defines.events.on_gui_click, function(event)
     end
 end)
 
-script.on_nth_tick(600, function()
+script.on_nth_tick(Constants.CITY_CONSUMPTION_TICKS, function()
     for _, city in ipairs(global.tycoon_cities or {}) do
         if city.special_buildings.town_hall ~= nil and city.special_buildings.town_hall.valid then
             Consumption.consumeBasicNeeds(city)
