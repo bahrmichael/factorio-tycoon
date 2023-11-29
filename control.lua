@@ -335,6 +335,20 @@ script.on_event(defines.events.on_chunk_charted, function (chunk)
     end
 end)
 
+-- local function findCityByEntityUnitNumber(unitNumber)
+--     local entity = (global.tycoon_entities or {})[unitNumber]
+
+--     return entity
+
+
+--     for _, city in ipairs(global.tycoon_cities) do
+--         if city.special_buildings.town_hall ~= nil and city.special_buildings.town_hall.unit_number == townHallUnitNumber then
+--             return city
+--         end
+--     end
+--     return nil
+-- end
+
 local function findCityByTownHallUnitNumber(townHallUnitNumber)
     for _, city in ipairs(global.tycoon_cities) do
         if city.special_buildings.town_hall ~= nil and city.special_buildings.town_hall.unit_number == townHallUnitNumber then
@@ -584,6 +598,15 @@ script.on_event(defines.events.on_gui_opened, function (gui)
         urbanPlanningCenterGui = player.gui.relative.add{type = "frame", anchor = anchor, caption = {"", {"entity-name.tycoon-urban-planning-center"}}, direction = "vertical", name = guiKey}
 
         Gui.addUrbanPlanningCenterView(urbanPlanningCenterGui)
+        
+    elseif gui.entity ~= nil and isSupplyBuilding(gui.entity.name) then
+        local player = game.players[gui.player_index]
+        
+        local unit_number = gui.entity.unit_number
+        local city = findCityByTownHallUnitNumber(unit_number)
+        assert(city ~= nil, "Could not find the city for town hall unit number ".. unit_number)
+
+        game.print("hello!")
     end
 end)
 
