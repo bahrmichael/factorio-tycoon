@@ -1,16 +1,21 @@
 ---------------------------------------------------------------------------------------------------
+Version: unreleased
+Date: 01. 12. 2023
+  Changes:
+    - TODO
+---------------------------------------------------------------------------------------------------
 Version: 0.2.11
-Date: 01. 01. 2023
+Date: 01. 12. 2023
   Locale:
     - Updated localization for pt-BR.
 ---------------------------------------------------------------------------------------------------
 Version: 0.2.10
-Date: 01. 01. 2023
+Date: 01. 12. 2023
   Bugfixes:
     - Fixed an issue where the game could crash if you deconstructed a house.
 ---------------------------------------------------------------------------------------------------
 Version: 0.2.9
-Date: 01. 01. 2023
+Date: 01. 12. 2023
   Locale:
     - Added Japanese localizatino thanks to yuyuyuxyu.
   Changes:
