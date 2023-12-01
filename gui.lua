@@ -486,11 +486,11 @@ end
 local function addCitiesOverview(anchor)
     local columnWidth = 100
     local tbl = anchor.add{type = "table", column_count = 4, draw_horizontal_lines = true}
-    local c1 = tbl.add{type = "label", caption = "Name"}
+    local c1 = tbl.add{type = "label", caption = {"", {"tycoon-gui-name"}}}
     c1.style.width = columnWidth
-    local c2 = tbl.add{type = "label", caption = "Citizens"}
+    local c2 = tbl.add{type = "label", caption =  {"", {"tycoon-gui-citizens"}}}
     c2.style.width = columnWidth
-    local c3 = tbl.add{type = "label", caption = "Basic Needs Supplied"}
+    local c3 = tbl.add{type = "label", caption =  {"", {"tycoon-gui-basic-needs-met"}}}
     c3.style.width = columnWidth
     local c4 = tbl.add{type = "label", caption = ""}
     c4.style.width = columnWidth
@@ -505,7 +505,7 @@ local function addCitiesOverview(anchor)
         tbl.add{type = "label", caption = {"", "[font=default-bold]", city.name, "[/font]"}}
         tbl.add{type = "label", caption = countCitizens(city)}
         tbl.add{type = "label", caption = {"", "[color=".. color .."]", {text}, "[/color]"}}
-        tbl.add{type = "button", caption = "Show Details", name = "multiple_cities_select_tab:" .. i, tags = {selected_tab = i + 1}}
+        tbl.add{type = "button", caption = {"", {"tycoon-gui-show-details"}}, name = "multiple_cities_select_tab:" .. i, tags = {selected_tab = i + 1}}
     end
 end
 

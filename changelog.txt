@@ -1,4 +1,12 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.2.9
+Date: 01. 01. 2023
+  Locale:
+    - Added Japanese localizatino thanks to yuyuyuxyu.
+  Changes:
+    - Marked omnifluid as an incompatible mod, because water towers currently can't deal with water as items.
+
+---------------------------------------------------------------------------------------------------
 Version: 0.2.8
 Date: 29. 11. 2023
   Changes:
