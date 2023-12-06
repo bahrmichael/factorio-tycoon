@@ -6,7 +6,11 @@ data:extend{
         icon_size = 64,
         max_health = 200,
         rotatable = false,
-        flags = { "not-rotatable", "not-deconstructable"},
+        flags = { "not-rotatable" },
+        minable = {
+            mining_time = 3,
+            results = {}
+        },
         fixed_recipe = "tycoon-fishing",
         collision_box = { { -3.9, -3.4}, {3.9, 3.9} },
         selection_box = { { -3.9, -3.9}, {3.9, 3.9} },
