@@ -183,22 +183,38 @@ end
 
 --- @param city City
 --- @param needs any | nil
-local function areBasicNeedsMet(city, needs, forGui)
+--- @return number[] supplyLevels
+local function getBasicNeedsSupplyLevels(city, needs)
     updateProvidedAmounts(city)
 
     local n = needs or city.stats.basic_needs
 
-    for _, amounts in pairs(n) do
-        if forGui and amounts ~= nil and amounts.required == 0 then
+    local waterDemand = ((n or {}).water or {})
+
+    if waterDemand.provided < waterDemand.required then
+        return { 0 }
+    end
+
+    local supplyLevels = {}
+
+    for resource, amounts in pairs(n) do
+        if resource == "water" then
             -- noop
         elseif (amounts == nil or amounts.provided == nil or amounts.provided == 0) then
-            return false
-        elseif amounts.provided < amounts.required then
-            return false
+            table.insert(supplyLevels, 0)
+        elseif (amounts == nil or amounts.required == nil or amounts.required == 0) then
+            if (amounts ~= nil and amounts.provided ~= nil and amounts.provided > 0) then
+                table.insert(supplyLevels, 1)
+            else
+                table.insert(supplyLevels, 0)
+            end
+        else
+            local supplyLevel = amounts.provided / amounts.required
+            table.insert(supplyLevels, supplyLevel)
         end
     end
 
-    return true
+    return supplyLevels
 end
 
 -- This value should match the one in university-science.lua
@@ -338,7 +354,7 @@ local function consumeBasicNeeds(city)
 end
 
 return {
-    areBasicNeedsMet = areBasicNeedsMet,
+    getBasicNeedsSupplyLevels = getBasicNeedsSupplyLevels,
     updateNeeds = updateNeeds,
     consumeBasicNeeds = consumeBasicNeeds,
     consumeItem = consumeItem

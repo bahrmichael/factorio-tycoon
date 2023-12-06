@@ -620,6 +620,22 @@ local function canBuildSimpleHouse(city)
         and excavationPitCount <= #city.grid
 end
 
+--- @param supplyLevels number[]
+--- @param city City
+--- @return boolean shouldTierGrow
+local function shouldTierGrow(supplyLevels, city)
+    -- https://mods.factorio.com/mod/tycoon/discussion/6565de7d3e4062cbd3213508
+    -- ((S1/D1 + S2/D2 + ... + Sn/Dn) / n)²
+    local innerSum = 0;
+    for _, value in pairs(supplyLevels) do
+        innerSum = innerSum + math.min(1, value)
+    end
+
+    local growthChance = math.pow((innerSum / #supplyLevels), 2)
+
+    return city.generator() < growthChance
+end
+
 local function canUpgradeToResidential(city)
     if not game.forces.player.technologies["tycoon-residential-housing"].researched then
         return false
@@ -633,11 +649,6 @@ local function canUpgradeToResidential(city)
     local residentialCount = ((city.buildingCounts or {})["residential"] or 0)
     if simpleCount < residentialCount * 5 then
         -- There should be 5 simple buildings for every residential building
-        return false
-    end
-
-    local needsMet = Consumption.areBasicNeedsMet(city, getNeeds(city, "residential"))
-    if not needsMet then
         return false
     end
 
@@ -662,11 +673,6 @@ local function canUpgradeToHighrise(city)
     local highriseCount = ((city.buildingCounts or {})["highrise"] or 0)
     if residentialCount < highriseCount * 5 then
         -- There should be 5 residential buildings for every highrise building
-        return false
-    end
-
-    local needsMet = Consumption.areBasicNeedsMet(city, getNeeds(city, "highrise"))
-    if not needsMet then
         return false
     end
 
@@ -716,12 +722,12 @@ local function newCityGrowth(city, suppliedTiers)
             if not isBuilt then
                 table.insert(city.priority_buildings, 1, prioBuilding)
             end
-        elseif key == "highrise" and canUpgradeToHighrise(city) then
+        elseif key == "highrise" and Util.indexOf("highrise", suppliedTiers) >= 0 and canUpgradeToHighrise(city) then
             isBuilt = City.upgradeHouse(city, "highrise")
             if isBuilt then
                 growCitizenCount(city, -1 * citizenCounts["residential"], "residential")
             end
-        elseif key == "residential" and canUpgradeToResidential(city) then
+        elseif key == "residential" and Util.indexOf("residential", suppliedTiers) >= 0 and canUpgradeToResidential(city) then
             isBuilt = City.upgradeHouse(city, "residential")
             if isBuilt then
                 growCitizenCount(city, -1 * citizenCounts["simple"], "simple")
@@ -960,13 +966,13 @@ script.on_nth_tick(Constants.CITY_GROWTH_TICKS, function(event)
         if city.special_buildings.town_hall ~= nil and city.special_buildings.town_hall.valid then
 
             local suppliedTiers = {}
-            if Consumption.areBasicNeedsMet(city, getNeeds(city, "simple")) then
+            if shouldTierGrow(Consumption.getBasicNeedsSupplyLevels(city, getNeeds(city, "simple")), city) then
                 table.insert(suppliedTiers, "simple")
             end
-            if Consumption.areBasicNeedsMet(city, getNeeds(city, "residential")) then
+            if shouldTierGrow(Consumption.getBasicNeedsSupplyLevels(city, getNeeds(city, "residential")), city) then
                 table.insert(suppliedTiers, "residential")
             end
-            if Consumption.areBasicNeedsMet(city, getNeeds(city, "highrise")) then
+            if shouldTierGrow(Consumption.getBasicNeedsSupplyLevels(city, getNeeds(city, "highrise")), city) then
                 table.insert(suppliedTiers, "highrise")
             end
             if #suppliedTiers > 0 then
