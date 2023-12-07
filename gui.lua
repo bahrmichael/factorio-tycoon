@@ -235,7 +235,9 @@ local function addBasicNeedsView(rootGui, basicNeeds, city, waterTowers, markets
             end
 
             local color = "green"
-            if amounts.provided < amounts.required or (amounts.provided == 0 and amounts.required == 0) then
+            if amounts.provided > 0 and amounts.provided < amounts.required then
+                color = "orange"
+            elseif amounts.provided == 0 then
                 color = "red"
             end
 
