@@ -35,6 +35,10 @@ data:extend{
                 type = "unlock-recipe",
                 recipe = "tycoon-grow-cows-with-grain",
             },
+            {
+                type = "unlock-recipe",
+                recipe = "tycoon-grow-chicken-with-grain",
+            },
         },
         prerequisites = { "tycoon-farming" },
         order = "g-e-e",
@@ -89,7 +93,7 @@ data:extend{
                 recipe = "tycoon-dough-to-bread",
             },
         },
-        prerequisites = { "tycoon-farming", "tycoon-husbandry", "automation-2" },
+        prerequisites = { "tycoon-farming", "tycoon-husbandry", "automation-2", "tycoon-milking" },
         order = "g-e-e",
         unit = {
           count = 100,
@@ -150,6 +154,10 @@ data:extend{
                 type = "unlock-recipe",
                 recipe = "tycoon-cows-to-meat",
             },
+            {
+                type = "unlock-recipe",
+                recipe = "tycoon-chicken-to-meat",
+            },
         },
         prerequisites = { "tycoon-husbandry" },
         order = "g-e-e",
@@ -178,7 +186,7 @@ data:extend{
                 recipe = "tycoon-university-science-blue",
             },
         },
-        prerequisites = { "steel-processing", "optics", "tycoon-meat-processing", "tycoon-baking" },
+        prerequisites = { "steel-processing", "optics", "tycoon-meat-processing", "tycoon-baking", "tycoon-milking", "tycoon-bottling" },
         order = "g-e-e",
         unit = {
           count = 60,
@@ -187,6 +195,129 @@ data:extend{
             { "logistic-science-pack", 1 },
           },
           time = 30,
+        },
+    },
+    {
+        type = "technology",
+        name = "tycoon-egg-production",
+        mod = "Tycoon",
+        icon = "__tycoon__/graphics/icons/egg-production.png",
+        icon_size = 256,
+        effects = {
+            {
+                type = "unlock-recipe",
+                recipe = "tycoon-egg",
+            },
+        },
+        prerequisites = { "tycoon-husbandry" },
+        order = "g-e-e",
+        unit = {
+          count = 60,
+          ingredients = {
+            { "automation-science-pack", 1 },
+            { "logistic-science-pack", 1 },
+          },
+          time = 100,
+        },
+    },
+    {
+        type = "technology",
+        name = "tycoon-drinks",
+        mod = "Tycoon",
+        icon = "__tycoon__/graphics/icons/drinks.png",
+        icon_size = 256,
+        effects = {
+            {
+                type = "unlock-recipe",
+                recipe = "tycoon-smoothie",
+            },
+        },
+        prerequisites = { "tycoon-bottling" },
+        order = "g-e-e",
+        unit = {
+          count = 60,
+          ingredients = {
+            { "automation-science-pack", 1 },
+            { "logistic-science-pack", 1 },
+          },
+          time = 100,
+        },
+    },
+    {
+        type = "technology",
+        name = "tycoon-desserts",
+        mod = "Tycoon",
+        icon = "__tycoon__/graphics/icons/cookies.png",
+        icon_size = 256,
+        effects = {
+            {
+                type = "unlock-recipe",
+                recipe = "tycoon-apple-cake",
+            },
+        },
+        prerequisites = { "tycoon-egg-production", "tycoon-fermentation", "tycoon-baking" },
+        order = "g-e-e",
+        unit = {
+          count = 60,
+          ingredients = {
+            { "automation-science-pack", 1 },
+            { "logistic-science-pack", 1 },
+          },
+          time = 100,
+        },
+    },
+    {
+        type = "technology",
+        name = "tycoon-fermentation",
+        mod = "Tycoon",
+        icon = "__tycoon__/graphics/icons/fermentation.png",
+        icon_size = 256,
+        effects = {
+            {
+                type = "unlock-recipe",
+                recipe = "tycoon-butter",
+            },
+            {
+                type = "unlock-recipe",
+                recipe = "tycoon-cheese",
+            },
+        },
+        prerequisites = { "tycoon-milking" },
+        order = "g-e-e",
+        unit = {
+          count = 60,
+          ingredients = {
+            { "automation-science-pack", 1 },
+            { "logistic-science-pack", 1 },
+          },
+          time = 100,
+        },
+    },
+    {
+        type = "technology",
+        name = "tycoon-main-dish",
+        mod = "Tycoon",
+        icon = "__tycoon__/graphics/icons/restaurant-menu.png",
+        icon_size = 256,
+        effects = {
+            {
+                type = "unlock-recipe",
+                recipe = "tycoon-burger",
+            },
+            {
+                type = "unlock-recipe",
+                recipe = "tycoon-dumpling",
+            },
+        },
+        prerequisites = { "tycoon-meat-processing", "tycoon-fermentation", "tycoon-baking" },
+        order = "g-e-e",
+        unit = {
+          count = 60,
+          ingredients = {
+            { "automation-science-pack", 1 },
+            { "logistic-science-pack", 1 },
+          },
+          time = 100,
         },
     },
     {
@@ -205,7 +336,7 @@ data:extend{
                 recipe = "tycoon-university-science-yellow",
             },
         },
-        prerequisites = { "fluid-handling", "concrete", "tycoon-residential-housing", "tycoon-bottling" },
+        prerequisites = { "fluid-handling", "concrete", "tycoon-residential-housing", "tycoon-desserts", "tycoon-main-dish", "tycoon-fermentation", "tycoon-drinks" },
         order = "g-e-e",
         unit = {
           count = 200,
@@ -229,7 +360,7 @@ data:extend{
                 recipe = "tycoon-urban-planning-center",
             },
         },
-        prerequisites = { "tycoon-highrise-housing" },
+        prerequisites = { "tycoon-residential-housing" },
         order = "g-e-e",
         unit = {
           count = 100,
