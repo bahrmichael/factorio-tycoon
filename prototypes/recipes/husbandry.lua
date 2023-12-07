@@ -25,7 +25,7 @@ data:extend{
         subgroup = "tycoon-intermediate-products",
         order = "a[tycoon]-d[chicken]",
         energy_required = 30,
-        enabled = true,
+        enabled = false,
         ingredients = {
             { type = "fluid", name = "water", amount = 200 },
             { type = "item", name = "tycoon-grain", amount = 50 },
@@ -62,7 +62,7 @@ data:extend{
         energy_required = 30,
         subgroup = "tycoon-intermediate-products",
         order = "a[tycoon]-e[egg]",
-        enabled = true,
+        enabled = false,
         ingredients = {
             { type = "fluid", name = "water", amount = 100 },
             { type = "item", name = "tycoon-chicken", amount = 10 },

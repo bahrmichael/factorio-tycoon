@@ -20,7 +20,7 @@ data:extend{
         name = "tycoon-chicken-to-meat",
         category = "tycoon-butchery",
         energy_required = 10,
-        enabled = true,
+        enabled = false,
         ingredients = {
             { type = "item", name = "tycoon-chicken", amount = 1 },
         },

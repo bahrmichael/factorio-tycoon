@@ -97,7 +97,7 @@ data:extend{
         name = "tycoon-smoothie",
         category = "crafting-with-fluid",
         energy_required = 15,
-        enabled = true,
+        enabled = false,
         ingredients = {
             { type = "item", name = "tycoon-bottle", amount = 25 },
             { type = "item", name = "tycoon-apple", amount = 50 },
@@ -126,7 +126,7 @@ data:extend{
         name = "tycoon-butter",
         category = "crafting-with-fluid",
         energy_required = 60,
-        enabled = true,
+        enabled = false,
         ingredients = {
             { type = "fluid", name = "tycoon-milk", amount = 100 },
         },
@@ -150,7 +150,7 @@ data:extend{
         name = "tycoon-burger",
         category = "crafting",
         energy_required = 15,
-        enabled = true,
+        enabled = false,
         ingredients = {
             { type = "item", name = "tycoon-cheese", amount = 1 },
             { type = "item", name = "tycoon-patty", amount = 1 },
@@ -176,7 +176,7 @@ data:extend{
         name = "tycoon-dumpling",
         category = "crafting",
         energy_required = 15,
-        enabled = true,
+        enabled = false,
         ingredients = {
             { type = "item", name = "tycoon-dough", amount = 1 },
             { type = "item", name = "tycoon-fish-filet", amount = 1 },
