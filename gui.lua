@@ -348,8 +348,8 @@ local function getOverallSupplyLevelsSummary(city)
     local highriseLevels = Consumption.getBasicNeedsSupplyLevels(city, getNeeds(city, "highrise"))
 
     local supplyLevelSummary = getSupplyLevelsSummary(simpleLevels)
-    local residentialLevelSummary = getSupplyLevelsSummary(residentialLevels)
-    local highriseLevelSymmary = getSupplyLevelsSummary(highriseLevels)
+    local residentialLevelSummary = game.forces.player.technologies["tycoon-residential-housing"].researched and getSupplyLevelsSummary(residentialLevels) or "supplied"
+    local highriseLevelSymmary = game.forces.player.technologies["tycoon-highrise-housing"].researched and getSupplyLevelsSummary(highriseLevels) or "supplied"
 
     if supplyLevelSummary == "supplied" and residentialLevelSummary == "supplied" and highriseLevelSymmary == "supplied" then
         return "supplied"
