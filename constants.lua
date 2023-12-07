@@ -9,6 +9,7 @@ local CONSTANTS = {
     MORE_CITIES_TICKS = OneSecond * 60,
     INITIAL_CITY_TICK = 30,
     PASSENGER_SPAWNING_TICKS = OneSecond * 2,
+    CITY_CONSUMPTION_TICKS = OneSecond * 60,
 }
 
 return CONSTANTS

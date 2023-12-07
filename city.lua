@@ -1282,6 +1282,12 @@ local function findUpgradableCells(city, limit, upgradeTo)
 end
 
 local function clearCell(city, upgradeCell)
+    -- The game crashes when a house was destroyed and therefore the entity became invalid. See https://mods.factorio.com/mod/tycoon/discussion/656a05ca3f91639be4702152
+    -- We should probably listen to destruction events and clear up the city grid (so that it doesn't try upgrading that building) and also clear the lights
+    if not upgradeCell.cell.entity.valid then
+        return
+    end
+    
     if global.tycoon_house_lights ~= nil and global.tycoon_house_lights[upgradeCell.cell.entity.unit_number] then
         global.tycoon_house_lights[upgradeCell.cell.entity.unit_number].destroy()
     end

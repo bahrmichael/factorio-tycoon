@@ -1,4 +1,36 @@
 ---------------------------------------------------------------------------------------------------
+Version: unreleased
+Date: 01. 12. 2023
+  Changes:
+    - TODO
+---------------------------------------------------------------------------------------------------
+Version: 0.2.11
+Date: 01. 12. 2023
+  Locale:
+    - Updated localization for pt-BR.
+---------------------------------------------------------------------------------------------------
+Version: 0.2.10
+Date: 01. 12. 2023
+  Bugfixes:
+    - Fixed an issue where the game could crash if you deconstructed a house.
+---------------------------------------------------------------------------------------------------
+Version: 0.2.9
+Date: 01. 12. 2023
+  Locale:
+    - Added Japanese localizatino thanks to yuyuyuxyu.
+  Changes:
+    - Marked omnifluid as an incompatible mod, because water towers currently can't deal with water as items.
+
+---------------------------------------------------------------------------------------------------
+Version: 0.2.8
+Date: 29. 11. 2023
+  Changes:
+    - Supply buildings (market, hardware store, ...) now have a GUI that shows which city they are supplying.
+  Bugfixes:
+    - Stable can now be placed on resource patches.
+    - Fixed an issue where the game could crash when completing productivity research.
+    - Cities now consume food every minute, instead of previously every 10 seconds. Now the town hall GUI is correct.
+---------------------------------------------------------------------------------------------------
 Version: 0.2.7
 Date: 16. 11. 2023
   Bugfixes:
