@@ -255,7 +255,7 @@ local function addBasicNeedsView(rootGui, basicNeeds, city, waterTowers, markets
     basicNeedsGui.add{type = "line"}
 
     local growthChance = getGrowthChance(Consumption.getBasicNeedsSupplyLevels(city, getNeeds(city, housingTier)))
-    basicNeedsGui.add{type = "label", caption = {"", {"tycoon-gui-growth-chance", {"", {"technology-name.tycoon-" .. housingTier .. "-housing"}}, math.floor(growthChance * 100)}}}-- "" .. math.floor(growthChance * 100) .. "%"}
+    basicNeedsGui.add{type = "label", caption = {"", {"tycoon-gui-growth-chance", {"", {"technology-name.tycoon-" .. housingTier .. "-housing"}}, math.floor(growthChance * 100)}}}
 end
 
 --- @param city City
