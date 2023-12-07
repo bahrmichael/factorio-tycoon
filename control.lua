@@ -722,12 +722,12 @@ local function newCityGrowth(city, suppliedTiers)
             if not isBuilt then
                 table.insert(city.priority_buildings, 1, prioBuilding)
             end
-        elseif key == "highrise" and Util.indexOf("highrise", suppliedTiers) >= 0 and canUpgradeToHighrise(city) then
+        elseif key == "highrise" and Util.indexOf(suppliedTiers, "highrise") ~= nil and canUpgradeToHighrise(city) then
             isBuilt = City.upgradeHouse(city, "highrise")
             if isBuilt then
                 growCitizenCount(city, -1 * citizenCounts["residential"], "residential")
             end
-        elseif key == "residential" and Util.indexOf("residential", suppliedTiers) >= 0 and canUpgradeToResidential(city) then
+        elseif key == "residential" and Util.indexOf(suppliedTiers, "residential") ~= nil and canUpgradeToResidential(city) then
             isBuilt = City.upgradeHouse(city, "residential")
             if isBuilt then
                 growCitizenCount(city, -1 * citizenCounts["simple"], "simple")
