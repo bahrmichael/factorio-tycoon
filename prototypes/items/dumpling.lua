@@ -5,7 +5,7 @@ data:extend{
       icon = "__tycoon__/graphics/icons/dumpling.png",
       icon_size = 64,
       subgroup = "tycoon-food",
-      order = "a[tycoon]-a[dumpling]",
+      order = "a[tycoon]-f[dumpling]",
       stack_size = 200
     }
   }
