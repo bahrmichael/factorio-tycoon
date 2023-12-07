@@ -639,14 +639,6 @@ script.on_event(defines.events.on_gui_click, function(event)
     end
 end)
 
-script.on_nth_tick(Constants.CITY_CONSUMPTION_TICKS, function()
-    for _, city in ipairs(global.tycoon_cities or {}) do
-        if city.special_buildings.town_hall ~= nil and city.special_buildings.town_hall.valid then
-            Consumption.consumeBasicNeeds(city)
-        end
-    end
-end)
-
 local function canBuildSimpleHouse(city)
     local simpleCount = ((city.buildingCounts or {})["simple"] or 0)
     -- Todo: come up with a good function that slows down growth if there are too many
@@ -1000,6 +992,8 @@ script.on_nth_tick(Constants.CITY_GROWTH_TICKS, function(event)
 
     for _, city in ipairs(global.tycoon_cities) do
         if city.special_buildings.town_hall ~= nil and city.special_buildings.town_hall.valid then
+
+            Consumption.consumeBasicNeeds(city)
 
             local suppliedTiers = {}
             if shouldTierGrow(Consumption.getBasicNeedsSupplyLevels(city, getNeeds(city, "simple")), city) then
