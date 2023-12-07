@@ -191,7 +191,7 @@ local function getBasicNeedsSupplyLevels(city, needs)
 
     local waterDemand = ((n or {}).water or {})
 
-    if waterDemand.provided < waterDemand.required then
+    if waterDemand.provided < waterDemand.required or waterDemand.provided == 0 then
         return { 0 }
     end
 
