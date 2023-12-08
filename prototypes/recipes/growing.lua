@@ -35,7 +35,9 @@ data:extend{
         },
         result = "tycoon-apple",
         -- 50 per minute is a good starting amount
-        result_count = 25
+        result_count = 25,
+        hidden = true,
+        hidden_from_player_crafting = true,
     },
 }
 for i = 2, 11, 1 do
@@ -52,6 +54,8 @@ for i = 2, 11, 1 do
             },
             result = "tycoon-apple",
             result_count = 16+math.pow(i*3, 2),
+            hidden = true,
+            hidden_from_player_crafting = true,
         },
     }
 end

@@ -400,51 +400,24 @@ data:extend{
     },
     {
         type = "technology",
-        name = "tycoon-apple-farm-productivity-1",
+        name = "tycoon-apple-farm-productivity",
         mod = "Tycoon",
-        level = 1,
         icon = "__tycoon__/graphics/icons/apple-farm.png",
         icon_size = 256,
         effects = {
             {
-                type = "unlock-recipe",
-                recipe = "tycoon-grow-apples-with-water-2",
+                -- this still triggers the on_research_finished event
+                type = "nothing",
             },
         },
         prerequisites = { "tycoon-farming" },
         unit = {
-            count = 20,
+            count_formula = "(L^2)*100",
             ingredients = {
                 { "automation-science-pack", 1 },
             },
-            time = 30,
+            time = 60,
         },
+        max_level = 10,
     },
 }
-
-for i = 2, 10, 1 do
-    data:extend{
-        {
-            type = "technology",
-            name = "tycoon-apple-farm-productivity-" .. i,
-            mod = "Tycoon",
-            level = i,
-            icon = "__tycoon__/graphics/icons/apple-farm.png",
-            icon_size = 256,
-            effects = {
-                {
-                    type = "unlock-recipe",
-                    recipe = "tycoon-grow-apples-with-water-" .. i + 1,
-                },
-            },
-            prerequisites = { "tycoon-apple-farm-productivity-" .. (i - 1) },
-            unit = {
-                count = 20+math.pow(i*2, 2),
-                ingredients = {
-                    { "automation-science-pack", 1 },
-                },
-                time = 30,
-            },
-        },
-    }
-end

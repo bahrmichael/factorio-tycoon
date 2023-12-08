@@ -504,7 +504,7 @@ script.on_event(defines.events.on_research_finished, function(event)
     local name = research.name
 
     if string.find(name, "tycoon-apple-farm-productivity", 1, true) then
-        local new_recipe = research.effects[1].recipe
+        local new_recipe = "tycoon-grow-apples-with-water-" .. research.level
         for i, farm in ipairs(global.tycoon_primary_industries["tycoon-apple-farm"] or {}) do
             if farm.valid then
                 farm.set_recipe(new_recipe)
@@ -513,7 +513,6 @@ script.on_event(defines.events.on_research_finished, function(event)
                 table.remove(global.tycoon_primary_industries["tycoon-apple-farm"], i)
             end
         end
-        game.forces.player.recipes["tycoon-grow-apples-with-water-" .. research.level].enabled = false
     end
 end)
 
