@@ -178,7 +178,7 @@ local function getGrowthChance(supplyLevels)
         innerSum = innerSum + math.min(1, value)
     end
 
-    local growthChance = math.pow((innerSum / #supplyLevels), 2)
+    local growthChance = math.pow((innerSum / #supplyLevels), 4)
 
     return growthChance
 end
@@ -255,7 +255,7 @@ local function addBasicNeedsView(rootGui, basicNeeds, city, waterTowers, markets
     basicNeedsGui.add{type = "line"}
 
     local growthChance = getGrowthChance(Consumption.getBasicNeedsSupplyLevels(city, getNeeds(city, housingTier)))
-    basicNeedsGui.add{type = "label", caption = {"", {"tycoon-gui-growth-chance", {"", {"technology-name.tycoon-" .. housingTier .. "-housing"}}, math.floor(growthChance * 100)}}}
+    basicNeedsGui.add{type = "label", caption = {"", {"tycoon-gui-growth-chance", {"", math.floor(growthChance * 100), {"technology-name.tycoon-" .. housingTier .. "-housing"}}}}}
 end
 
 --- @param city City

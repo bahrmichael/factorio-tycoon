@@ -658,7 +658,7 @@ local function shouldTierGrow(supplyLevels, city)
         innerSum = innerSum + math.min(1, value)
     end
 
-    local growthChance = math.pow((innerSum / #supplyLevels), 2)
+    local growthChance = math.pow((innerSum / #supplyLevels), 4)
 
     return city.generator() < growthChance
 end
