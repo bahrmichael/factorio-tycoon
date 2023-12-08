@@ -127,7 +127,7 @@ data:extend{
         prerequisites = { "tycoon-milking", "automation-2" },
         order = "g-e-e",
         unit = {
-          count = 100,
+          count = 150,
           ingredients = {
             { "automation-science-pack", 1 },
             { "logistic-science-pack", 1 },
@@ -189,10 +189,11 @@ data:extend{
         prerequisites = { "steel-processing", "optics", "tycoon-meat-processing", "tycoon-baking", "tycoon-milking", "tycoon-bottling" },
         order = "g-e-e",
         unit = {
-          count = 60,
+          count = 100,
           ingredients = {
             { "automation-science-pack", 1 },
             { "logistic-science-pack", 1 },
+            { "chemical-science-pack", 1 },
           },
           time = 30,
         },
@@ -235,12 +236,13 @@ data:extend{
         prerequisites = { "tycoon-bottling" },
         order = "g-e-e",
         unit = {
-          count = 60,
+          count = 100,
           ingredients = {
             { "automation-science-pack", 1 },
             { "logistic-science-pack", 1 },
+            { "chemical-science-pack", 1 },
           },
-          time = 100,
+          time = 60,
         },
     },
     {
@@ -255,20 +257,21 @@ data:extend{
                 recipe = "tycoon-apple-cake",
             },
         },
-        prerequisites = { "tycoon-egg-production", "tycoon-fermentation", "tycoon-baking" },
+        prerequisites = { "tycoon-egg-production", "tycoon-dairy-products", "tycoon-baking" },
         order = "g-e-e",
         unit = {
-          count = 60,
-          ingredients = {
-            { "automation-science-pack", 1 },
-            { "logistic-science-pack", 1 },
-          },
-          time = 100,
+            count = 150,
+            ingredients = {
+                { "automation-science-pack", 1 },
+                { "logistic-science-pack", 1 },
+                { "chemical-science-pack", 1 },
+            },
+            time = 100,
         },
     },
     {
         type = "technology",
-        name = "tycoon-fermentation",
+        name = "tycoon-dairy-products",
         mod = "Tycoon",
         icon = "__tycoon__/graphics/icons/fermentation.png",
         icon_size = 256,
@@ -309,15 +312,16 @@ data:extend{
                 recipe = "tycoon-dumpling",
             },
         },
-        prerequisites = { "tycoon-meat-processing", "tycoon-fermentation", "tycoon-baking" },
+        prerequisites = { "tycoon-meat-processing", "tycoon-dairy-products", "tycoon-baking" },
         order = "g-e-e",
         unit = {
-          count = 60,
-          ingredients = {
-            { "automation-science-pack", 1 },
-            { "logistic-science-pack", 1 },
-          },
-          time = 100,
+            count = 200,
+            ingredients = {
+                { "automation-science-pack", 1 },
+                { "logistic-science-pack", 1 },
+                { "chemical-science-pack", 1 },
+            },
+            time = 100,
         },
     },
     {
@@ -336,10 +340,10 @@ data:extend{
                 recipe = "tycoon-university-science-yellow",
             },
         },
-        prerequisites = { "fluid-handling", "concrete", "tycoon-residential-housing", "tycoon-desserts", "tycoon-main-dish", "tycoon-fermentation", "tycoon-drinks" },
+        prerequisites = { "fluid-handling", "concrete", "tycoon-residential-housing", "tycoon-desserts", "tycoon-main-dish", "tycoon-dairy-products", "tycoon-drinks" },
         order = "g-e-e",
         unit = {
-          count = 200,
+          count = 400,
           ingredients = {
             { "automation-science-pack", 1 },
             { "logistic-science-pack", 1 },
