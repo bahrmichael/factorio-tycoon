@@ -696,7 +696,8 @@ local function canUpgradeToResidential(city)
     end
 
     local residentialCount = ((city.buildingCounts or {})["residential"] or 0)
-    if simpleCount < residentialCount * 5 then
+
+    if Util.countPendingLowerTierHouses(simpleCount, residentialCount) > 0 then
         -- There should be 5 simple buildings for every residential building
         return false
     end
@@ -720,7 +721,7 @@ local function canUpgradeToHighrise(city)
     -- highrise should not cover more than 50% of the houses
     -- ideally only an inner circle
     local highriseCount = ((city.buildingCounts or {})["highrise"] or 0)
-    if residentialCount < highriseCount * 5 then
+    if Util.countPendingLowerTierHouses(residentialCount, highriseCount) > 0 then
         -- There should be 5 residential buildings for every highrise building
         return false
     end
