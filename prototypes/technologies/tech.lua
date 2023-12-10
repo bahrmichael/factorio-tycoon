@@ -423,5 +423,55 @@ data:extend{
             time = 60,
         },
         max_level = 10,
+        upgrade = true,
+    },
+    {
+        type = "technology",
+        name = "tycoon-wheat-farm-productivity",
+        mod = "Tycoon",
+        icon = "__tycoon__/graphics/icons/wheat-farm.png",
+        icon_size = 256,
+        effects = {
+            {
+                -- this still triggers the on_research_finished event
+                type = "nothing",
+            },
+        },
+        prerequisites = { "tycoon-husbandry" },
+        unit = {
+            count_formula = "(L^2)*100",
+            ingredients = {
+                { "automation-science-pack", 1 },
+                { "logistic-science-pack", 1 },
+            },
+            time = 60,
+        },
+        max_level = 10,
+        upgrade = true,
+    },
+    {
+        type = "technology",
+        name = "tycoon-fishery-productivity",
+        mod = "Tycoon",
+        icon = "__tycoon__/graphics/icons/fishery.png",
+        icon_size = 256,
+        effects = {
+            {
+                -- this still triggers the on_research_finished event
+                type = "nothing",
+            },
+        },
+        prerequisites = { "tycoon-husbandry" },
+        unit = {
+            count_formula = "(L^2)*100",
+            ingredients = {
+                { "automation-science-pack", 1 },
+                { "logistic-science-pack", 1 },
+                { "chemical-science-pack", 1 },
+            },
+            time = 60,
+        },
+        max_level = 10,
+        upgrade = true,
     },
 }

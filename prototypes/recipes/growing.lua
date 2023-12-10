@@ -6,56 +6,30 @@ data:extend{
     {
         type = "recipe-category",
         name = "tycoon-growing-wheat"
-    },
-    {
-        type = "recipe",
-        name = "tycoon-grow-wheat-with-water",
-        category = "tycoon-growing-wheat",
-        order = "a[tycoon]-b[wheat]",
-        energy_required = 30,
-        enabled = true,
-        ingredients = {
-            { type = "fluid", name = "water", amount = 400 },
-        },
-        result = "tycoon-wheat",
-        result_count = 50,
     }
 }
 
-data:extend{
-    {
-        type = "recipe",
-        name = "tycoon-grow-apples-with-water-1",
-        category = "tycoon-growing-apples",
-        order = "a[tycoon]-a[apples]",
-        energy_required = 30,
-        enabled = true,
-        ingredients = {
-            { type = "fluid", name = "water", amount = 300 },
-        },
-        result = "tycoon-apple",
-        -- 50 per minute is a good starting amount
-        result_count = 25,
-        hidden = true,
-        hidden_from_player_crafting = true,
-    },
-}
-for i = 2, 11, 1 do
-    data:extend{
-        {
-            type = "recipe",
-            name = "tycoon-grow-apples-with-water-" .. i,
-            category = "tycoon-growing-apples",
-            order = "a[tycoon]-a[apples]",
-            energy_required = 30,
-            enabled = false,
-            ingredients = {
-                { type = "fluid", name = "water", amount = 300 },
+local function add_incresing_tech(recipe_name_base, recipe_category, result_name, order_suffix)
+    for i = 1, 11, 1 do
+        data:extend{
+            {
+                type = "recipe",
+                name = recipe_name_base .. "-" .. i,
+                category = recipe_category,
+                order = "a[tycoon]-" .. order_suffix,
+                energy_required = 30,
+                enabled = i == 1,
+                ingredients = {
+                    { type = "fluid", name = "water", amount = 300 },
+                },
+                result = result_name,
+                result_count = i == 1 and 50 or (16+math.pow(i*3, 2)),
+                hidden = true,
+                hidden_from_player_crafting = true,
             },
-            result = "tycoon-apple",
-            result_count = 16+math.pow(i*3, 2),
-            hidden = true,
-            hidden_from_player_crafting = true,
-        },
-    }
+        }
+    end
 end
+
+add_incresing_tech("tycoon-grow-wheat-with-water", "tycoon-growing-wheat", "tycoon-wheat", "b[wheat]")
+add_incresing_tech("tycoon-grow-apples-with-water", "tycoon-growing-apples", "tycoon-apple", "a[apples]")

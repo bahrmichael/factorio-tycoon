@@ -220,10 +220,6 @@ local function addBasicNeedsView(rootGui, basicNeeds, city, waterTowers, markets
                 displayedMissingSuppliers[missingSupplier] = true
             end
         else
-            -- This check is mostly for backwards compatibility. A game crashed when I tried to open the gui after changing the resources that citizens need.
-            if city.stats.basic_needs[resource] == nil then
-                Consumption.updateNeeds(city)
-            end
             local amounts = city.stats.basic_needs[resource]
 
             local itemName = resource
@@ -255,7 +251,7 @@ local function addBasicNeedsView(rootGui, basicNeeds, city, waterTowers, markets
     basicNeedsGui.add{type = "line"}
 
     local growthChance = getGrowthChance(Consumption.getBasicNeedsSupplyLevels(city, getNeeds(city, housingTier)))
-    basicNeedsGui.add{type = "label", caption = {"", {"tycoon-gui-growth-chance", {"", math.floor(growthChance * 100), {"technology-name.tycoon-" .. housingTier .. "-housing"}}}}}
+    basicNeedsGui.add{type = "label", caption = {"", {"tycoon-gui-growth-chance", math.floor(growthChance * 100), {"", {"technology-name.tycoon-" .. housingTier .. "-housing"}}}}}
 end
 
 --- @param city City
@@ -499,6 +495,9 @@ local function addTrainStationView(trainStationUnitNumber, anchor, city)
 end
 
 local function addCityView(city, anchor)
+    
+    Consumption.updateNeeds(city)
+
     local tabbed_pane = anchor.add{type="tabbed-pane"}
     local tab_overview = tabbed_pane.add{type="tab", caption={"", {"tycoon-gui-city-overview"}}}
     local tab_simple = tabbed_pane.add{type="tab", caption={"", {"technology-name.tycoon-simple-housing"}}}

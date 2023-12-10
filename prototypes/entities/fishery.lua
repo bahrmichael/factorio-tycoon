@@ -3,7 +3,7 @@ data:extend{
         type = "assembling-machine",
         name = "tycoon-fishery",
         icon = "__tycoon__/graphics/icons/fishery.png",
-        icon_size = 64,
+        icon_size = 256,
         max_health = 200,
         rotatable = false,
         flags = { "not-rotatable" },
@@ -11,7 +11,6 @@ data:extend{
             mining_time = 3,
             results = {}
         },
-        fixed_recipe = "tycoon-fishing",
         collision_box = { { -3.9, -3.4}, {3.9, 3.9} },
         selection_box = { { -3.9, -3.9}, {3.9, 3.9} },
         collision_mask = { "player-layer", "water-tile", "resource-layer", "item-layer", "ghost-layer", "object-layer", "train-layer", "rail-layer", "transport-belt-layer" },

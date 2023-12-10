@@ -513,6 +513,28 @@ script.on_event(defines.events.on_research_finished, function(event)
                 table.remove(global.tycoon_primary_industries["tycoon-apple-farm"], i)
             end
         end
+    elseif string.find(name, "tycoon-wheat-farm-productivity", 1, true) then
+        local new_recipe = "tycoon-grow-wheat-with-water-" .. research.level
+        for i, farm in ipairs(global.tycoon_primary_industries["tycoon-wheat-farm"] or {}) do
+            if farm.valid then
+                farm.set_recipe(new_recipe)
+                farm.recipe_locked = true
+            else
+                -- todo: check if we added those to the primary industries
+                table.remove(global.tycoon_primary_industries["tycoon-wheat-farm"], i)
+            end
+        end
+    elseif string.find(name, "tycoon-fishery-productivity", 1, true) then
+        local new_recipe = "tycoon-fishing-" .. research.level
+        for i, farm in ipairs(global.tycoon_primary_industries["tycoon-fishery"] or {}) do
+            if farm.valid then
+                farm.set_recipe(new_recipe)
+                farm.recipe_locked = true
+            else
+                -- todo: check if we added those to the primary industries
+                table.remove(global.tycoon_primary_industries["tycoon-fishery"], i)
+            end
+        end
     end
 end)
 
