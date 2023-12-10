@@ -363,18 +363,19 @@ local function getNeeds(city, tier)
     elseif tier == "residential" then
         return {
             water = city.stats.basic_needs.water,
-            ["tycoon-apple"] = city.stats.basic_needs["tycoon-apple"],
+            ["tycoon-milk-bottle"] = city.stats.basic_needs["tycoon-milk-bottle"],
             ["tycoon-meat"] = city.stats.basic_needs["tycoon-meat"],
             ["tycoon-bread"] = city.stats.basic_needs["tycoon-bread"],
+            ["tycoon-fish-filet"] = city.stats.basic_needs["tycoon-fish-filet"],
         }
     elseif tier == "highrise" then
         return {
             water = city.stats.basic_needs.water,
-            ["tycoon-apple"] = city.stats.basic_needs["tycoon-apple"],
-            ["tycoon-meat"] = city.stats.basic_needs["tycoon-meat"],
-            ["tycoon-bread"] = city.stats.basic_needs["tycoon-bread"],
-            ["tycoon-fish-filet"] = city.stats.basic_needs["tycoon-fish-filet"],
-            ["tycoon-milk-bottle"] = city.stats.basic_needs["tycoon-milk-bottle"],
+            ["tycoon-smoothie"] = city.stats.basic_needs["tycoon-smoothie"],
+            ["tycoon-apple-cake"] = city.stats.basic_needs["tycoon-apple-cake"],
+            ["tycoon-cheese"] = city.stats.basic_needs["tycoon-cheese"],
+            ["tycoon-burger"] = city.stats.basic_needs["tycoon-burger"],
+            ["tycoon-dumpling"] = city.stats.basic_needs["tycoon-dumpling"],
         }
     else
         assert(false, "Unknown tier for getNeeds: " .. tier)
@@ -503,7 +504,7 @@ script.on_event(defines.events.on_research_finished, function(event)
     local name = research.name
 
     if string.find(name, "tycoon-apple-farm-productivity", 1, true) then
-        local new_recipe = research.effects[1].recipe
+        local new_recipe = "tycoon-grow-apples-with-water-" .. research.level
         for i, farm in ipairs(global.tycoon_primary_industries["tycoon-apple-farm"] or {}) do
             if farm.valid then
                 farm.set_recipe(new_recipe)
@@ -512,7 +513,28 @@ script.on_event(defines.events.on_research_finished, function(event)
                 table.remove(global.tycoon_primary_industries["tycoon-apple-farm"], i)
             end
         end
-        game.forces.player.recipes["tycoon-grow-apples-with-water-" .. research.level].enabled = false
+    elseif string.find(name, "tycoon-wheat-farm-productivity", 1, true) then
+        local new_recipe = "tycoon-grow-wheat-with-water-" .. research.level
+        for i, farm in ipairs(global.tycoon_primary_industries["tycoon-wheat-farm"] or {}) do
+            if farm.valid then
+                farm.set_recipe(new_recipe)
+                farm.recipe_locked = true
+            else
+                -- todo: check if we added those to the primary industries
+                table.remove(global.tycoon_primary_industries["tycoon-wheat-farm"], i)
+            end
+        end
+    elseif string.find(name, "tycoon-fishery-productivity", 1, true) then
+        local new_recipe = "tycoon-fishing-" .. research.level
+        for i, farm in ipairs(global.tycoon_primary_industries["tycoon-fishery"] or {}) do
+            if farm.valid then
+                farm.set_recipe(new_recipe)
+                farm.recipe_locked = true
+            else
+                -- todo: check if we added those to the primary industries
+                table.remove(global.tycoon_primary_industries["tycoon-fishery"], i)
+            end
+        end
     end
 end)
 
@@ -638,14 +660,6 @@ script.on_event(defines.events.on_gui_click, function(event)
     end
 end)
 
-script.on_nth_tick(Constants.CITY_CONSUMPTION_TICKS, function()
-    for _, city in ipairs(global.tycoon_cities or {}) do
-        if city.special_buildings.town_hall ~= nil and city.special_buildings.town_hall.valid then
-            Consumption.consumeBasicNeeds(city)
-        end
-    end
-end)
-
 local function canBuildSimpleHouse(city)
     local simpleCount = ((city.buildingCounts or {})["simple"] or 0)
     -- Todo: come up with a good function that slows down growth if there are too many
@@ -653,6 +667,22 @@ local function canBuildSimpleHouse(city)
     local excavationPitCount = #(city.excavationPits or {})
     return simpleCount < (#city.grid * 10)
         and excavationPitCount <= #city.grid
+end
+
+--- @param supplyLevels number[]
+--- @param city City
+--- @return boolean shouldTierGrow
+local function shouldTierGrow(supplyLevels, city)
+    -- https://mods.factorio.com/mod/tycoon/discussion/6565de7d3e4062cbd3213508
+    -- ((S1/D1 + S2/D2 + ... + Sn/Dn) / n)²
+    local innerSum = 0;
+    for _, value in pairs(supplyLevels) do
+        innerSum = innerSum + math.min(1, value)
+    end
+
+    local growthChance = math.pow((innerSum / #supplyLevels), 4)
+
+    return city.generator() < growthChance
 end
 
 local function canUpgradeToResidential(city)
@@ -666,13 +696,9 @@ local function canUpgradeToResidential(city)
     end
 
     local residentialCount = ((city.buildingCounts or {})["residential"] or 0)
-    if simpleCount < residentialCount * 5 then
-        -- There should be 5 simple buildings for every residential building
-        return false
-    end
 
-    local needsMet = Consumption.areBasicNeedsMet(city, getNeeds(city, "residential"))
-    if not needsMet then
+    if Util.countPendingLowerTierHouses(simpleCount, residentialCount) > 0 then
+        -- There should be 5 simple buildings for every residential building
         return false
     end
 
@@ -695,13 +721,8 @@ local function canUpgradeToHighrise(city)
     -- highrise should not cover more than 50% of the houses
     -- ideally only an inner circle
     local highriseCount = ((city.buildingCounts or {})["highrise"] or 0)
-    if residentialCount < highriseCount * 5 then
+    if Util.countPendingLowerTierHouses(residentialCount, highriseCount) > 0 then
         -- There should be 5 residential buildings for every highrise building
-        return false
-    end
-
-    local needsMet = Consumption.areBasicNeedsMet(city, getNeeds(city, "highrise"))
-    if not needsMet then
         return false
     end
 
@@ -751,12 +772,12 @@ local function newCityGrowth(city, suppliedTiers)
             if not isBuilt then
                 table.insert(city.priority_buildings, 1, prioBuilding)
             end
-        elseif key == "highrise" and canUpgradeToHighrise(city) then
+        elseif key == "highrise" and Util.indexOf(suppliedTiers, "highrise") ~= nil and canUpgradeToHighrise(city) then
             isBuilt = City.upgradeHouse(city, "highrise")
             if isBuilt then
                 growCitizenCount(city, -1 * citizenCounts["residential"], "residential")
             end
-        elseif key == "residential" and canUpgradeToResidential(city) then
+        elseif key == "residential" and Util.indexOf(suppliedTiers, "residential") ~= nil and canUpgradeToResidential(city) then
             isBuilt = City.upgradeHouse(city, "residential")
             if isBuilt then
                 growCitizenCount(city, -1 * citizenCounts["simple"], "simple")
@@ -994,14 +1015,16 @@ script.on_nth_tick(Constants.CITY_GROWTH_TICKS, function(event)
     for _, city in ipairs(global.tycoon_cities) do
         if city.special_buildings.town_hall ~= nil and city.special_buildings.town_hall.valid then
 
+            Consumption.consumeBasicNeeds(city)
+
             local suppliedTiers = {}
-            if Consumption.areBasicNeedsMet(city, getNeeds(city, "simple")) then
+            if shouldTierGrow(Consumption.getBasicNeedsSupplyLevels(city, getNeeds(city, "simple")), city) then
                 table.insert(suppliedTiers, "simple")
             end
-            if Consumption.areBasicNeedsMet(city, getNeeds(city, "residential")) then
+            if shouldTierGrow(Consumption.getBasicNeedsSupplyLevels(city, getNeeds(city, "residential")), city) then
                 table.insert(suppliedTiers, "residential")
             end
-            if Consumption.areBasicNeedsMet(city, getNeeds(city, "highrise")) then
+            if shouldTierGrow(Consumption.getBasicNeedsSupplyLevels(city, getNeeds(city, "highrise")), city) then
                 table.insert(suppliedTiers, "highrise")
             end
             if #suppliedTiers > 0 then

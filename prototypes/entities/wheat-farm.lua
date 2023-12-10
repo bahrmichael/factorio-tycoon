@@ -3,11 +3,14 @@ data:extend{
         type = "assembling-machine",
         name = "tycoon-wheat-farm",
         icon = "__tycoon__/graphics/icons/wheat-farm.png",
-        icon_size = 64,
+        icon_size = 256,
         max_health = 200,
         rotatable = false,
-        flags = { "not-rotatable", "not-deconstructable"},
-        fixed_recipe = "tycoon-grow-wheat-with-water",
+        flags = { "not-rotatable" },
+        minable = {
+            mining_time = 3,
+            results = {}
+        },
         fluid_boxes = {
             {
                 production_type = "input",

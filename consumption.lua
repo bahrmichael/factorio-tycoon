@@ -28,7 +28,7 @@ local basicNeeds = {
     residential = {
         {
             amount = 2,
-            resource = "tycoon-apple",
+            resource = "tycoon-milk-bottle",
         },
         {
             amount = 2,
@@ -37,36 +37,34 @@ local basicNeeds = {
         {
             amount = 4,
             resource = "tycoon-bread",
-        }
-    },
-    highrise = {
-        {
-            amount = 1,
-            resource = "tycoon-apple",
-        },
-        {
-            amount = 2,
-            resource = "tycoon-meat",
-        },
-        {
-            amount = 3,
-            resource = "tycoon-bread",
         },
         {
             amount = 2,
             resource = "tycoon-fish-filet",
         },
+    },
+    highrise = {
         {
             amount = 1,
-            resource = "tycoon-milk-bottle",
+            resource = "tycoon-smoothie",
+        },
+        {
+            amount = 2,
+            resource = "tycoon-apple-cake",
+        },
+        {
+            amount = 3,
+            resource = "tycoon-cheese",
+        },
+        {
+            amount = 1,
+            resource = "tycoon-burger",
+        },
+        {
+            amount = 1,
+            resource = "tycoon-dumpling",
         }
     }
-}
-
-local basicNeedIncrements = {
-    default = {"water", "tycoon-apple"},
-    residential = {"tycoon-meat", "tycoon-bread"},
-    highrise = {"tycoon-fish-filet", "tycoon-milk-bottle"}
 }
 
 --- @param city City
@@ -95,7 +93,7 @@ local function setBasicNeedsProvided(city, resource, amount)
     city.stats.basic_needs[resource].provided = math.floor(amount)
 end
 
-local DAY_TO_MINUTE_FACTOR = 600 / 25000
+local DAY_TO_MINUTE_FACTOR = (60*60) / 25000
 
 --- @param amountPerDay number
 --- @param citizenCount number
@@ -185,22 +183,38 @@ end
 
 --- @param city City
 --- @param needs any | nil
-local function areBasicNeedsMet(city, needs, forGui)
+--- @return number[] supplyLevels
+local function getBasicNeedsSupplyLevels(city, needs)
     updateProvidedAmounts(city)
 
     local n = needs or city.stats.basic_needs
 
-    for _, amounts in pairs(n) do
-        if forGui and amounts ~= nil and amounts.required == 0 then
+    local waterDemand = ((n or {}).water or {})
+
+    if waterDemand.provided < waterDemand.required or waterDemand.provided == 0 then
+        return { 0 }
+    end
+
+    local supplyLevels = {}
+
+    for resource, amounts in pairs(n) do
+        if resource == "water" then
             -- noop
         elseif (amounts == nil or amounts.provided == nil or amounts.provided == 0) then
-            return false
-        elseif amounts.provided < amounts.required then
-            return false
+            table.insert(supplyLevels, 0)
+        elseif (amounts == nil or amounts.required == nil or amounts.required == 0) then
+            if (amounts ~= nil and amounts.provided ~= nil and amounts.provided > 0) then
+                table.insert(supplyLevels, 1)
+            else
+                table.insert(supplyLevels, 0)
+            end
+        else
+            local supplyLevel = amounts.provided / amounts.required
+            table.insert(supplyLevels, supplyLevel)
         end
     end
 
-    return true
+    return supplyLevels
 end
 
 -- This value should match the one in university-science.lua
@@ -213,6 +227,12 @@ local resourcePrices = {
     ["tycoon-milk-bottle"] = 5 / kwPerCurrency,
     ["tycoon-bread"] = 4 / kwPerCurrency,
     ["tycoon-fish-filet"] = 4 / kwPerCurrency,
+    -- todo: balance the new basic needs
+    ["tycoon-smoothie"] = 4 / kwPerCurrency,
+    ["tycoon-apple-cake"] = 4 / kwPerCurrency,
+    ["tycoon-cheese"] = 4 / kwPerCurrency,
+    ["tycoon-burger"] = 4 / kwPerCurrency,
+    ["tycoon-dumpling"] = 4 / kwPerCurrency,
     stone = 3 / kwPerCurrency,
     ["iron-plate"] = 8 / kwPerCurrency,
     ["steel-plate"] = 64,
@@ -257,12 +277,7 @@ local function consumeItem(item, suppliers, city, isConstruction)
         end
     end
     
-    local requiredAmount
-    if isConstruction then
-        requiredAmount = item.required
-    else
-        requiredAmount = getRequiredAmount(item.required, countCitizens(city))
-    end
+    local requiredAmount = item.required
     local consumedAmount = 0
     for _, entity in ipairs(entitiesWithSupply) do
         local availableCount = entity.get_item_count(item.name)
@@ -334,9 +349,8 @@ local function consumeBasicNeeds(city)
 end
 
 return {
-    areBasicNeedsMet = areBasicNeedsMet,
+    getBasicNeedsSupplyLevels = getBasicNeedsSupplyLevels,
     updateNeeds = updateNeeds,
     consumeBasicNeeds = consumeBasicNeeds,
-    consumeItem = consumeItem,
-    basicNeedIncrements = basicNeedIncrements
+    consumeItem = consumeItem
 }
