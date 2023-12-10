@@ -1,7 +1,7 @@
 local Consumption = require("consumption")
 local Constants = require("constants")
 local CityPlanner = require("city-planner")
-local Consumption = require("consumption")
+local Util = require("util")
 
 -- This array is ordered from most expensive to cheapest, so that
 -- we do expensive upgrades first (instead of just letting the road always expand).
@@ -252,6 +252,23 @@ local function addBasicNeedsView(rootGui, basicNeeds, city, waterTowers, markets
 
     local growthChance = getGrowthChance(Consumption.getBasicNeedsSupplyLevels(city, getNeeds(city, housingTier)))
     basicNeedsGui.add{type = "label", caption = {"", {"tycoon-gui-growth-chance", math.floor(growthChance * 100), {"", {"technology-name.tycoon-" .. housingTier .. "-housing"}}}}}
+
+    basicNeedsGui.add{type = "line"}
+
+    local lowerTierMap = {
+        residential = "simple",
+        highrise = "residential",
+    }
+
+    if housingTier ~= "simple" then
+        local lowerTierCount = ((city.buildingCounts or {})[lowerTierMap[housingTier]] or 0)
+        local higherTierCount = ((city.buildingCounts or {})[housingTier] or 0)
+        local numberOfLowerTierHousesNeeded = Util.countPendingLowerTierHouses(lowerTierCount, higherTierCount)
+
+        if numberOfLowerTierHousesNeeded > 0 then
+            basicNeedsGui.add{type = "label", caption = {"", "[color=red]", {"tycoon-gui-grow-other-housing-tier", {"", {"technology-name.tycoon-" .. housingTier .. "-housing"}}, numberOfLowerTierHousesNeeded, {"", {"technology-name.tycoon-" .. lowerTierMap[housingTier] .. "-housing"}}}, "[/color]"}}
+        end
+    end
 end
 
 --- @param city City
