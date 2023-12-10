@@ -93,7 +93,7 @@ local function setBasicNeedsProvided(city, resource, amount)
     city.stats.basic_needs[resource].provided = math.floor(amount)
 end
 
-local DAY_TO_MINUTE_FACTOR = 600 / 25000
+local DAY_TO_MINUTE_FACTOR = (60*60) / 25000
 
 --- @param amountPerDay number
 --- @param citizenCount number
@@ -277,12 +277,7 @@ local function consumeItem(item, suppliers, city, isConstruction)
         end
     end
     
-    local requiredAmount
-    if isConstruction then
-        requiredAmount = item.required
-    else
-        requiredAmount = getRequiredAmount(item.required, countCitizens(city))
-    end
+    local requiredAmount = item.required
     local consumedAmount = 0
     for _, entity in ipairs(entitiesWithSupply) do
         local availableCount = entity.get_item_count(item.name)
