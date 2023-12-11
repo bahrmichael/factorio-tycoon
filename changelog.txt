@@ -1,4 +1,9 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.3.1
+Date: 11. 12. 2023
+  Bugfixes:
+    - If you previously had husbandry researched, some new recipes would not be enabled. This is fixed now.
+---------------------------------------------------------------------------------------------------
 Version: 0.3.0
 Date: 10. 12. 2023
   Major Features:
