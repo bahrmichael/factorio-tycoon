@@ -1,8 +1,24 @@
 ---------------------------------------------------------------------------------------------------
-Version: unreleased
-Date: 01. 12. 2023
+Version: 0.3.1
+Date: 11. 12. 2023
+  Bugfixes:
+    - If you previously had husbandry researched, some new recipes would not be enabled. This is fixed now.
+---------------------------------------------------------------------------------------------------
+Version: 0.3.0
+Date: 10. 12. 2023
+  Major Features:
+    - New foods have been introduced: Smoothies, apple cake, cheese, burgers, and dumplings. There are also new technologies and supply chain steps to get there. The currency that citizens pay for the new food is not balanced yet.
+    - Residential and highrise houses now have new basic needs. Residential houses don't need apples anymore, but als need milk bottles and fish filets.
+      Highrise houses now need smoothies, apple cakes, cheese, burgers, and dumplings. Basic needs for simple houses remain unchanged.
+    - Housing growth does not require all foods to be fully supplied anymore. Instead we now generate a chance based on the provided resources, which is applied once per minute.
+      To achieve maximum growth you still need to fully supply all resources. You can see the chance in each housing tier's GUI.
+    - Cities don't grow, if there aren't enough lower tier housees (e.g. simple houses for residential houses). The GUI now shows you a warning if that's the case for a given housing tier.
+    - Apple farm productivity techs have been replaced with an infinite technology (that goes up to level 10). You may have to research apple farm productivity again.
+    - Introduced productivity research for wheat farms and fisheries.
   Changes:
-    - TODO
+    - You can now deconstruct primary industries. They may respawn again close by, but at least you can make way for your factories and rail network.
+    - Cities now consume resource and construct buildings one per minute. Previously once per minute and every 30 seconds.
+    - Urban planning centers now attempt to place a new city every two minutes (previously every minute), if enough credits are available.
 ---------------------------------------------------------------------------------------------------
 Version: 0.2.11
 Date: 01. 12. 2023

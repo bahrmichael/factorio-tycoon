@@ -6,7 +6,11 @@ data:extend{
         icon_size = 256,
         max_health = 200,
         rotatable = false,
-        flags = { "not-rotatable", "not-deconstructable"},
+        flags = { "not-rotatable" },
+        minable = {
+            mining_time = 3,
+            results = {}
+        },
         fluid_boxes = {
             {
                 production_type = "input",

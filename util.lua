@@ -28,7 +28,20 @@ local function calculateDistance(p1, p2)
     return math.sqrt(dx * dx + dy * dy)
 end
 
+--- @param lowerTierBuildingCounts number
+--- @param higherTierBuildingCounts number
+--- @return number Number of lower tier houses needed.
+local function countPendingLowerTierHouses(lowerTierBuildingCounts, higherTierBuildingCounts)
+    local higherTierExpectation = higherTierBuildingCounts * 3
+    if lowerTierBuildingCounts < higherTierExpectation then
+        return higherTierExpectation - lowerTierBuildingCounts
+    end
+
+    return 0
+end
+
 return {
+    countPendingLowerTierHouses = countPendingLowerTierHouses,
     splitString = splitString,
     indexOf = indexOf,
     calculateDistance = calculateDistance,

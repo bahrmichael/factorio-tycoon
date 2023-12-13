@@ -61,7 +61,7 @@ jobs:
 
     - name: Set up Python
       if: ${{ steps.changed-files.outputs.any_modified == 'true' && steps.get-version.outputs.version != 'unreleased' }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.x'
 
