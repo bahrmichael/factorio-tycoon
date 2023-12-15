@@ -79,10 +79,26 @@ local function findHighestProductivityLevel(prefix)
         if (game.forces.player.technologies[prefix .. "-" .. i] or {}).researched == true then
             -- noop, attempt the next level
         else
-            return i - 1
+            return i
         end
     end
-    return 0
+    return 1
+end
+
+local function getFixedRecipeForIndustry(industryName)
+    if industryName == "tycoon-apple-farm" then
+        local level = findHighestProductivityLevel("tycoon-apple-farm-productivity")
+        local recipe = "tycoon-grow-apples-with-water-" .. level
+        return recipe
+    elseif industryName == "tycoon-wheat-farm" then
+        local level = findHighestProductivityLevel("tycoon-wheat-farm-productivity")
+        local recipe = "tycoon-grow-wheat-with-water-" .. level
+        return recipe
+    elseif industryName == "tycoon-fishery" then
+        local level = findHighestProductivityLevel("tycoon-fishery-productivity")
+        local recipe = "tycoon-fishing-" .. level
+        return recipe
+    end
 end
 
 local function placePrimaryIndustryAtPosition(position, entityName)
@@ -127,13 +143,9 @@ local function placePrimaryIndustryAtPosition(position, entityName)
                 force = "neutral",
                 move_stuck_players = true
             }
-            if entity ~= nil then
+            if entity ~= nil and entity.valid then
                 -- or any other primary industry that has productivity research
-                if entity.name == "tycoon-apple-farm" then
-                    local level = findHighestProductivityLevel("tycoon-apple-farm-productivity")
-                    local recipe = "tycoon-grow-apples-with-water-" .. level + 1
-                    entity.set_recipe(recipe)
-                end
+                entity.set_recipe(getFixedRecipeForIndustry(entity.name))
                 entity.recipe_locked = true
                 return entity
             else
