@@ -210,7 +210,7 @@ local function getBasicNeedsSupplyLevels(city, needs)
             end
         else
             local supplyLevel = amounts.provided / amounts.required
-            table.insert(supplyLevels, supplyLevel)
+            table.insert(supplyLevels, math.min(supplyLevel, 1))
         end
     end
 

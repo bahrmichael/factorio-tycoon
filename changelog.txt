@@ -1,4 +1,16 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.3.3
+Date: 15. 12. 2023
+  Bugfixes:
+    - Fixed an issue where wheat farms and fisheries were not producing anything unless you researched their productivity.
+---------------------------------------------------------------------------------------------------
+Version: 0.3.2
+Date: 14. 12. 2023
+  Changes:
+    - Reverted the additional need for chemical science packs for researching residential housing.
+  Bugfixes:
+    - Fixed an issue where the cities overview would falsely show "lacking" when everything's well supplied.
+---------------------------------------------------------------------------------------------------
 Version: 0.3.1
 Date: 11. 12. 2023
   Bugfixes:
