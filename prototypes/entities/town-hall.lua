@@ -29,5 +29,31 @@ data:extend{
                 },
             }
         },
+        working_sound = {
+            sound = {
+                filename = "__tycoon__/sound/274349__iamazerrad__crowd-noise-1.wav",
+            },
+            idle_sound = {
+                filename = "__tycoon__/sound/274349__iamazerrad__crowd-noise-1.wav",
+                variations = {
+                    {
+                        filename = "__tycoon__/sound/440949__l_q__amsterdam-background.wav",
+                    },
+                    {
+                        filename = "__tycoon__/sound/524629__nimlos__barcelona-street-ambience-small-cafeteria-outdoors.wav",
+                    },
+                    {
+                        filename = "__tycoon__/sound/623270__elzbthep__close-cars-passing-by.wav",
+                    },
+                    {
+                        filename = "__tycoon__/sound/623271__elzbthep__cars-passing-by.wav",
+                    },
+                    {
+                        filename = "__tycoon__/sound/623277__elzbthep__traffic-lightcars.wav",
+                    },
+                }
+            },
+            probability = 0,
+        }
     }
 }
