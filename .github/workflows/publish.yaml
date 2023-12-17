@@ -47,6 +47,7 @@ jobs:
         cp -R graphics tycoon/
         cp -R locale tycoon/
         cp -R migrations tycoon/
+        cp -R sounds tycoon/
         cp *.lua tycoon/
         cp info.json tycoon/
         cp thumbnail.png tycoon/
