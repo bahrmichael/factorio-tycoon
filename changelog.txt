@@ -1,4 +1,11 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.3.4
+Date: 16. 12. 2023
+  Locale:
+    - Updated Japanese translation.
+  Bugfixes:
+    - Fixed a section in the tips and tricks that incorrectly said you'd need 2 pipes instead of 2 pumps for highrise construction.
+---------------------------------------------------------------------------------------------------
 Version: 0.3.3
 Date: 15. 12. 2023
   Bugfixes:
