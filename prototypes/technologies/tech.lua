@@ -272,7 +272,7 @@ data:extend{
         type = "technology",
         name = "tycoon-dairy-products",
         mod = "Tycoon",
-        icon = "__tycoon__/graphics/icons/fermentation.png",
+        icon = "__tycoon__/graphics/icons/dairy.png",
         icon_size = 256,
         effects = {
             {

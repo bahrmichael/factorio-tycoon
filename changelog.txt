@@ -3,11 +3,13 @@ Version: unreleased
 Date: 17. 12. 2023
   Major Features:
     - The passenger spawn rate now also takes the size of other cities into account. The larger your average city, the more passengers will show up.
+  Changes:
+    - Updated the picture for dairy products tech.
 ---------------------------------------------------------------------------------------------------
 Version: 0.3.9
 Date: 18. 12. 2023
   Bugfixes:
-    - Fixed an issue where supply buildings an train stations would not connect to city when placed by robots.
+    - Fixed an issue where supply buildings and train stations would not connect to city when placed by robots.
 ---------------------------------------------------------------------------------------------------
 Version: 0.3.8
 Date: 18. 12. 2023
