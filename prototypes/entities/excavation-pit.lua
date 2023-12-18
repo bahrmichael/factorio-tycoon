@@ -27,6 +27,24 @@ local function createExcavationPit(name, spriteSize)
             },
         }
     },
+    working_sound = {
+      sound = {
+          variations = {
+              {
+                  filename = "__tycoon__/sound/209798__soundscape_leuphana__20131204_construction-site_zoomh2nxy.wav",
+              },
+              {
+                  filename = "__tycoon__/sound/209801__soundscape_leuphana__20131204_construction-work_zoomh2nxy.wav",
+              },
+              {
+                  filename = "__tycoon__/sound/479554__craigsmith__r16-22-construction-site-ambience.wav",
+              },
+          }
+      },
+      fade_in_ticks = 10,
+      fade_out_ticks = 10,
+      max_sounds_per_type = 1
+  },
   }
 end
 

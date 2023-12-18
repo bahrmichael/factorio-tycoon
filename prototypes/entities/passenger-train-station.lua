@@ -32,5 +32,13 @@ data:extend{
             }
         },
         circuit_wire_max_distance = 9,
+        working_sound = {
+            sound = {
+                filename = "__tycoon__/sound/430983__be_a_hero_not_a_patriot__metro-warszawa-2017-centrum-station-ambience-ticket-inspectors-check-peoples-travelcards-with-beeping-poland.wav",
+            },
+            probability = 1,
+            fade_in_ticks = 10,
+            fade_out_ticks = 10,
+        }
     }
 }
