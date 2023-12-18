@@ -29,23 +29,5 @@ data:extend{
                 },
             }
         },
-        working_sound = {
-            sound = {
-                variations = {
-                    {
-                        filename = "__tycoon__/sound/274349__iamazerrad__crowd-noise-1.wav",
-                    },
-                    {
-                        filename = "__tycoon__/sound/440949__l_q__amsterdam-background.wav",
-                    },
-                    {
-                        filename = "__tycoon__/sound/524629__nimlos__barcelona-street-ambience-small-cafeteria-outdoors.wav",
-                    },
-                }
-            },
-            fade_in_ticks = 10,
-            fade_out_ticks = 10,
-            max_sounds_per_type = 1
-        },
     }
 }
