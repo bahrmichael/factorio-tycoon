@@ -1,5 +1,5 @@
 ---------------------------------------------------------------------------------------------------
-Version: unreleased
+Version: 0.3.6
 Date: 17. 12. 2023
   Changes:
     - Cities and train station now produce noises.
