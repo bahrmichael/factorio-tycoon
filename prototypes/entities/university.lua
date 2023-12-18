@@ -31,5 +31,9 @@ data:extend{
             usage_priority = "secondary-input",
             emissions_per_minute = 20,
         },
+        allowed_effects = {"speed", "productivity", "consumption", "pollution"},
+        module_specification = {
+            module_slots = 2,
+        }
     }
 }
