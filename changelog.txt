@@ -1,4 +1,14 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.3.9
+Date: 18. 12. 2023
+  Bugfixes:
+    - Fixed an issue where supply buildings an train stations would not connect to city when placed by robots.
+---------------------------------------------------------------------------------------------------
+Version: 0.3.8
+Date: 18. 12. 2023
+  Bugfixes:
+    - Fixed an issue where the migration script would crash if you installed Tycoon into an older savegame.
+---------------------------------------------------------------------------------------------------
 Version: 0.3.7
 Date: 18. 12. 2023
   Features:
