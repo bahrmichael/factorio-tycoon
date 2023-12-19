@@ -166,6 +166,28 @@ local function addConstructionMaterialsGui(rootGui, constructionNeeds, city, har
         constructionGui.add{type = "label", caption = {"", {"tycoon-gui-urbanization-requirement-1"}}}
         constructionGui.add{type = "label", caption = {"", {"tycoon-gui-urbanization-requirement-2"}}}
     end
+
+
+    constructionGui.add{type = "line"}
+
+    local lowerTierMap = {
+        residential = "simple",
+        highrise = "residential",
+    }
+
+    if housingType ~= "simple" then
+        local lowerTierCount = ((city.buildingCounts or {})[lowerTierMap[housingType]] or 0)
+        local higherTierCount = ((city.buildingCounts or {})[housingType] or 0)
+        local numberOfLowerTierHousesNeeded = Util.countPendingLowerTierHouses(lowerTierCount, higherTierCount)
+
+        if numberOfLowerTierHousesNeeded == 0 and not Util.hasReachedLowerTierThreshold(city, housingType) then
+            numberOfLowerTierHousesNeeded = Util.lowerTierThreshold[housingType] - lowerTierCount
+        end
+
+        if numberOfLowerTierHousesNeeded > 0 then
+            constructionGui.add{type = "label", caption = {"", "[color=red]", {"tycoon-gui-grow-other-housing-tier", {"", {"technology-name.tycoon-" .. housingType .. "-housing"}}, numberOfLowerTierHousesNeeded, {"", {"technology-name.tycoon-" .. lowerTierMap[housingType] .. "-housing"}}}, "[/color]"}}
+        end
+    end
 end
 
 --- @param supplyLevels number[]
@@ -252,23 +274,6 @@ local function addBasicNeedsView(rootGui, basicNeeds, city, waterTowers, markets
 
     local growthChance = getGrowthChance(Consumption.getBasicNeedsSupplyLevels(city, getNeeds(city, housingTier)))
     basicNeedsGui.add{type = "label", caption = {"", {"tycoon-gui-growth-chance", math.floor(growthChance * 100), {"", {"technology-name.tycoon-" .. housingTier .. "-housing"}}}}}
-
-    basicNeedsGui.add{type = "line"}
-
-    local lowerTierMap = {
-        residential = "simple",
-        highrise = "residential",
-    }
-
-    if housingTier ~= "simple" then
-        local lowerTierCount = ((city.buildingCounts or {})[lowerTierMap[housingTier]] or 0)
-        local higherTierCount = ((city.buildingCounts or {})[housingTier] or 0)
-        local numberOfLowerTierHousesNeeded = Util.countPendingLowerTierHouses(lowerTierCount, higherTierCount)
-
-        if numberOfLowerTierHousesNeeded > 0 then
-            basicNeedsGui.add{type = "label", caption = {"", "[color=red]", {"tycoon-gui-grow-other-housing-tier", {"", {"technology-name.tycoon-" .. housingTier .. "-housing"}}, numberOfLowerTierHousesNeeded, {"", {"technology-name.tycoon-" .. lowerTierMap[housingTier] .. "-housing"}}}, "[/color]"}}
-        end
-    end
 end
 
 --- @param city City

@@ -1,4 +1,10 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.3.10
+Date: 19. 12. 2023
+  Changes:
+    - Moved warning about required lower tier housing to the construction materials section. It previously told you in the basic needs section if you need more houses of a lower tier.
+    - Added a GUI construction warning if the minimum threshold of lower tier houses has not been met for the next tier. If you've been wondering why the next tier (i.e. residential or highrise) wasn't growing, this may be the reason why.
+---------------------------------------------------------------------------------------------------
 Version: 0.3.9
 Date: 18. 12. 2023
   Bugfixes:
