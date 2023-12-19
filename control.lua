@@ -180,13 +180,15 @@ local function isSupplyBuilding(entityName)
     return false
 end
 
-script.on_event(defines.events.on_built_entity, function(event)
+script.on_event({defines.events.on_built_entity, defines.events.on_robot_built_entity}, function(event)
     local entity = event.created_entity
 
     if isSupplyBuilding(entity.name) or entity.name == "tycoon-passenger-train-station" then
         local nearbyTownHall = game.surfaces[1].find_entities_filtered{position=entity.position, radius=Constants.CITY_RADIUS, name="tycoon-town-hall", limit=1}
         if #nearbyTownHall == 0 then
-            game.players[event.player_index].print({"", {"tycoon-supply-building-not-connected"}})
+            if event.player_index ~= nil then
+                game.players[event.player_index].print({"", {"tycoon-supply-building-not-connected"}})
+            end
             return
         end
 
