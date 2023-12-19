@@ -1,11 +1,11 @@
 data:extend{
     {
       type = "item",
-      name = "tycoon-tire",
-      icon = "__tycoon__/graphics/icons/tire.png",
+      name = "tycoon-gloves",
+      icon = "__tycoon__/graphics/icons/gloves.png",
       icon_size = 256,
       subgroup = "tycoon-intermediate-products",
-      order = "a[tycoon]-a[tire]",
+      order = "a[tycoon]-a[gloves]",
       stack_size = 50
     }
   }

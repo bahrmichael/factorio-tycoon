@@ -473,4 +473,172 @@ data:extend{
         max_level = 10,
         upgrade = true,
     },
+    {
+        type = "technology",
+        name = "tycoon-personal-transportation",
+        mod = "Tycoon",
+        icon = "__tycoon__/graphics/icons/bicycle.png",
+        icon_size = 256,
+        effects = {
+            {
+                type = "unlock-recipe",
+                recipe = "tycoon-iron-chain",
+            },
+            {
+                type = "unlock-recipe",
+                recipe = "tycoon-tire",
+            },
+            {
+                type = "unlock-recipe",
+                recipe = "tycoon-bicycle",
+            },
+        },
+        prerequisites = { "tycoon-residential-housing", "plastics" },
+        order = "g-e-e",
+        unit = {
+          count = 200,
+          ingredients = {
+            { "automation-science-pack", 1 },
+            { "logistic-science-pack", 1 },
+            { "chemical-science-pack", 1 },
+          },
+          time = 60,
+        },
+    },
+    {
+        type = "technology",
+        name = "tycoon-candles",
+        mod = "Tycoon",
+        icon = "__tycoon__/graphics/icons/candle.png",
+        icon_size = 256,
+        effects = {
+            {
+                type = "unlock-recipe",
+                recipe = "tycoon-candle",
+            },
+        },
+        prerequisites = { "tycoon-residential-housing", "oil-processing" },
+        order = "g-e-e",
+        unit = {
+          count = 50,
+          ingredients = {
+            { "automation-science-pack", 1 },
+            { "logistic-science-pack", 1 },
+            { "chemical-science-pack", 1 },
+          },
+          time = 60,
+        },
+    },
+    {
+        type = "technology",
+        name = "tycoon-kitchen-utilities",
+        mod = "Tycoon",
+        icon = "__tycoon__/graphics/icons/cutlery.png",
+        icon_size = 256,
+        effects = {
+            {
+                type = "unlock-recipe",
+                recipe = "tycoon-cutlery",
+            },
+            {
+                type = "unlock-recipe",
+                recipe = "tycoon-cooking-pot",
+            },
+            {
+                type = "unlock-recipe",
+                recipe = "tycoon-cooking-pan",
+            },
+        },
+        prerequisites = { "steel-processing" },
+        order = "g-e-e",
+        unit = {
+          count = 100,
+          ingredients = {
+            { "automation-science-pack", 1 },
+          },
+          time = 30,
+        },
+    },
+    {
+        type = "technology",
+        name = "tycoon-electronic-devices",
+        mod = "Tycoon",
+        icon = "__tycoon__/graphics/icons/television.png",
+        icon_size = 256,
+        effects = {
+            {
+                type = "unlock-recipe",
+                recipe = "tycoon-television",
+            },
+        },
+        prerequisites = { "advanced-electronics" },
+        order = "g-e-e",
+        unit = {
+          count = 100,
+          ingredients = {
+            { "automation-science-pack", 1 },
+          },
+          time = 60,
+        },
+    },
+    {
+        type = "technology",
+        name = "tycoon-computers",
+        mod = "Tycoon",
+        icon = "__tycoon__/graphics/icons/laptop.png",
+        icon_size = 256,
+        effects = {
+            {
+                type = "unlock-recipe",
+                recipe = "tycoon-smartphone",
+            },
+            {
+                type = "unlock-recipe",
+                recipe = "tycoon-laptop",
+            },
+            {
+                type = "unlock-recipe",
+                recipe = "tycoon-keyboard",
+            },
+        },
+        prerequisites = { "tycoon-electronic-devices", "tycoon-residential-housing" },
+        order = "g-e-e",
+        unit = {
+          count = 200,
+          ingredients = {
+            { "automation-science-pack", 1 },
+            { "logistic-science-pack", 1 },
+            { "chemical-science-pack", 1 },
+          },
+          time = 30,
+        },
+    },
+    {
+        type = "technology",
+        name = "tycoon-hygiene",
+        mod = "Tycoon",
+        icon = "__tycoon__/graphics/icons/soap.png",
+        icon_size = 256,
+        effects = {
+            {
+                type = "unlock-recipe",
+                recipe = "tycoon-soap",
+            },
+            {
+                type = "unlock-recipe",
+                recipe = "tycoon-gloves",
+            },
+        },
+        prerequisites = { "oil-processing", "tycoon-residential-housing" },
+        order = "g-e-e",
+        unit = {
+          count = 100,
+          ingredients = {
+            { "automation-science-pack", 1 },
+            { "logistic-science-pack", 1 },
+            { "chemical-science-pack", 1 },
+          },
+          time = 30,
+        },
+    },
 }
