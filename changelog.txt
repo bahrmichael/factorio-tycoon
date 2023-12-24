@@ -1,4 +1,9 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.3.11
+Date: 24. 12. 2023
+  Bugfixes:
+    - Fixed a rare issue where the game could crash if another bug caused a city or its town hall to disappear.
+---------------------------------------------------------------------------------------------------
 Version: 0.3.10
 Date: 19. 12. 2023
   Changes:
