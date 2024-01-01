@@ -1,0 +1,23 @@
+name: Patch crowdin PR
+
+on:
+  push:
+    branches:
+      - l10n_main
+
+jobs:
+  auto_commit:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+
+    - name: Replace ]= in .cfg files
+      run: |
+        find locale -type f -name "*.cfg" -exec sed -i 's/]=/]/' {} +
+        git config --global user.email "actions@github.com"
+        git config --global user.name "GitHub Actions"
+        git add .
+        git commit -m "Auto commit: Replace ]= with ] in .cfg files"
+        git push origin l10n_main
