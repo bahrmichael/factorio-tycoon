@@ -170,7 +170,7 @@ local function addConstructionMaterialsGui(rootGui, constructionNeeds, city, har
             local c3 = tbl.add{type = "label", caption = {"", "[color=" .. color .. "]", amounts.provided, "[/color]"}}
             c3.style.padding = 5
             c3.style.minimal_width = 100
-            local c4 = tbl.add{type = "label", caption = getItemPrice(resource) .. " [item=tycoon-currency]"}
+            local c4 = tbl.add{type = "label", caption = "[item=tycoon-currency] " .. getItemPrice(resource)}
             c4.style.padding = 5
             c4.style.minimal_width = 100
         end
@@ -305,7 +305,7 @@ local function addBasicNeedsView(rootGui, basicNeeds, city, waterTowers, markets
             c3.style.padding = 5
             c3.style.minimal_width = 100
             if resource ~= "water" then
-                local c4 = tbl.add{type = "label", caption = getItemPrice(resource) .. " [item=tycoon-currency]"}
+                local c4 = tbl.add{type = "label", caption = "[item=tycoon-currency] " .. getItemPrice(resource)}
                 c4.style.padding = 5
                 c4.style.minimal_width = 100
             else
