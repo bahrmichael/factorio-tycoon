@@ -1,6 +1,9 @@
 ---------------------------------------------------------------------------------------------------
 Version: unreleased
 Date: 03. 01. 2024
+  Changes:
+    - Added resource prices for food and construction materials in the town hall gui. You can now see how much you will get per unit sold.
+    - Updated the styling of the town hall gui's basic needs and construction materials section.
   Balancing:
     - Increased the currency you get for highrise food.
 ---------------------------------------------------------------------------------------------------

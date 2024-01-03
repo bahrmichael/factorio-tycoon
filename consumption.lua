@@ -351,5 +351,6 @@ return {
     getBasicNeedsSupplyLevels = getBasicNeedsSupplyLevels,
     updateNeeds = updateNeeds,
     consumeBasicNeeds = consumeBasicNeeds,
-    consumeItem = consumeItem
+    consumeItem = consumeItem,
+    resourcePrices = resourcePrices,
 }

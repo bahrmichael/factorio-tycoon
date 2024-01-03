@@ -119,6 +119,16 @@ local function getNeeds(city, tier)
     end
 end
 
+
+local function getItemPrice(itemName)
+    local value = Consumption.resourcePrices[itemName]
+    if value == nil then
+        return "?"
+    else
+        return value
+    end
+end
+
 --- @param rootGui any
 --- @param constructionNeeds string[]
 --- @param city City
@@ -127,11 +137,10 @@ local function addConstructionMaterialsGui(rootGui, constructionNeeds, city, har
    
     local constructionGui = rootGui.add{type = "frame", direction = "vertical", caption = {"", {"tycoon-gui-construction"}}}
 
-    local tbl = constructionGui.add{type = "table", column_count = 2, draw_horizontal_lines = true}
+    local tbl = constructionGui.add{type = "table", column_count = 4, draw_horizontal_lines = true}
     
     if #hardwareStores == 0 then
         tbl.add{type = "label", caption = {"", "[color=red]", {"tycoon-gui-missing", {"entity-name.tycoon-hardware-store"}}, "[/color]"}}
-        tbl.add{type = "label", caption = ""}
     else
         for _, resource in ipairs(constructionNeeds) do
 
@@ -151,9 +160,19 @@ local function addConstructionMaterialsGui(rootGui, constructionNeeds, city, har
             if amounts.provided == 0 then
                 color = "red"
             end
-
-            tbl.add{type = "label", caption = {"", {"?", {itemName}, {fallbackName}}, ": "}}
-            tbl.add{type = "label", caption = {"", "[color=" .. color .. "]", amounts.provided, "[/color]"}}
+            
+            local c1 = tbl.add{type = "label", caption = "[item=" .. resource .. "]"}
+            c1.style.padding = 5
+            c1.style.minimal_width = 100
+            local c2 = tbl.add{type = "label", caption = {"", {"?", {itemName}, {fallbackName}}}}
+            c2.style.padding = 5
+            c2.style.minimal_width = 100
+            local c3 = tbl.add{type = "label", caption = {"", "[color=" .. color .. "]", amounts.provided, "[/color]"}}
+            c3.style.padding = 5
+            c3.style.minimal_width = 100
+            local c4 = tbl.add{type = "label", caption = getItemPrice(resource) .. " [item=tycoon-currency]"}
+            c4.style.padding = 5
+            c4.style.minimal_width = 100
         end
     end
 
@@ -221,7 +240,7 @@ local function addBasicNeedsView(rootGui, basicNeeds, city, waterTowers, markets
 
     local displayedMissingSuppliers = {}
 
-    local tbl = basicNeedsGui.add{type = "table", column_count = 2, draw_horizontal_lines = true}
+    local tbl = basicNeedsGui.add{type = "table", column_count = 4, draw_horizontal_lines = true}
     for _, resource in ipairs(basicNeeds) do
 
         local missingSupplier = nil
@@ -238,6 +257,8 @@ local function addBasicNeedsView(rootGui, basicNeeds, city, waterTowers, markets
         if missingSupplier ~= nil then
             if displayedMissingSuppliers[missingSupplier] ~= true then
                 tbl.add{type = "label", caption = {"", "[color=red]", {"tycoon-gui-missing", {"entity-name." .. missingSupplier}}, "[/color]"}}
+                tbl.add{type = "label", caption = ""}
+                tbl.add{type = "label", caption = ""}
                 tbl.add{type = "label", caption = ""}
                 displayedMissingSuppliers[missingSupplier] = true
             end
@@ -259,14 +280,39 @@ local function addBasicNeedsView(rootGui, basicNeeds, city, waterTowers, markets
                 color = "red"
             end
 
-            tbl.add{type = "label", caption = {"", {itemName}, ": "}}
+            local imgName
+            if resource == "water" or resource == "tycoon-milk" then
+                imgName = "fluid=" .. resource
+            else
+                -- Vanilla items like water are not in our localization config, and therefore have to be accessed differently
+                imgName = "item=" .. resource
+            end
+            
+            local c1 = tbl.add{type = "label", caption = "[" .. imgName .. "]"}
+            c1.style.padding = 5
+            c1.style.minimal_width = 100
+
+            local c2 = tbl.add{type = "label", caption = {"", {itemName}}}
+            c2.style.padding = 5
+            c2.style.minimal_width = 100
 
             local captionElements = {"", "[color=" .. color .. "]", amounts.provided, "/", amounts.required, "[/color]"}
             if resource == "water" and (amounts.provided == 0 or (amounts.required / amounts.provided) > 0.75) then
                 table.insert(captionElements, " ")
                 table.insert(captionElements, {"tycoon-gui-add-more-water-towers"})
             end
-            tbl.add{type = "label", caption = captionElements}
+            local c3 = tbl.add{type = "label", caption = captionElements}
+            c3.style.padding = 5
+            c3.style.minimal_width = 100
+            if resource ~= "water" then
+                local c4 = tbl.add{type = "label", caption = getItemPrice(resource) .. " [item=tycoon-currency]"}
+                c4.style.padding = 5
+                c4.style.minimal_width = 100
+            else
+                local c5 = tbl.add{type = "label", caption = ""}
+                c5.style.padding = 5
+                c5.style.minimal_width = 100
+            end
         end
     end
 
