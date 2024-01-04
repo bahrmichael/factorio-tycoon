@@ -7,7 +7,7 @@ Date: 04. 01. 2024
   Balancing:
     - Increased the currency you get for highrise food.
   Locale:
-    - Updated Tycoon description regarding upcoming features.
+    - Updated English localization.
 ---------------------------------------------------------------------------------------------------
 Version: 0.3.11
 Date: 24. 12. 2023
