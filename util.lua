@@ -40,8 +40,28 @@ local function countPendingLowerTierHouses(lowerTierBuildingCounts, higherTierBu
     return 0
 end
 
+local lowerTierThreshold = {
+    highrise = 20,
+    residential = 20,
+}
+
+local function hasReachedLowerTierThreshold(city, currentHousingTier)
+    if currentHousingTier == "highrise" then
+        local residentialCount = ((city.buildingCounts or {})["residential"] or 0)
+        return residentialCount >= lowerTierThreshold[currentHousingTier]
+    elseif currentHousingTier == "residential" then
+        local simpleCount = ((city.buildingCounts or {})["simple"] or 0)
+        return simpleCount >= lowerTierThreshold[currentHousingTier]
+    else
+        return true
+    end
+end
+
+
 return {
     countPendingLowerTierHouses = countPendingLowerTierHouses,
+    hasReachedLowerTierThreshold = hasReachedLowerTierThreshold,
+    lowerTierThreshold = lowerTierThreshold,
     splitString = splitString,
     indexOf = indexOf,
     calculateDistance = calculateDistance,

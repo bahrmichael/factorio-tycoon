@@ -1,4 +1,24 @@
 ---------------------------------------------------------------------------------------------------
+Version: unreleased
+Date: 03. 01. 2024
+  Changes:
+    - Added resource prices for food and construction materials in the town hall gui. You can now see how much you will get per unit sold.
+    - Updated the styling of the town hall gui's basic needs and construction materials section.
+  Balancing:
+    - Increased the currency you get for highrise food.
+---------------------------------------------------------------------------------------------------
+Version: 0.3.11
+Date: 24. 12. 2023
+  Bugfixes:
+    - Fixed a rare issue where the game could crash if another bug caused a city or its town hall to disappear.
+---------------------------------------------------------------------------------------------------
+Version: 0.3.10
+Date: 19. 12. 2023
+  Changes:
+    - Chicken now have a red hat thanks to yuyuyuxyu!
+    - Moved warning about required lower tier housing to the construction materials section. It previously told you in the basic needs section if you need more houses of a lower tier.
+    - Added a GUI construction warning if the minimum threshold of lower tier houses has not been met for the next tier. If you've been wondering why the next tier (i.e. residential or highrise) wasn't growing, this may be the reason why.
+---------------------------------------------------------------------------------------------------
 Version: 0.3.9
 Date: 18. 12. 2023
   Bugfixes:
