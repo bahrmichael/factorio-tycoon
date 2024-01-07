@@ -1,13 +1,15 @@
 ---------------------------------------------------------------------------------------------------
-Version: unreleased
-Date: 04. 01. 2024
+Version: 0.3.12
+Date: 07. 01. 2024
   Changes:
     - Added resource prices for food and construction materials in the town hall gui. You can now see how much you will get per unit sold.
-    - Updated the styling of the town hall gui's basic needs and construction materials section.
+    - Added item pictures to the town hall gui's basic needs and construction materials.
   Balancing:
     - Increased the currency you get for highrise food.
   Locale:
-    - Updated English localization.
+    - Added German localization.
+    - Small text updates.
+    - Migrated localization to Crowdin. Reach out if you like to help with localization!
 ---------------------------------------------------------------------------------------------------
 Version: 0.3.11
 Date: 24. 12. 2023
