@@ -8,6 +8,10 @@ local CityPlanning = require("city-planner")
 local Passengers = require("passengers")
 local Util = require("util")
 
+local runDijsktra = require 'dijkstra'
+local grid = require 'grid'
+-- local Bresenham = require("bresenham")
+
 local primary_industry_names = {"tycoon-apple-farm", "tycoon-wheat-farm", "tycoon-fishery"}
 
 local function growCitizenCount(city, count, tier)
@@ -1112,6 +1116,15 @@ script.on_nth_tick(Constants.MORE_CITIES_TICKS, function ()
     end
 end)
 
+script.on_event(defines.events.on_ai_command_completed, function(event)
+    if global.tycoon_units ~= nil then
+        if global.tycoon_units[event.unit_number] ~= nil and global.tycoon_units[event.unit_number].valid then
+            global.tycoon_units[event.unit_number].destroy()
+        end
+    end
+    -- game.print("test")
+end)
+
 script.on_event(defines.events.on_gui_checked_state_changed, function(event)
 
     local element = event.element
@@ -1152,6 +1165,51 @@ local function spawnSuppliedBuilding(city, entityName, supplyName, supplyAmount)
     end
 end
 
+-- A custom function that print the actual state of the
+-- distance map
+-- local function printDistanceMap(grid)
+-- 	print()
+-- 	for y,row in ipairs(grid.nodes) do
+-- 		for x,cell in ipairs(row) do
+-- 			io.write(('%4s'):format(cell.distance))
+-- 		end
+-- 		io.write('\n')
+-- 	end
+-- 	print()
+-- end
+
+-- A custom function that print some debugging information
+-- It sequentially prints a message, then the distance map, then the path
+-- returned by grid.getPath (see grid.lua)
+local function printInfo(grid, path, cost, msg)
+    game.print(msg)
+    -- printDistanceMap(grid)
+    game.print(('path : %d steps - cost: %d'):format(#path, cost))
+    -- Print the path  
+    for k, node in ipairs(path) do
+        game.print(('step:%d, x: %d, y: %d'):format(k, node.x, node.y))
+    end
+    game.print(('-'):rep(80))
+end
+
+--- @param direction Direction The direction that the road previously extended into.
+--- @return Direction direction The inverted direction
+local function invertDirection(direction)
+    local invertedDirection
+    if direction == "north" then
+        invertedDirection = "south"
+    elseif direction == "south" then
+        invertedDirection = "north"
+    elseif direction == "east" then
+        invertedDirection = "west"
+    elseif direction == "west" then
+        invertedDirection = "east"
+    else
+        assert(false, "Invalid direction")
+    end
+    return invertedDirection
+end
+
 commands.add_command("tycoon", nil, function(command)
     if command.player_index ~= nil and command.parameter == "spawn_city" then
         CityPlanning.addMoreCities(false, true)
@@ -1181,6 +1239,190 @@ commands.add_command("tycoon", nil, function(command)
         end
     elseif command.parameter == "grid" then
         DEBUG.logGrid(global.tycoon_cities[1].grid, game.print)
+    elseif command.parameter == "dijkstra" then
+
+        
+        local city = global.tycoon_cities[1]
+
+        local fromHouseCoordinates = {x=3, y=6}
+        -- local fromHouseCoordinates = global.tycoon_cities[1].houseLocations[math.random(#global.tycoon_cities[1].houseLocations)]
+        local fromCoordinates = GridUtil.translateCityGridToTileCoordinates(city, fromHouseCoordinates)
+        local toHouseCoordinates = {x=13, y=12}
+        -- local toHouseCoordinates = global.tycoon_cities[1].houseLocations[math.random(#global.tycoon_cities[1].houseLocations)]
+        local toHouse = global.tycoon_cities[1].grid[toHouseCoordinates.y][toHouseCoordinates.x].entity
+
+        local map = {
+            -- {5,5,5,5,5,5,5,5,5,5},
+            -- {5,1,1,1,2,2,2,2,2,5},
+            -- {5,2,2,1,2,2,2,2,1,5},
+            -- {5,2,2,1,3,3,2,2,1,5},
+            -- {5,2,2,1,3,3,2,2,1,5},
+            -- {5,2,2,1,3,3,3,3,1,5},
+            -- {5,2,2,1,1,1,1,1,1,5},
+            -- {5,2,2,2,3,3,3,3,1,5},
+            -- {5,2,3,3,3,3,3,3,2,5},
+            -- {5,5,5,5,5,5,5,5,5,5},
+        }
+
+
+        local cityGrid = global.tycoon_cities[1].grid
+        for i, row in ipairs(cityGrid) do
+            map[i] = {}
+            for j, cell in ipairs(row) do
+                local translated_cell = 99
+                if cell.type == "building" then
+                    translated_cell = 10
+                elseif cell.type == "road" then
+                    translated_cell = 1
+                end
+                map[i][j] = translated_cell
+            end
+        end
+
+        grid.create(map)  -- We create the grid map
+        grid.passable = function(value) return value ~= 99 end -- values ~= 5 are passable
+        grid.diagonal = false  -- diagonal moves are disallowed (this is the default behavior)
+        grid.distance = grid.calculateManhattanDistance  -- We will use manhattan heuristic
+
+        local target = grid.getNode(toHouseCoordinates.x, toHouseCoordinates.y)
+        -- local target = grid.getNode(14, 12)
+        runDijsktra(grid, target)
+
+        --  Let us read the full path from node(9,9) => node(2,2)
+        local start = grid.getNode(fromHouseCoordinates.x, fromHouseCoordinates.y)
+        -- local start = grid.getNode(3, 6)
+        local path, cost = grid.findPath(start,target)
+
+        if #path < 10 then
+            game.print("Path was too short")
+            return
+        end
+
+        -- printInfo(grid, path, cost, 'path')
+        
+        -- local fromCoordinates = GridUtil.translateCityGridToTileCoordinates(city, fromHouseCoordinates)
+        local unit = game.surfaces[1].create_entity{
+            name = "tycoon-mining-drone",
+            position = fromCoordinates,
+            force = "neutral"
+        }
+        local unit_group = game.surfaces[1].create_unit_group{
+            position = fromCoordinates,
+            force = "neutral"
+        }
+
+        if unit ~= nil then
+
+            global.tycoon_units[unit_group.group_number] = unit
+            unit_group.add_member(unit)
+
+            local commands = {}
+
+            -- local pointos = Bresenham.line(fromHouseCoordinates.x, fromHouseCoordinates.y, toHouseCoordinates.x, toHouseCoordinates.y)
+            for _, point in ipairs(path) do
+                local cell = city.grid[point.y][point.x]
+                if cell.type == "road" then
+                    local roadSockets = cell.roadSockets
+
+                    if #commands > 0 and #roadSockets == 2 and roadSockets[1] == invertDirection(roadSockets[2]) then
+                        -- skip straight road pieces, because we only need to change direction at corners or intersections
+                    else
+                        local destination = GridUtil.translateCityGridToTileCoordinates(city, point)
+                        destination.x = destination.x + 3
+                        destination.y = destination.y + 3
+                        game.print(destination)
+
+                        table.insert(commands, {
+                            type = defines.command.go_to_location,
+                            destination = destination,
+                            radius = 0,
+                            distraction = defines.distraction.none,
+                            -- low_priority = true,
+                            -- pathfind_flags = drone_path_flags
+                        })
+                    end
+                end
+            end
+
+            table.insert(commands, {
+                type = defines.command.go_to_location,
+                destination_entity = toHouse,
+                radius = 1,
+                distraction = defines.distraction.none,
+                -- low_priority = true,
+                -- pathfind_flags = drone_path_flags
+            })
+
+            unit_group.set_command({
+                type = defines.command.compound,
+                structure_type = defines.compound_command.logical_and,
+                commands = commands
+            })
+        end
+
+    elseif command.parameter == "drone" then
+        local city = global.tycoon_cities[1]
+
+        -- local toCoordinates = GridUtil.translateCityGridToTileCoordinates(city, toHouse)
+        game.print("hello!")
+
+        global.tycoon_units = global.tycoon_units or {}
+
+        for i = 1, 10, 1 do
+
+            local fromHouseCoordinates = global.tycoon_cities[1].houseLocations[math.random(#global.tycoon_cities[1].houseLocations)]
+            local fromCoordinates = GridUtil.translateCityGridToTileCoordinates(city, fromHouseCoordinates)
+            local toHouseCoordinates = global.tycoon_cities[1].houseLocations[math.random(#global.tycoon_cities[1].houseLocations)]
+            local toHouse = global.tycoon_cities[1].grid[toHouseCoordinates.y][toHouseCoordinates.x].entity
+
+            -- x=1 y=1
+            -- x=3 y=5
+
+            -- x=2 y=2
+
+            local unit = game.surfaces[1].create_entity{
+                name = "tycoon-mining-drone",
+                position = fromCoordinates,
+                force = "neutral"
+            }
+            local unit_group = game.surfaces[1].create_unit_group{
+                position = fromCoordinates,
+                force = "neutral"
+            }
+
+            if unit ~= nil then
+
+                global.tycoon_units[unit_group.group_number] = unit
+                unit_group.add_member(unit)
+
+                local pointos = Bresenham.line(fromHouseCoordinates.x, fromHouseCoordinates.y, toHouseCoordinates.x, toHouseCoordinates.y)
+                for _, point in ipairs(pointos) do
+                    local cell = global.tycoon_cities[1].grid[point.y][point.x]
+                    if cell.type == "road" then
+                        local destination = GridUtil.translateCityGridToTileCoordinates(city, point)
+                        game.print(destination)
+                        unit_group.set_command          {
+                            type = defines.command.go_to_location,
+                            destination = destination,
+                            radius = 0,
+                            distraction = defines.distraction.none,
+                            -- low_priority = true,
+                            -- pathfind_flags = drone_path_flags
+                        }
+                    end
+                end
+
+                unit_group.set_command          {
+                    type = defines.command.go_to_location,
+                    destination_entity = toHouse,
+                    radius = 0,
+                    distraction = defines.distraction.none,
+                    -- low_priority = true,
+                    -- pathfind_flags = drone_path_flags
+                }
+            end
+        end
+        
     else
         game.print("Unknown command: tycoon " .. (command.parameter or ""))
     end
