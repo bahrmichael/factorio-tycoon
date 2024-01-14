@@ -1097,7 +1097,7 @@ script.on_nth_tick(Constants.INITIAL_CITY_TICK, function ()
         global.tycoon_cities = {}
     end
 
-    if #global.tycoon_cities == 0 then
+    if (settings.startup["tycoon-spawn-initial-city"] or {}).value and #global.tycoon_cities == 0 then
         CityPlanning.addMoreCities(true, true)
     end
 end)
@@ -1185,3 +1185,7 @@ commands.add_command("tycoon", nil, function(command)
         game.print("Unknown command: tycoon " .. (command.parameter or ""))
     end
 end)
+
+remote.add_interface("tycoon", {
+    spawn_city = CityPlanning.addCity
+})
