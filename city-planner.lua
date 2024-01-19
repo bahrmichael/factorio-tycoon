@@ -319,12 +319,12 @@ local function initializeCity(city)
     table.insert(city.priority_buildings, {name = "tycoon-treasury", priority = 10})
 end
 
-local function addCity(position)
+local function addCity(position, predefinedCityName)
     if global.tycoon_cities == nil then
         global.tycoon_cities = {}
     end
     local cityId = #global.tycoon_cities + 1
-    local cityName = DataConstants.CityNames[(cityId % #DataConstants.CityNames) + 1]
+    local cityName = predefinedCityName or DataConstants.CityNames[(cityId % #DataConstants.CityNames) + 1]
     local generatorSalt = cityId * 1337
     table.insert(global.tycoon_cities, {
         id = cityId,
@@ -433,4 +433,5 @@ return {
     getRequiredFundsForNextCity = getRequiredFundsForNextCity,
     getTotalAvailableFunds = getTotalAvailableFunds,
     findNewCityPosition = findNewCityPosition,
+    addCity = addCity,
 }

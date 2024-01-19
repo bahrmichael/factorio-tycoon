@@ -485,23 +485,27 @@ script.on_event(defines.events.on_player_cursor_stack_changed, function(event)
 
             for _, city in ipairs(global.tycoon_cities or {}) do
 
-                local r = rendering.draw_circle{
-                    color = {0.1, 0.2, 0.1, 0.01},
-                    -- todo: add tech that increases this range, but only up to 250 which is the max for building cities all over the map
-                    radius = Constants.CITY_RADIUS,
-                    filled = true,
-                    target = city.special_buildings.town_hall,
-                    surface = game.surfaces[1],
-                    draw_on_ground = true,
-                }
+                -- Added this condition, because there was a case where a city was gone in a multiplayer (no idea why yet),
+                -- and then the game would crash upon rendering the circle.
+                if (city.special_buildings or {}).town_hall ~= nil and (city.special_buildings or {}).town_hall.valid then
+                    local r = rendering.draw_circle{
+                        color = {0.1, 0.2, 0.1, 0.01},
+                        -- todo: add tech that increases this range, but only up to 250 which is the max for building cities all over the map
+                        radius = Constants.CITY_RADIUS,
+                        filled = true,
+                        target = city.special_buildings.town_hall,
+                        surface = game.surfaces[1],
+                        draw_on_ground = true,
+                    }
 
-                if global.tycoon_player_renderings == nil then
-                    global.tycoon_player_renderings = {}
+                    if global.tycoon_player_renderings == nil then
+                        global.tycoon_player_renderings = {}
+                    end
+                    if global.tycoon_player_renderings[event.player_index] == nil then
+                        global.tycoon_player_renderings[event.player_index] = {}
+                    end
+                    table.insert(global.tycoon_player_renderings, r)
                 end
-                if global.tycoon_player_renderings[event.player_index] == nil then
-                    global.tycoon_player_renderings[event.player_index] = {}
-                end
-                table.insert(global.tycoon_player_renderings, r)
             end
         else
             rendering.clear("tycoon")
@@ -645,7 +649,7 @@ script.on_event(defines.events.on_gui_opened, function (gui)
         end
 
         local anchor = {gui = defines.relative_gui_type.container_gui, name = gui.entity.name, position = defines.relative_gui_position.right}
-        supplyBuildingView = player.gui.relative.add{type = "frame", anchor = anchor, caption = {"", {"entity-name." .. gui.entity.name}}, direction = "vertical", name = guiKey}
+                supplyBuildingView = player.gui.relative.add{type = "frame", anchor = anchor, caption = {"", {"entity-name." .. gui.entity.name}}, direction = "vertical", name = guiKey}
 
         Gui.addSupplyBuildingOverview(supplyBuildingView, cityName)
     end
@@ -704,13 +708,12 @@ local function canUpgradeToResidential(city)
         return false
     end
 
-    local simpleCount = ((city.buildingCounts or {})["simple"] or 0)
-    if simpleCount < 20 then
+    if not Util.hasReachedLowerTierThreshold(city, "residential") then
         return false
     end
 
+    local simpleCount = ((city.buildingCounts or {})["simple"] or 0)
     local residentialCount = ((city.buildingCounts or {})["residential"] or 0)
-
     if Util.countPendingLowerTierHouses(simpleCount, residentialCount) > 0 then
         -- There should be 5 simple buildings for every residential building
         return false
@@ -727,13 +730,13 @@ local function canUpgradeToHighrise(city)
         return false
     end
 
-    local residentialCount = ((city.buildingCounts or {})["residential"] or 0)
-    if residentialCount < 20 then
+    if not Util.hasReachedLowerTierThreshold(city, "highrise") then
         return false
     end
 
     -- highrise should not cover more than 50% of the houses
     -- ideally only an inner circle
+    local residentialCount = ((city.buildingCounts or {})["residential"] or 0)
     local highriseCount = ((city.buildingCounts or {})["highrise"] or 0)
     if Util.countPendingLowerTierHouses(residentialCount, highriseCount) > 0 then
         -- There should be 5 residential buildings for every highrise building
@@ -1094,7 +1097,7 @@ script.on_nth_tick(Constants.INITIAL_CITY_TICK, function ()
         global.tycoon_cities = {}
     end
 
-    if #global.tycoon_cities == 0 then
+    if (settings.startup["tycoon-spawn-initial-city"] or {}).value and #global.tycoon_cities == 0 then
         CityPlanning.addMoreCities(true, true)
     end
 end)
@@ -1182,3 +1185,7 @@ commands.add_command("tycoon", nil, function(command)
         game.print("Unknown command: tycoon " .. (command.parameter or ""))
     end
 end)
+
+remote.add_interface("tycoon", {
+    spawn_city = CityPlanning.addCity
+})
