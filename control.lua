@@ -1033,6 +1033,7 @@ script.on_nth_tick(Constants.CITY_GROWTH_TICKS, function(event)
         if city.special_buildings.town_hall ~= nil and city.special_buildings.town_hall.valid then
 
             Consumption.consumeBasicNeeds(city)
+            Consumption.consumeAdditionalNeeds(city)
 
             local suppliedTiers = {}
             if shouldTierGrow(Consumption.getBasicNeedsSupplyLevels(city, getNeeds(city, "simple")), city) then
@@ -1044,6 +1045,7 @@ script.on_nth_tick(Constants.CITY_GROWTH_TICKS, function(event)
             if shouldTierGrow(Consumption.getBasicNeedsSupplyLevels(city, getNeeds(city, "highrise")), city) then
                 table.insert(suppliedTiers, "highrise")
             end
+            -- TODO: replace this check with something that uses the new supply function
             if #suppliedTiers > 0 then
                 newCityGrowth(city, suppliedTiers)
             end

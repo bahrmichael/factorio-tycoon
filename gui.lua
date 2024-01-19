@@ -322,6 +322,87 @@ local function addBasicNeedsView(rootGui, basicNeeds, city, waterTowers, markets
     basicNeedsGui.add{type = "label", caption = {"", {"tycoon-gui-growth-chance", math.floor(growthChance * 100), {"", {"technology-name.tycoon-" .. housingTier .. "-housing"}}}}}
 end
 
+--- @param rootGui any
+--- @param additionalNeeds string[]
+--- @param city City
+--- @param markets any[]
+--- @param housingTier string
+local function addAdditionalNeedsView(rootGui, additionalNeeds, city, markets, housingTier)
+    if city.stats.additional_needs == nil then
+        -- These stats have never been set yet, so there's no way we can display this info.
+        -- Todo: move this down and explain why we're not showing it yet.
+        return
+    end
+
+    local additionalNeedsGui = rootGui.add{type = "frame", direction = "vertical", caption = {"", {"tycoon-gui-additional-needs"}}, name = "additional_needs"}
+    additionalNeedsGui.add{type = "label", caption = {"", {"tycoon-gui-additional-needs-consumption"}}}
+    additionalNeedsGui.add{type = "line"}
+
+    local displayedMissingSuppliers = {}
+
+    local tbl = additionalNeedsGui.add{type = "table", column_count = 4, draw_horizontal_lines = true}
+    for _, resource in ipairs(additionalNeeds) do
+
+        local missingSupplier = nil
+        if #markets == 0 then
+            missingSupplier = "tycoon-market"
+        end
+
+        if missingSupplier ~= nil then
+            if displayedMissingSuppliers[missingSupplier] ~= true then
+                tbl.add{type = "label", caption = {"", "[color=red]", {"tycoon-gui-missing", {"entity-name." .. missingSupplier}}, "[/color]"}}
+                tbl.add{type = "label", caption = ""}
+                tbl.add{type = "label", caption = ""}
+                tbl.add{type = "label", caption = ""}
+                displayedMissingSuppliers[missingSupplier] = true
+            end
+        elseif city.stats.additional_needs[resource] ~= nil then
+            local amounts = city.stats.additional_needs[resource]
+
+            local itemName = resource
+            if string.find(resource, "tycoon-", 1, true) then
+                itemName = "item-name." .. itemName
+            end
+
+            local color = "green"
+            if amounts.provided > 0 and amounts.provided < amounts.required then
+                color = "orange"
+            elseif amounts.provided == 0 then
+                color = "red"
+            end
+
+            local imgName = "item=" .. resource
+            
+            local c1 = tbl.add{type = "label", caption = "[" .. imgName .. "]"}
+            c1.style.padding = 5
+            c1.style.minimal_width = 100
+
+            local c2 = tbl.add{type = "label", caption = {"", {itemName}}}
+            c2.style.padding = 5
+            c2.style.minimal_width = 100
+
+            local captionElements = {"", "[color=" .. color .. "]", amounts.provided, "/", amounts.required, "[/color]"}
+            local c3 = tbl.add{type = "label", caption = captionElements}
+            c3.style.padding = 5
+            c3.style.minimal_width = 100
+            if resource ~= "water" then
+                local c4 = tbl.add{type = "label", caption = "[item=tycoon-currency] " .. getItemPrice(resource)}
+                c4.style.padding = 5
+                c4.style.minimal_width = 100
+            else
+                local c5 = tbl.add{type = "label", caption = ""}
+                c5.style.padding = 5
+                c5.style.minimal_width = 100
+            end
+        end
+    end
+
+    additionalNeedsGui.add{type = "line"}
+
+    -- local growthChance = getGrowthChance(Consumption.getadditionalNeedsSupplyLevels(city, getNeeds(city, housingTier)))
+    -- additionalNeedsGui.add{type = "label", caption = {"", {"tycoon-gui-growth-chance", math.floor(growthChance * 100), {"", {"technology-name.tycoon-" .. housingTier .. "-housing"}}}}}
+end
+
 --- @param city City
 --- @param filter string | nil
 local function countCitizens(city, filter)
@@ -364,6 +445,12 @@ local basicNeeds = {
     highrise = {"water", "tycoon-smoothie", "tycoon-apple-cake", "tycoon-cheese", "tycoon-burger", "tycoon-dumpling" }
 }
 
+local additionalNeeds = {
+    simple = {"tycoon-cooking-pan", "tycoon-cooking-pot", "tycoon-cutlery"},
+    residential = {"tycoon-bicycle", "tycoon-candle", "tycoon-soap", "tycoon-gloves", "tycoon-television"},
+    highrise = {"tycoon-smartphone", "tycoon-laptop"}
+}
+
 local constructionNeeds = {
     simple = {"stone-brick", "iron-plate"},
     residential = {"stone-brick", "iron-plate", "steel-plate", "small-lamp"},
@@ -373,6 +460,8 @@ local constructionNeeds = {
 --- @param city City
 --- @param housingType string
 local function addHousingView(housingType, city, anchor)
+    
+    anchor.style.natural_height = 600
     if housingType ~= "simple" and not game.forces.player.technologies["tycoon-" .. housingType .. "-housing"].researched then
         anchor.add{type = "label", caption = {"", "[color=red]", {"tycoon-gui-not-researched"}, "[/color]"}}
         anchor.add{type = "button", caption = "Open Technology", name = "tycoon_open_tech:" .. housingType .. "-housing"}
@@ -388,6 +477,7 @@ local function addHousingView(housingType, city, anchor)
 
     addBasicNeedsView(anchor, basicNeeds[housingType], city, waterTowers, markets, housingType)
     addConstructionMaterialsGui(anchor, constructionNeeds[housingType], city, hardwareStores, housingType)
+    addAdditionalNeedsView(anchor, additionalNeeds[housingType], city, markets, housingType)
 end
 
 local function getSupplyLevelsSummary(supplyLevels)
@@ -576,15 +666,15 @@ local function addCityView(city, anchor)
     tabbed_pane.add_tab(tab_overview, overviewContainer)
     addCityOverview(city, overviewContainer)
     
-    local simpleContainer = tabbed_pane.add{type = "flow", direction = "vertical"}
+    local simpleContainer = tabbed_pane.add{type = "scroll-pane", direction = "vertical"}
     tabbed_pane.add_tab(tab_simple, simpleContainer)
     addHousingView("simple", city, simpleContainer)
     
-    local residentialContainer = tabbed_pane.add{type = "flow", direction = "vertical"}
+    local residentialContainer = tabbed_pane.add{type = "scroll-pane", direction = "vertical"}
     tabbed_pane.add_tab(tab_residential, residentialContainer)
     addHousingView("residential", city, residentialContainer)
     
-    local highriseContainer = tabbed_pane.add{type = "flow", direction = "vertical"}
+    local highriseContainer = tabbed_pane.add{type = "scroll-pane", direction = "vertical"}
     tabbed_pane.add_tab(tab_highrise, highriseContainer)
     addHousingView("highrise", city, highriseContainer)
 

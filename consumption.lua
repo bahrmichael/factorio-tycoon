@@ -1,11 +1,12 @@
 local Constants = require("constants")
 
---- @class BasicNeed
+--- @class Need
 --- @field provided number
 --- @field required number
 
 --- @class CityStats
---- @field basic_needs { string: BasicNeed }
+--- @field basic_needs { string: Need }
+--- @field additional_needs { string: Need }
 
 --- @class SpecialBuildings
 --- @field town_hall any
@@ -67,6 +68,87 @@ local basicNeeds = {
     }
 }
 
+local additionalNeeds = {
+    simple = {
+        {
+            amount = 1,
+            resource = "tycoon-cooking-pan",
+        },
+        {
+            amount = 1,
+            resource = "tycoon-cooking-pot",
+        },
+        {
+            amount = 1,
+            resource = "tycoon-cutlery",
+        }
+    },
+    residential = {
+        {
+            amount = 1,
+            resource = "tycoon-bicycle",
+        },
+        {
+            amount = 2,
+            resource = "tycoon-candle",
+        },
+        {
+            amount = 3,
+            resource = "tycoon-soap",
+        },
+        {
+            amount = 5,
+            resource = "tycoon-gloves",
+        },
+        {
+            amount = 1,
+            resource = "tycoon-television",
+        },
+    },
+    highrise = {
+        {
+            amount = 1,
+            resource = "tycoon-smartphone",
+        },
+        {
+            amount = 1,
+            resource = "tycoon-laptop",
+        }
+    }
+}
+
+--- @param city City
+--- @param resource string
+--- @param amount number
+local function setAdditionalNeedsRequired(city, resource, amount)
+    if city.stats.additional_needs == nil then
+        city.stats.additional_needs = {}
+    end
+    if city.stats.additional_needs[resource] == nil then
+        city.stats.additional_needs[resource] = {
+            provided = 0,
+            required = 0,
+        }
+    end
+    city.stats.additional_needs[resource].required = math.floor(amount)
+end
+
+--- @param city City
+--- @param resource string
+--- @param amount number
+local function setAdditionalNeedsProvided(city, resource, amount)
+    if city.stats.additional_needs == nil then
+        city.stats.additional_needs = {}
+    end
+    if city.stats.additional_needs[resource] == nil then
+        city.stats.additional_needs[resource] = {
+            provided = 0,
+            required = 0,
+        }
+    end
+    city.stats.additional_needs[resource].provided = math.floor(amount)
+end
+
 --- @param city City
 --- @param resource string
 --- @param amount number
@@ -102,7 +184,7 @@ local function getRequiredAmount(amountPerDay, citizenCount)
 end
 
 --- @param city City
-local function updateNeeds(city)
+local function updateBasicNeeds(city)
     local needs = {
         water = 0
     }
@@ -119,6 +201,29 @@ local function updateNeeds(city)
     for resource, amount in pairs(needs) do
         setBasicNeedsRequired(city, resource, amount)
     end
+end
+
+--- @param city City
+local function updateAdditionalNeeds(city)
+    local needs = {}
+    for citizenTier, citizenCount in pairs(city.citizens) do
+        for _, need in ipairs(additionalNeeds[citizenTier]) do
+            if needs[need.resource] == nil then
+                needs[need.resource] = 0
+            end
+            needs[need.resource] = needs[need.resource] + getRequiredAmount(need.amount, citizenCount)
+        end
+    end
+
+    for resource, amount in pairs(needs) do
+        setAdditionalNeedsRequired(city, resource, amount)
+    end
+end
+
+--- @param city City
+local function updateNeeds(city)
+    updateBasicNeeds(city)
+    updateAdditionalNeeds(city)
 end
 
 --- @param city City
@@ -148,7 +253,8 @@ end
 --- @param city City
 local function updateProvidedAmounts(city)
     local markets = listSpecialCityBuildings(city, "tycoon-market")
-    
+
+    -- BASIC NEEDS
     if #markets >= 1 then
         for resource, _ in pairs(city.stats.basic_needs) do
             if resource ~= "water" then
@@ -165,6 +271,22 @@ local function updateProvidedAmounts(city)
             if resource ~= "water" then
                 setBasicNeedsProvided(city, resource, 0)
             end
+        end
+    end
+
+    -- ADDITIONAL NEEDS
+    if #markets >= 1 then
+        for resource, _ in pairs(city.stats.additional_needs or {}) do
+            local totalAvailable = 0
+            for _, market in ipairs(markets) do
+                local availableCount = market.get_item_count(resource)
+                totalAvailable = totalAvailable + availableCount
+            end
+            setAdditionalNeedsProvided(city, resource, totalAvailable)
+        end
+    else
+        for resource, _ in pairs(city.stats.additional_needs) do
+            setAdditionalNeedsProvided(city, resource, 0)
         end
     end
     
@@ -240,6 +362,17 @@ local resourcePrices = {
     ["small-lamp"] = 46 / kwPerCurrency,
     ["pump"] = 201 / kwPerCurrency,
     ["pipe"] = 9 / kwPerCurrency,
+    -- Balance these, maybe with a script that can automatically go through recipes?
+    ["tycoon-cooking-pan"] = 1 / kwPerCurrency,
+    ["tycoon-cooking-pot"] = 1 / kwPerCurrency,
+    ["tycoon-cutlery"] = 1 / kwPerCurrency,
+    ["tycoon-bicycle"] = 1 / kwPerCurrency,
+    ["tycoon-candle"] = 1 / kwPerCurrency,
+    ["tycoon-soap"] = 1 / kwPerCurrency,
+    ["tycoon-gloves"] = 1 / kwPerCurrency,
+    ["tycoon-television"] = 1 / kwPerCurrency,
+    ["tycoon-smartphone"] = 1 / kwPerCurrency,
+    ["tycoon-laptop"] = 1 / kwPerCurrency,
 }
 
 --- @param city City
@@ -347,10 +480,27 @@ local function consumeBasicNeeds(city)
     end
 end
 
+
+--- @param city City
+local function consumeAdditionalNeeds(city)
+    
+    local markets = listSpecialCityBuildings(city, "tycoon-market")
+
+    if #markets >= 1 then
+        for resource, amounts in pairs(city.stats.additional_needs) do
+            consumeItem({
+                name = resource,
+                required = amounts.required
+            }, markets, city, false)
+        end
+    end
+end
+
 return {
     getBasicNeedsSupplyLevels = getBasicNeedsSupplyLevels,
     updateNeeds = updateNeeds,
     consumeBasicNeeds = consumeBasicNeeds,
+    consumeAdditionalNeeds = consumeAdditionalNeeds,
     consumeItem = consumeItem,
     resourcePrices = resourcePrices,
 }
