@@ -13,7 +13,7 @@ data:extend{
             { type = "item", name = "tycoon-cow", amount = 1 },
         },
         result = "tycoon-meat",
-        result_count = 100,
+        result_count = 50,
     },
     {
         type = "recipe",
@@ -37,6 +37,6 @@ data:extend{
             { type = "item", name = "raw-fish", amount = 1 },
         },
         result = "tycoon-fish-filet",
-        result_count = 20,
+        result_count = 10,
     },
 }

@@ -9,7 +9,7 @@ data:extend{
             { type = "item", name = "tycoon-wheat", amount = 25 },
         },
         result = "tycoon-grain",
-        result_count = 100,
+        result_count = 50,
     },
     {
         type = "recipe",
@@ -96,7 +96,7 @@ data:extend{
         type = "recipe",
         name = "tycoon-smoothie",
         category = "crafting-with-fluid",
-        energy_required = 15,
+        energy_required = 30,
         enabled = false,
         ingredients = {
             { type = "item", name = "tycoon-bottle", amount = 25 },
@@ -110,10 +110,10 @@ data:extend{
         type = "recipe",
         name = "tycoon-apple-cake",
         category = "crafting",
-        energy_required = 30,
+        energy_required = 10,
         enabled = true,
         ingredients = {
-            { type = "item", name = "tycoon-butter", amount = 2 },
+            { type = "item", name = "tycoon-butter", amount = 1 },
             { type = "item", name = "tycoon-apple", amount = 5 },
             { type = "item", name = "tycoon-egg", amount = 2 },
             { type = "item", name = "tycoon-dough", amount = 1 },
@@ -128,7 +128,7 @@ data:extend{
         energy_required = 60,
         enabled = false,
         ingredients = {
-            { type = "fluid", name = "tycoon-milk", amount = 100 },
+            { type = "fluid", name = "tycoon-milk", amount = 50 },
         },
         result = "tycoon-butter",
         result_count = 25,
@@ -140,7 +140,7 @@ data:extend{
         energy_required = 60,
         enabled = true,
         ingredients = {
-            { type = "fluid", name = "tycoon-milk", amount = 100 },
+            { type = "fluid", name = "tycoon-milk", amount = 200 },
         },
         result = "tycoon-cheese",
         result_count = 50,
@@ -163,7 +163,7 @@ data:extend{
         type = "recipe",
         name = "tycoon-patty",
         category = "crafting",
-        energy_required = 10,
+        energy_required = 2,
         enabled = true,
         ingredients = {
             { type = "item", name = "tycoon-meat", amount = 1 },
@@ -175,7 +175,7 @@ data:extend{
         type = "recipe",
         name = "tycoon-dumpling",
         category = "crafting",
-        energy_required = 15,
+        energy_required = 5,
         enabled = false,
         ingredients = {
             { type = "item", name = "tycoon-dough", amount = 1 },

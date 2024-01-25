@@ -125,7 +125,7 @@ local function getItemPrice(itemName)
     if value == nil then
         return "?"
     else
-        return value
+        return string.format("%.1f", value)
     end
 end
 
@@ -318,7 +318,7 @@ local function addBasicNeedsView(rootGui, basicNeeds, city, waterTowers, markets
 
     basicNeedsGui.add{type = "line"}
 
-    local growthChance = getGrowthChance(Consumption.getBasicNeedsSupplyLevels(city, getNeeds(city, housingTier)))
+    local growthChance = getGrowthChance(Consumption.getSupplyLevels(city, getNeeds(city, housingTier)))
     basicNeedsGui.add{type = "label", caption = {"", {"tycoon-gui-growth-chance", math.floor(growthChance * 100), {"", {"technology-name.tycoon-" .. housingTier .. "-housing"}}}}}
 end
 
@@ -497,9 +497,9 @@ local function getSupplyLevelsSummary(supplyLevels)
 end
 
 local function getOverallSupplyLevelsSummary(city)
-    local simpleLevels = Consumption.getBasicNeedsSupplyLevels(city, getNeeds(city, "simple"))
-    local residentialLevels = Consumption.getBasicNeedsSupplyLevels(city, getNeeds(city, "residential"))
-    local highriseLevels = Consumption.getBasicNeedsSupplyLevels(city, getNeeds(city, "highrise"))
+    local simpleLevels = Consumption.getSupplyLevels(city, getNeeds(city, "simple"))
+    local residentialLevels = Consumption.getSupplyLevels(city, getNeeds(city, "residential"))
+    local highriseLevels = Consumption.getSupplyLevels(city, getNeeds(city, "highrise"))
 
     local simpleLevelSummary = getSupplyLevelsSummary(simpleLevels)
     local residentialLevelSummary = game.forces.player.technologies["tycoon-residential-housing"].researched and getSupplyLevelsSummary(residentialLevels) or "supplied"

@@ -3,7 +3,7 @@ data:extend{
         type = "recipe",
         name = "tycoon-bicycle",
         category = "crafting",
-        energy_required = 5,
+        energy_required = 20,
         enabled = false,
         ingredients = {
             { type = "item", name = "iron-stick", amount = 10 },
@@ -29,13 +29,13 @@ data:extend{
         type = "recipe",
         name = "tycoon-candle",
         category = "chemistry",
-        energy_required = 5,
+        energy_required = 3,
         enabled = false,
         ingredients = {
-            { type = "fluid", name = "petroleum-gas", amount = 20 },
+            { type = "fluid", name = "petroleum-gas", amount = 40 },
         },
         result = "tycoon-candle",
-        result_count = 1,
+        result_count = 2,
     },
     {
         type = "recipe",
@@ -47,7 +47,7 @@ data:extend{
             { type = "fluid", name = "petroleum-gas", amount = 10 },
         },
         result = "tycoon-gloves",
-        result_count = 1,
+        result_count = 2,
     },
     {
         type = "recipe",
@@ -125,7 +125,7 @@ data:extend{
         type = "recipe",
         name = "tycoon-cooking-pan",
         category = "crafting",
-        energy_required = 2,
+        energy_required = 1,
         enabled = false,
         ingredients = {
             { type = "item", name = "steel-plate", amount = 1 },
@@ -138,7 +138,7 @@ data:extend{
         type = "recipe",
         name = "tycoon-cooking-pot",
         category = "crafting",
-        energy_required = 2,
+        energy_required = 1,
         enabled = false,
         ingredients = {
             { type = "item", name = "steel-plate", amount = 1 },
@@ -154,8 +154,8 @@ data:extend{
         energy_required = 5,
         enabled = false,
         ingredients = {
-            { type = "fluid", name = "light-oil", amount = 10 },
-            { type = "item", name = "coal", amount = 2 },
+            { type = "fluid", name = "light-oil", amount = 20 },
+            { type = "item", name = "coal", amount = 5 },
         },
         result = "tycoon-soap",
         result_count = 5,

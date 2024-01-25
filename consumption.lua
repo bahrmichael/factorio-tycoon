@@ -306,20 +306,19 @@ end
 --- @param city City
 --- @param needs any | nil
 --- @return number[] supplyLevels
-local function getBasicNeedsSupplyLevels(city, needs)
+local function getSupplyLevels(city, needs)
+    assert(needs ~= nil, "Expected needs in getSupplyLevels to not be nil.")
     updateProvidedAmounts(city)
 
-    local n = needs or city.stats.basic_needs
+    local waterDemand = (needs or {}).water
 
-    local waterDemand = ((n or {}).water or {})
-
-    if waterDemand.provided < waterDemand.required or waterDemand.provided == 0 then
+    if waterDemand ~= nil and (waterDemand.provided < waterDemand.required or waterDemand.provided == 0) then
         return { 0 }
     end
 
     local supplyLevels = {}
 
-    for resource, amounts in pairs(n) do
+    for resource, amounts in pairs(needs) do
         if resource == "water" then
             -- noop
         elseif (amounts == nil or amounts.provided == nil or amounts.provided == 0) then
@@ -340,39 +339,38 @@ local function getBasicNeedsSupplyLevels(city, needs)
 end
 
 -- This value should match the one in university-science.lua
-local kwPerCurrency = 20
+-- local kwPerCurrency = 300
 
 local resourcePrices = {
     water = 0,
-    ["tycoon-apple"] = 1 / kwPerCurrency,
-    ["tycoon-meat"] = 2 / kwPerCurrency,
-    ["tycoon-milk-bottle"] = 5 / kwPerCurrency,
-    ["tycoon-bread"] = 4 / kwPerCurrency,
-    ["tycoon-fish-filet"] = 4 / kwPerCurrency,
-    ["tycoon-smoothie"] = 12 / kwPerCurrency,
-    ["tycoon-apple-cake"] = 217 / kwPerCurrency,
-    ["tycoon-cheese"] = 12 / kwPerCurrency,
-    ["tycoon-burger"] = 152 / kwPerCurrency,
-    ["tycoon-dumpling"] = 82 / kwPerCurrency,
-    stone = 3 / kwPerCurrency,
-    ["iron-plate"] = 8 / kwPerCurrency,
-    ["steel-plate"] = 64 / kwPerCurrency,
-    ["stone-brick"] = 11 / kwPerCurrency,
-    ["concrete"] = 9 / kwPerCurrency,
-    ["small-lamp"] = 46 / kwPerCurrency,
-    ["pump"] = 201 / kwPerCurrency,
-    ["pipe"] = 9 / kwPerCurrency,
-    -- Balance these, maybe with a script that can automatically go through recipes?
-    ["tycoon-cooking-pan"] = 1 / kwPerCurrency,
-    ["tycoon-cooking-pot"] = 1 / kwPerCurrency,
-    ["tycoon-cutlery"] = 1 / kwPerCurrency,
-    ["tycoon-bicycle"] = 1 / kwPerCurrency,
-    ["tycoon-candle"] = 1 / kwPerCurrency,
-    ["tycoon-soap"] = 1 / kwPerCurrency,
-    ["tycoon-gloves"] = 1 / kwPerCurrency,
-    ["tycoon-television"] = 1 / kwPerCurrency,
-    ["tycoon-smartphone"] = 1 / kwPerCurrency,
-    ["tycoon-laptop"] = 1 / kwPerCurrency,
+    ["tycoon-apple"] = 0.5,
+    ["tycoon-meat"] = 1.675,
+    ["tycoon-milk"] = 0.32,
+    ["tycoon-milk-bottle"] = 0.95,
+    ["tycoon-bread"] = 1.28375,
+    ["tycoon-fish-filet"] = 1.2666666666667,
+    ["tycoon-smoothie"] = 2.2,
+    ["tycoon-apple-cake"] = 11.590416666667,
+    ["tycoon-cheese"] = 1.78,
+    ["tycoon-burger"] = 11.822083333333,
+    ["tycoon-dumpling"] = 4.38375,
+    ["iron-plate"] = 1.3,
+    ["steel-plate"] = 10.5,
+    ["stone-brick"] = 1.8,
+    ["concrete"] = 1.3666666666667,
+    ["small-lamp"] = 7.5416666666667,
+    ["pump"] = 33.333333333333,
+    ["pipe"] = 1.5083333333333,
+    ["tycoon-cooking-pan"] = 11.670833333333,
+    ["tycoon-cooking-pot"] = 11.670833333333,
+    ["tycoon-cutlery"] = 3.5666666666667,
+    ["tycoon-bicycle"] = 21.792592592593,
+    ["tycoon-candle"] = 3.7731481481481,
+    ["tycoon-soap"] = 1.5462962962963,
+    ["tycoon-gloves"] = 0.99537037037037,
+    ["tycoon-television"] = 54.084259259259,
+    ["tycoon-smartphone"] = 217.97490740741,
+    ["tycoon-laptop"] = 840.21583333333,
 }
 
 --- @param city City
@@ -487,7 +485,7 @@ local function consumeAdditionalNeeds(city)
     local markets = listSpecialCityBuildings(city, "tycoon-market")
 
     if #markets >= 1 then
-        for resource, amounts in pairs(city.stats.additional_needs) do
+        for resource, amounts in pairs(city.stats.additional_needs or {}) do
             consumeItem({
                 name = resource,
                 required = amounts.required
@@ -497,7 +495,7 @@ local function consumeAdditionalNeeds(city)
 end
 
 return {
-    getBasicNeedsSupplyLevels = getBasicNeedsSupplyLevels,
+    getSupplyLevels = getSupplyLevels,
     updateNeeds = updateNeeds,
     consumeBasicNeeds = consumeBasicNeeds,
     consumeAdditionalNeeds = consumeAdditionalNeeds,

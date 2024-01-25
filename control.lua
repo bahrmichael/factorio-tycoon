@@ -7,6 +7,7 @@ local GridUtil = require("grid-util")
 local CityPlanning = require("city-planner")
 local Passengers = require("passengers")
 local Util = require("util")
+local RecipeCalculator = require("recipe-calculator")
 
 local primary_industry_names = {"tycoon-apple-farm", "tycoon-wheat-farm", "tycoon-fishery"}
 
@@ -368,7 +369,7 @@ local function findCityByTownHallUnitNumber(townHallUnitNumber)
     return nil
 end
 
-local function getNeeds(city, tier)
+local function getBasicNeeds(city, tier)
     if tier == "simple" then
         return {
             water = city.stats.basic_needs.water,
@@ -392,8 +393,48 @@ local function getNeeds(city, tier)
             ["tycoon-dumpling"] = city.stats.basic_needs["tycoon-dumpling"],
         }
     else
-        assert(false, "Unknown tier for getNeeds: " .. tier)
+        assert(false, "Unknown tier for getBasicNeeds: " .. tier)
     end
+end
+
+local function getAdditionalNeeds(city, tier)
+    if city.stats.additional_needs == nil then
+        -- edge case for when this has not been initialized (e.g. when upgrading the savegame to the latest version of this mod)
+        return {}
+    end
+    if tier == "simple" then
+        return {
+            ["tycoon-cooking-pot"] = city.stats.additional_needs["tycoon-cooking-pot"],
+            ["tycoon-cooking-pan"] = city.stats.additional_needs["tycoon-cooking-pan"],
+            ["tycoon-cutlery"] = city.stats.additional_needs["tycoon-cutlery"],
+        }
+    elseif tier == "residential" then
+        return {
+            ["tycoon-bicycle"] = city.stats.additional_needs["tycoon-bicycle"],
+            ["tycoon-candle"] = city.stats.additional_needs["tycoon-candle"],
+            ["tycoon-soap"] = city.stats.additional_needs["tycoon-soap"],
+            ["tycoon-gloves"] = city.stats.additional_needs["tycoon-gloves"],
+            ["tycoon-television"] = city.stats.additional_needs["tycoon-television"],
+        }
+    elseif tier == "highrise" then
+        return {
+            ["tycoon-smartphone"] = city.stats.additional_needs["tycoon-smartphone"],
+            ["tycoon-laptop"] = city.stats.additional_needs["tycoon-laptop"],
+        }
+    else
+        assert(false, "Unknown tier for getAdditionalNeeds: " .. tier)
+    end
+end
+
+function TableConcat(t1,t2)
+    for i=1,#t2 do
+        t1[#t1+1] = t2[i]
+    end
+    return t1
+end
+
+local function getAllNeeds(city, tier)
+    return TableConcat(getBasicNeeds(city, tier), getAdditionalNeeds(city, tier))
 end
 
 local function getBuildables(city, stores)
@@ -687,10 +728,10 @@ local function canBuildSimpleHouse(city)
         and excavationPitCount <= #city.grid
 end
 
---- @param supplyLevels number[]
 --- @param city City
+--- @param supplyLevels number[]
 --- @return boolean shouldTierGrow
-local function shouldTierGrow(supplyLevels, city)
+local function shouldTierGrow(city, supplyLevels)
     -- https://mods.factorio.com/mod/tycoon/discussion/6565de7d3e4062cbd3213508
     -- ((S1/D1 + S2/D2 + ... + Sn/Dn) / n)²
     local innerSum = 0;
@@ -1036,13 +1077,13 @@ script.on_nth_tick(Constants.CITY_GROWTH_TICKS, function(event)
             Consumption.consumeAdditionalNeeds(city)
 
             local suppliedTiers = {}
-            if shouldTierGrow(Consumption.getBasicNeedsSupplyLevels(city, getNeeds(city, "simple")), city) then
+            if shouldTierGrow(city, Consumption.getSupplyLevels(city, getAllNeeds(city, "simple"))) then
                 table.insert(suppliedTiers, "simple")
             end
-            if shouldTierGrow(Consumption.getBasicNeedsSupplyLevels(city, getNeeds(city, "residential")), city) then
+            if shouldTierGrow(city, Consumption.getSupplyLevels(city, getAllNeeds(city, "residential"))) then
                 table.insert(suppliedTiers, "residential")
             end
-            if shouldTierGrow(Consumption.getBasicNeedsSupplyLevels(city, getNeeds(city, "highrise")), city) then
+            if shouldTierGrow(city, Consumption.getSupplyLevels(city, getAllNeeds(city, "highrise"))) then
                 table.insert(suppliedTiers, "highrise")
             end
             -- TODO: replace this check with something that uses the new supply function
@@ -1066,22 +1107,8 @@ script.on_nth_tick(Constants.CITY_GROWTH_TICKS, function(event)
 end)
 
 script.on_init(function()
-
     global.tycoon_global_generator = game.create_random_generator()
-
     global.tycoon_city_buildings = {}
-
-    -- for i = 1, 8, 1 do
-    --     game.surfaces[1].create_entity{
-    --         name = "tycoon-house-highrise-" .. i,
-    --         position = {x = -30 + i * 8, y = 20},
-    --         force = "player"
-    --     }
-    -- end
-    
-        -- /c game. player. insert{ name="stone", count=1000 }
-        -- /c game. player. insert{ name="tycoon-water-tower", count=1 }
-        -- /c game. player. insert{ name="tycoon-cow", count=100 }
 end)
 
 script.on_nth_tick(Constants.PASSENGER_SPAWNING_TICKS, function()
@@ -1134,60 +1161,61 @@ script.on_event(defines.events.on_gui_checked_state_changed, function(event)
     end
 end)
 
-local function spawnSuppliedBuilding(city, entityName, supplyName, supplyAmount)
+-- local function spawnSuppliedBuilding(city, entityName, supplyName, supplyAmount)
 
-    local position = game.surfaces[1].find_non_colliding_position(entityName, city.center, 200, 5, true)
-    position.x = math.floor(position.x)
-    position.y = math.floor(position.y) + 20
+--     local position = game.surfaces[1].find_non_colliding_position(entityName, city.center, 200, 5, true)
+--     position.x = math.floor(position.x)
+--     position.y = math.floor(position.y) + 20
 
-    local e = game.surfaces[1].create_entity{
-        name = entityName,
-        position = position,
-        force = "neutral",
-        move_stuck_players = true
-    }
+--     local e = game.surfaces[1].create_entity{
+--         name = entityName,
+--         position = position,
+--         force = "neutral",
+--         move_stuck_players = true
+--     }
 
-    if supplyName == "water" then
-        e.insert_fluid{name = "water", amount = supplyAmount}
-    else
-        e.insert{name = supplyName, count = supplyAmount}
-    end
-end
+--     if supplyName == "water" then
+--         e.insert_fluid{name = "water", amount = supplyAmount}
+--     else
+--         e.insert{name = supplyName, count = supplyAmount}
+--     end
+-- end
 
-commands.add_command("tycoon", nil, function(command)
-    if command.player_index ~= nil and command.parameter == "spawn_city" then
-        CityPlanning.addMoreCities(false, true)
+-- commands.add_command("tycoon", nil, function(command)
+--     if command.player_index ~= nil and command.parameter == "spawn_city" then
+--         CityPlanning.addMoreCities(false, true)
         
-        local cityIndex = #global.tycoon_cities
-        local city = global.tycoon_cities[cityIndex]
-        spawnSuppliedBuilding(city, "tycoon-market", "tycoon-apple", 1000)
-        spawnSuppliedBuilding(city, "tycoon-hardware-store", "stone-brick", 1000)
-        spawnSuppliedBuilding(city, "tycoon-hardware-store", "iron-plate", 1000)
-        spawnSuppliedBuilding(city, "tycoon-water-tower", "water", 10000)
-    elseif command.player_index ~= nil and command.parameter == "position" then
-        local player = game.players[command.player_index]
-        player.print('x='..player.character.position.x..' y='..player.character.position.y)
-    elseif command.parameter == "grow-1" then
-        local c = City.growAtRandomRoadEnd(global.tycoon_cities[1])
-        if c == nil then
-            game.print("City 1 expanded grid to size " .. #global.tycoon_cities[1].grid)
-        else
-            game.print("new road in cit 1: x=" .. c.x .. " y=" .. c.y)
-        end
-    elseif command.parameter == "grow-2" then
-        local c = City.growAtRandomRoadEnd(global.tycoon_cities[2])
-        if c == nil then
-            game.print("City 2 expanded grid to size " .. #global.tycoon_cities[1].grid)
-        else
-            game.print("new road in city 2: x=" .. c.x .. " y=" .. c.y)
-        end
-    elseif command.parameter == "grid" then
-        DEBUG.logGrid(global.tycoon_cities[1].grid, game.print)
-    else
-        game.print("Unknown command: tycoon " .. (command.parameter or ""))
-    end
-end)
+--         local cityIndex = #global.tycoon_cities
+--         local city = global.tycoon_cities[cityIndex]
+--         spawnSuppliedBuilding(city, "tycoon-market", "tycoon-apple", 1000)
+--         spawnSuppliedBuilding(city, "tycoon-hardware-store", "stone-brick", 1000)
+--         spawnSuppliedBuilding(city, "tycoon-hardware-store", "iron-plate", 1000)
+--         spawnSuppliedBuilding(city, "tycoon-water-tower", "water", 10000)
+--     elseif command.player_index ~= nil and command.parameter == "position" then
+--         local player = game.players[command.player_index]
+--         player.print('x='..player.character.position.x..' y='..player.character.position.y)
+--     elseif command.parameter == "grow-1" then
+--         local c = City.growAtRandomRoadEnd(global.tycoon_cities[1])
+--         if c == nil then
+--             game.print("City 1 expanded grid to size " .. #global.tycoon_cities[1].grid)
+--         else
+--             game.print("new road in cit 1: x=" .. c.x .. " y=" .. c.y)
+--         end
+--     elseif command.parameter == "grow-2" then
+--         local c = City.growAtRandomRoadEnd(global.tycoon_cities[2])
+--         if c == nil then
+--             game.print("City 2 expanded grid to size " .. #global.tycoon_cities[1].grid)
+--         else
+--             game.print("new road in city 2: x=" .. c.x .. " y=" .. c.y)
+--         end
+--     elseif command.parameter == "grid" then
+--         DEBUG.logGrid(global.tycoon_cities[1].grid, game.print)
+--     else
+--         game.print("Unknown command: tycoon " .. (command.parameter or ""))
+--     end
+-- end)
 
 remote.add_interface("tycoon", {
-    spawn_city = CityPlanning.addCity
+    spawn_city = CityPlanning.addCity,
+    calculate_recipes = RecipeCalculator.calculateAllRecipes
 })
