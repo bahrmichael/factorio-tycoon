@@ -426,15 +426,15 @@ local function getAdditionalNeeds(city, tier)
     end
 end
 
-function TableConcat(t1,t2)
-    for i=1,#t2 do
-        t1[#t1+1] = t2[i]
+function MergeObjects(t1,t2)
+    for key, value in pairs(t2) do
+        t1[key] = value
     end
     return t1
 end
 
 local function getAllNeeds(city, tier)
-    return TableConcat(getBasicNeeds(city, tier), getAdditionalNeeds(city, tier))
+    return MergeObjects(getBasicNeeds(city, tier), getAdditionalNeeds(city, tier))
 end
 
 local function getBuildables(city, stores)

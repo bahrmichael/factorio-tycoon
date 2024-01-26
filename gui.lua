@@ -91,7 +91,7 @@ local function setConstructionMaterialsProvided(city, resource, amount)
     city.stats.construction_materials[resource].provided = math.floor(amount)
 end
 
-local function getNeeds(city, tier)
+local function getBasicNeeds(city, tier)
     if tier == "simple" then
         return {
             water = city.stats.basic_needs.water,
@@ -115,10 +115,38 @@ local function getNeeds(city, tier)
             ["tycoon-dumpling"] = city.stats.basic_needs["tycoon-dumpling"],
         }
     else
-        assert(false, "Unknown tier for getNeeds: " .. tier)
+        assert(false, "Unknown tier for getBasicNeeds: " .. tier)
     end
 end
 
+local function getAdditionalNeeds(city, tier)
+    if city.stats.additional_needs == nil then
+        -- edge case for when this has not been initialized (e.g. when upgrading the savegame to the latest version of this mod)
+        return {}
+    end
+    if tier == "simple" then
+        return {
+            ["tycoon-cooking-pot"] = city.stats.additional_needs["tycoon-cooking-pot"],
+            ["tycoon-cooking-pan"] = city.stats.additional_needs["tycoon-cooking-pan"],
+            ["tycoon-cutlery"] = city.stats.additional_needs["tycoon-cutlery"],
+        }
+    elseif tier == "residential" then
+        return {
+            ["tycoon-bicycle"] = city.stats.additional_needs["tycoon-bicycle"],
+            ["tycoon-candle"] = city.stats.additional_needs["tycoon-candle"],
+            ["tycoon-soap"] = city.stats.additional_needs["tycoon-soap"],
+            ["tycoon-gloves"] = city.stats.additional_needs["tycoon-gloves"],
+            ["tycoon-television"] = city.stats.additional_needs["tycoon-television"],
+        }
+    elseif tier == "highrise" then
+        return {
+            ["tycoon-smartphone"] = city.stats.additional_needs["tycoon-smartphone"],
+            ["tycoon-laptop"] = city.stats.additional_needs["tycoon-laptop"],
+        }
+    else
+        assert(false, "Unknown tier for getAdditionalNeeds: " .. tier)
+    end
+end
 
 local function getItemPrice(itemName)
     local value = Consumption.resourcePrices[itemName]
@@ -315,11 +343,6 @@ local function addBasicNeedsView(rootGui, basicNeeds, city, waterTowers, markets
             end
         end
     end
-
-    basicNeedsGui.add{type = "line"}
-
-    local growthChance = getGrowthChance(Consumption.getSupplyLevels(city, getNeeds(city, housingTier)))
-    basicNeedsGui.add{type = "label", caption = {"", {"tycoon-gui-growth-chance", math.floor(growthChance * 100), {"", {"technology-name.tycoon-" .. housingTier .. "-housing"}}}}}
 end
 
 --- @param rootGui any
@@ -398,9 +421,6 @@ local function addAdditionalNeedsView(rootGui, additionalNeeds, city, markets, h
     end
 
     additionalNeedsGui.add{type = "line"}
-
-    -- local growthChance = getGrowthChance(Consumption.getadditionalNeedsSupplyLevels(city, getNeeds(city, housingTier)))
-    -- additionalNeedsGui.add{type = "label", caption = {"", {"tycoon-gui-growth-chance", math.floor(growthChance * 100), {"", {"technology-name.tycoon-" .. housingTier .. "-housing"}}}}}
 end
 
 --- @param city City
@@ -457,36 +477,12 @@ local constructionNeeds = {
     highrise = {"steel-plate", "small-lamp", "pump", "concrete", "pipe"}
 }
 
---- @param city City
---- @param housingType string
-local function addHousingView(housingType, city, anchor)
-    
-    anchor.style.natural_height = 600
-    if housingType ~= "simple" and not game.forces.player.technologies["tycoon-" .. housingType .. "-housing"].researched then
-        anchor.add{type = "label", caption = {"", "[color=red]", {"tycoon-gui-not-researched"}, "[/color]"}}
-        anchor.add{type = "button", caption = "Open Technology", name = "tycoon_open_tech:" .. housingType .. "-housing"}
-        return
-    end
-
-    local stats = anchor.add{type = "frame", direction = "vertical", caption = {"", {"tycoon-gui-stats"}}, name = "city_stats"}
-    stats.add{type = "label", caption = {"", {"tycoon-gui-citizens"}, ": ",  countCitizens(city, housingType)}}
-
-    local waterTowers = listSpecialCityBuildings(city, "tycoon-water-tower")
-    local markets = listSpecialCityBuildings(city, "tycoon-market")
-    local hardwareStores = listSpecialCityBuildings(city, "tycoon-hardware-store")
-
-    addBasicNeedsView(anchor, basicNeeds[housingType], city, waterTowers, markets, housingType)
-    addConstructionMaterialsGui(anchor, constructionNeeds[housingType], city, hardwareStores, housingType)
-    addAdditionalNeedsView(anchor, additionalNeeds[housingType], city, markets, housingType)
-end
-
 local function getSupplyLevelsSummary(supplyLevels)
     local total = 0
     for _, value in pairs(supplyLevels) do
         total = total + value
     end
     local average = total / #supplyLevels
-    
     if average == 1 then
         return "supplied"
     elseif average == 0 then
@@ -496,28 +492,7 @@ local function getSupplyLevelsSummary(supplyLevels)
     end
 end
 
-local function getOverallSupplyLevelsSummary(city)
-    local simpleLevels = Consumption.getSupplyLevels(city, getNeeds(city, "simple"))
-    local residentialLevels = Consumption.getSupplyLevels(city, getNeeds(city, "residential"))
-    local highriseLevels = Consumption.getSupplyLevels(city, getNeeds(city, "highrise"))
-
-    local simpleLevelSummary = getSupplyLevelsSummary(simpleLevels)
-    local residentialLevelSummary = game.forces.player.technologies["tycoon-residential-housing"].researched and getSupplyLevelsSummary(residentialLevels) or "supplied"
-    local highriseLevelSymmary = game.forces.player.technologies["tycoon-highrise-housing"].researched and getSupplyLevelsSummary(highriseLevels) or "supplied"
-
-    if simpleLevelSummary == "supplied" and residentialLevelSummary == "supplied" and highriseLevelSymmary == "supplied" then
-        return "supplied"
-    elseif simpleLevelSummary == "missing" and residentialLevelSummary == "missing" and highriseLevelSymmary == "missing" then
-        return "missing"
-    else
-        return "lacking"
-    end
-end
-
-local function getOverallBasicNeedsCaption(city)
-    
-    local supplyLevel = getOverallSupplyLevelsSummary(city)
-
+local function mapSupplyLevelToLocalised(supplyLevel)
     if supplyLevel == "supplied" then
         return {"", "[color=green]", {"tycoon-gui-status-supplied"}, "[/color]"}
     elseif supplyLevel == "missing" then
@@ -547,6 +522,110 @@ local function areConstructionNeedsMet(city, housingTier, stores)
     return true
 end
 
+local function getConstructionMaterialsLevelLocalised(city, housingTier)
+    local hardwareStores = listSpecialCityBuildings(city, "tycoon-hardware-store")
+    local isMet = areConstructionNeedsMet(city, housingTier, hardwareStores)
+
+    if isMet then
+        return {"", "[color=green]", {"tycoon-gui-status-supplied"}, "[/color]"}
+    else
+        return {"", "[color=red]", {"tycoon-gui-status-missing"}, "[/color]"}
+    end
+end
+
+local function getAllNeeds(city, tier)
+    return MergeObjects(getBasicNeeds(city, tier), getAdditionalNeeds(city, tier))
+end
+
+--- @param city City
+--- @param housingType string
+local function addHousingView(housingType, city, anchor)
+    
+    anchor.style.natural_height = 600
+    if housingType ~= "simple" and not game.forces.player.technologies["tycoon-" .. housingType .. "-housing"].researched then
+        anchor.add{type = "label", caption = {"", "[color=red]", {"tycoon-gui-not-researched"}, "[/color]"}}
+        anchor.add{type = "button", caption = "Open Technology", name = "tycoon_open_tech:" .. housingType .. "-housing"}
+        return
+    end
+
+    local waterTowers = listSpecialCityBuildings(city, "tycoon-water-tower")
+    local markets = listSpecialCityBuildings(city, "tycoon-market")
+    local hardwareStores = listSpecialCityBuildings(city, "tycoon-hardware-store")
+
+    local tabbed_pane = anchor.add{type="tabbed-pane"}
+    local tab_overview = tabbed_pane.add{type="tab", caption={"", {"tycoon-gui-overview"}}}
+    local tab_basic_needs = tabbed_pane.add{type="tab", caption={"", {"tycoon-gui-basic-needs"}}}
+    local tab_additional_needs = tabbed_pane.add{type="tab", caption={"", {"tycoon-gui-additional-needs"}}}
+    local tab_construction_material = tabbed_pane.add{type="tab", caption={"", {"tycoon-gui-construction-materials"}}}
+
+    local overview_container = tabbed_pane.add{type = "flow", direction = "vertical"}
+    tabbed_pane.add_tab(tab_overview, overview_container)
+    local stats = overview_container.add{type = "frame", direction = "vertical", caption = {"", {"tycoon-gui-stats"}}, name = "city_stats"}
+    stats.add{type = "label", caption = {"", {"tycoon-gui-citizens"}, ": ",  countCitizens(city, housingType)}}
+
+    local basicNeedsSupplyLevelsSummary = getSupplyLevelsSummary(Consumption.getSupplyLevels(city, getBasicNeeds(city, housingType)));
+    local additionalNeedsSupplyLevelsSummary = getSupplyLevelsSummary(Consumption.getSupplyLevels(city, getAdditionalNeeds(city, housingType)));
+    -- local constructionMaterialsSupplyLevelsSummary = getSupplyLevelsSummary(Consumption.getSupplyLevels(city, getAdditionalNeeds(city, housingType)));
+    local tbl = stats.add{type = "table", column_count = 2, draw_horizontal_lines = true}
+    -- citizen count
+    -- tbl.add{type = "label", caption = {"", {"tycoon-gui-citizens"}, ": "}}
+    -- tbl.add{type = "label", caption = {"", countCitizens(city)}}
+    -- overall basic needs status
+    tbl.add{type = "label", caption = {"", {"tycoon-gui-basic-needs"}, ": "}}
+    tbl.add{type = "label", caption = mapSupplyLevelToLocalised(basicNeedsSupplyLevelsSummary)}
+    -- overall additional needs status
+    tbl.add{type = "label", caption = {"", {"tycoon-gui-additional-needs"}, ": "}}
+    tbl.add{type = "label", caption = mapSupplyLevelToLocalised(additionalNeedsSupplyLevelsSummary)}
+    -- overall construction materials status
+    tbl.add{type = "label", caption = {"", {"tycoon-gui-construction-materials"}, ": "}}
+    tbl.add{type = "label", caption = getConstructionMaterialsLevelLocalised(city, housingType)}
+
+    local growthChance = getGrowthChance(Consumption.getSupplyLevels(city, getAllNeeds(city, housingType)))
+    stats.add{type = "label", caption = {"", {"tycoon-gui-growth-chance", math.floor(growthChance * 100), {"", {"technology-name.tycoon-" .. housingType .. "-housing"}}}}}
+
+    local basic_needs_container = tabbed_pane.add{type = "scroll-pane", direction = "vertical"}
+    tabbed_pane.add_tab(tab_basic_needs, basic_needs_container)
+    addBasicNeedsView(basic_needs_container, basicNeeds[housingType], city, waterTowers, markets, housingType)
+
+    local advanced_needs_container = tabbed_pane.add{type = "scroll-pane", direction = "vertical"}
+    tabbed_pane.add_tab(tab_additional_needs, advanced_needs_container)
+    addAdditionalNeedsView(advanced_needs_container, additionalNeeds[housingType], city, markets, housingType)
+
+    local construction_needs_container = tabbed_pane.add{type = "scroll-pane", direction = "vertical"}
+    tabbed_pane.add_tab(tab_construction_material, construction_needs_container)
+    addConstructionMaterialsGui(construction_needs_container, constructionNeeds[housingType], city, hardwareStores, housingType)
+    
+    tabbed_pane.selected_tab_index = 1
+end
+
+local function getOverallSupplyLevelsSummary(city, needsFn)
+    local simpleLevels = Consumption.getSupplyLevels(city, needsFn(city, "simple"))
+    local residentialLevels = Consumption.getSupplyLevels(city, needsFn(city, "residential"))
+    local highriseLevels = Consumption.getSupplyLevels(city, needsFn(city, "highrise"))
+
+    local simpleLevelSummary = getSupplyLevelsSummary(simpleLevels)
+    local residentialLevelSummary = game.forces.player.technologies["tycoon-residential-housing"].researched and getSupplyLevelsSummary(residentialLevels) or "supplied"
+    local highriseLevelSymmary = game.forces.player.technologies["tycoon-highrise-housing"].researched and getSupplyLevelsSummary(highriseLevels) or "supplied"
+
+    if simpleLevelSummary == "supplied" and residentialLevelSummary == "supplied" and highriseLevelSymmary == "supplied" then
+        return "supplied"
+    elseif simpleLevelSummary == "missing" and residentialLevelSummary == "missing" and highriseLevelSymmary == "missing" then
+        return "missing"
+    else
+        return "lacking"
+    end
+end
+
+local function getOverallAdditionalNeedsCaption(city)
+    local supplyLevel = getOverallSupplyLevelsSummary(city, getAdditionalNeeds)
+    return mapSupplyLevelToLocalised(supplyLevel)
+end
+
+local function getOverallBasicNeedsCaption(city)
+    local supplyLevel = getOverallSupplyLevelsSummary(city, getBasicNeeds)
+    return mapSupplyLevelToLocalised(supplyLevel)
+end
+
 local function getOverallConstructionMaterialsCaption(city)
     local hardwareStores = listSpecialCityBuildings(city, "tycoon-hardware-store")
     local simpleMet = areConstructionNeedsMet(city, "simple", hardwareStores)
@@ -571,13 +650,15 @@ local function addCityOverview(city, anchor)
     -- overall basic needs status
     tbl.add{type = "label", caption = {"", {"tycoon-gui-basic-needs"}, ": "}}
     tbl.add{type = "label", caption = getOverallBasicNeedsCaption(city)}
+    -- overall additional needs status
+    tbl.add{type = "label", caption = {"", {"tycoon-gui-additional-needs"}, ": "}}
+    tbl.add{type = "label", caption = getOverallAdditionalNeedsCaption(city)}
     -- overall construction materials status
     tbl.add{type = "label", caption = {"", {"tycoon-gui-construction-materials"}, ": "}}
     tbl.add{type = "label", caption = getOverallConstructionMaterialsCaption(city)}
 end
 
 local function canCreatePassengerForCity(train_station_numer, destination_city_id)
-    
     -- If the player has not set any filters for this station (i.e. they are nil or none are false), then we can display new cities as accepted
     -- If any city has been disabled, then we won't allow new cities to automatically show up and produce passengers
 
