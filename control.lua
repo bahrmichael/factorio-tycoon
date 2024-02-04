@@ -729,19 +729,24 @@ local function canBuildSimpleHouse(city)
 end
 
 --- @param city City
---- @param supplyLevels number[]
+--- @param mandatorySupplyLevels number[]
+--- @param additionalSupplyLeevls number[]
 --- @return boolean shouldTierGrow
-local function shouldTierGrow(city, supplyLevels)
+local function shouldTierGrow(city, mandatorySupplyLevels, additionalSupplyLeevls)
     -- https://mods.factorio.com/mod/tycoon/discussion/6565de7d3e4062cbd3213508
     -- ((S1/D1 + S2/D2 + ... + Sn/Dn) / n)²
     local innerSum = 0;
-    for _, value in pairs(supplyLevels) do
+    for _, value in pairs(mandatorySupplyLevels) do
         innerSum = innerSum + math.min(1, value)
     end
 
-    local growthChance = math.pow((innerSum / #supplyLevels), 4)
+    local growthChance = math.pow((innerSum / #mandatorySupplyLevels), 4)
+    local additionalGrowth = 0;
+    for _, value in pairs(additionalSupplyLeevls) do
+        additionalGrowth = additionalGrowth + (math.min(1, value) * 0.05)
+    end
 
-    return city.generator() < growthChance
+    return city.generator() < (growthChance + additionalGrowth)
 end
 
 local function canUpgradeToResidential(city)
@@ -1077,13 +1082,13 @@ script.on_nth_tick(Constants.CITY_GROWTH_TICKS, function(event)
             Consumption.consumeAdditionalNeeds(city)
 
             local suppliedTiers = {}
-            if shouldTierGrow(city, Consumption.getSupplyLevels(city, getAllNeeds(city, "simple"))) then
+            if shouldTierGrow(city, Consumption.getSupplyLevels(city, getBasicNeeds(city, "simple")), Consumption.getSupplyLevels(city, getAdditionalNeeds(city, "simple"))) then
                 table.insert(suppliedTiers, "simple")
             end
-            if shouldTierGrow(city, Consumption.getSupplyLevels(city, getAllNeeds(city, "residential"))) then
+            if shouldTierGrow(city, Consumption.getSupplyLevels(city, getBasicNeeds(city, "residential")), Consumption.getSupplyLevels(city, getAdditionalNeeds(city, "residential"))) then
                 table.insert(suppliedTiers, "residential")
             end
-            if shouldTierGrow(city, Consumption.getSupplyLevels(city, getAllNeeds(city, "highrise"))) then
+            if shouldTierGrow(city, Consumption.getSupplyLevels(city, getBasicNeeds(city, "highrise")), Consumption.getSupplyLevels(city, getAdditionalNeeds(city, "highrise"))) then
                 table.insert(suppliedTiers, "highrise")
             end
             -- TODO: replace this check with something that uses the new supply function
