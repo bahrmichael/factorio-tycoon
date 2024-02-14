@@ -1,7 +1,6 @@
 ---------------------------------------------------------------------------------------------------
-
-Version: unreleased
-Date: 19. 01. 2023
+Version: 0.4.0
+Date: 27. 01. 2023
   Major Features:
     - The passenger spawn rate now also takes the size of other cities into account. The larger your average city, the more passengers will show up.
   Changes:

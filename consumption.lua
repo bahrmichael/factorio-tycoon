@@ -494,6 +494,120 @@ local function consumeAdditionalNeeds(city)
     end
 end
 
+local function getBasicNeeds(city, tier)
+    if tier == "simple" then
+        return {
+            water = city.stats.basic_needs.water,
+            ["tycoon-apple"] = city.stats.basic_needs["tycoon-apple"],
+        }
+    elseif tier == "residential" then
+        return {
+            water = city.stats.basic_needs.water,
+            ["tycoon-milk-bottle"] = city.stats.basic_needs["tycoon-milk-bottle"],
+            ["tycoon-meat"] = city.stats.basic_needs["tycoon-meat"],
+            ["tycoon-bread"] = city.stats.basic_needs["tycoon-bread"],
+            ["tycoon-fish-filet"] = city.stats.basic_needs["tycoon-fish-filet"],
+        }
+    elseif tier == "highrise" then
+        return {
+            water = city.stats.basic_needs.water,
+            ["tycoon-smoothie"] = city.stats.basic_needs["tycoon-smoothie"],
+            ["tycoon-apple-cake"] = city.stats.basic_needs["tycoon-apple-cake"],
+            ["tycoon-cheese"] = city.stats.basic_needs["tycoon-cheese"],
+            ["tycoon-burger"] = city.stats.basic_needs["tycoon-burger"],
+            ["tycoon-dumpling"] = city.stats.basic_needs["tycoon-dumpling"],
+        }
+    else
+        assert(false, "Unknown tier for getBasicNeeds: " .. tier)
+    end
+end
+
+local function getAdditionalNeeds(city, tier)
+    if city.stats.additional_needs == nil then
+        -- edge case for when this has not been initialized (e.g. when upgrading the savegame to the latest version of this mod)
+        return {}
+    end
+    if tier == "simple" then
+        return {
+            ["tycoon-cooking-pot"] = city.stats.additional_needs["tycoon-cooking-pot"],
+            ["tycoon-cooking-pan"] = city.stats.additional_needs["tycoon-cooking-pan"],
+            ["tycoon-cutlery"] = city.stats.additional_needs["tycoon-cutlery"],
+        }
+    elseif tier == "residential" then
+        return {
+            ["tycoon-bicycle"] = city.stats.additional_needs["tycoon-bicycle"],
+            ["tycoon-candle"] = city.stats.additional_needs["tycoon-candle"],
+            ["tycoon-soap"] = city.stats.additional_needs["tycoon-soap"],
+            ["tycoon-gloves"] = city.stats.additional_needs["tycoon-gloves"],
+            ["tycoon-television"] = city.stats.additional_needs["tycoon-television"],
+        }
+    elseif tier == "highrise" then
+        return {
+            ["tycoon-smartphone"] = city.stats.additional_needs["tycoon-smartphone"],
+            ["tycoon-laptop"] = city.stats.additional_needs["tycoon-laptop"],
+        }
+    else
+        assert(false, "Unknown tier for getAdditionalNeeds: " .. tier)
+    end
+end
+
+local function get_supply_factor_scaling_factor(supply_values)
+    if #(supply_values or {}) == 0 then
+        return 1
+    end
+    return 10 / #supply_values
+end
+
+local function logistics_function(x)
+    return 1 / (1 + math.exp(-(x - 5)))
+end
+
+local function calculate_ratio(city, needs)
+    local levels = getSupplyLevels(city, needs)
+    local factor = get_supply_factor_scaling_factor(levels)
+    local total = 0
+    for _, v in ipairs(levels) do
+        total = total + v * factor
+    end
+    local ratio = logistics_function(total)
+    return ratio
+end
+
+local function update_construction_timers(city, tier)
+
+    if tier ~= "simple" and not game.forces.player.technologies["tycoon-" .. tier .. "-housing"].researched then
+        return
+    end
+
+    local basic_ratio = calculate_ratio(city, getBasicNeeds(city, tier))
+    local additional_ratio = calculate_ratio(city, getAdditionalNeeds(city, tier))
+
+    -- It should scale between 1 minute and 30 minutes for basic resources
+    -- Todo: maybe consider citizen count?
+    local basic_max = 30 * 60 * 60;
+    local basic_min = 1 * 60 * 60;
+    local basic_duration = basic_min + (basic_max - basic_min) * (1 - basic_ratio)
+
+    -- Additional needs give another reducing scaling bonus between 5 seconds and 1 minute
+    local additional_max = 55 * 60;
+
+    local additional_duration_reduction = additional_max * additional_ratio
+
+    local resulting_duration = basic_duration - additional_duration_reduction
+
+    if city.construction_timers == nil then
+        city.construction_timers = {}
+    end
+    if city.construction_timers[tier] == nil then
+        city.construction_timers[tier] = {
+            last_construction = 0,
+            construction_interval = resulting_duration,
+        }
+    else
+        city.construction_timers[tier].construction_interval = resulting_duration
+    end
+end
+
 return {
     getSupplyLevels = getSupplyLevels,
     updateNeeds = updateNeeds,
@@ -501,4 +615,5 @@ return {
     consumeAdditionalNeeds = consumeAdditionalNeeds,
     consumeItem = consumeItem,
     resourcePrices = resourcePrices,
+    update_construction_timers = update_construction_timers,
 }

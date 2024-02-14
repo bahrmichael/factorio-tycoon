@@ -9,6 +9,19 @@ local CONSTANTS = {
     MORE_CITIES_TICKS = OneSecond * 120,
     INITIAL_CITY_TICK = 30,
     PASSENGER_SPAWNING_TICKS = OneSecond * 2,
+
+    CITY_SUPPLY_BUILDINGS = {"tycoon-market", "tycoon-hardware-store", "tycoon-water-tower"},
+    PRIMARY_INDUSTRIES = {"tycoon-apple-farm", "tycoon-wheat-farm", "tycoon-fishery"},
+    CITIZEN_COUNTS = {
+        simple = 4,
+        residential = 20,
+        highrise = 100,
+    },
+
+    SURFACE_INDEX = 1,
+
+    RESIDENTIAL_HOUSE_RATIO = 3,
+    HIGHRISE_HOUSE_RATIO = 5,
 }
 
 return CONSTANTS

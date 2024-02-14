@@ -157,6 +157,11 @@ local function getItemPrice(itemName)
     end
 end
 
+local house_ratios = {
+    residential = Constants.RESIDENTIAL_HOUSE_RATIO,
+    highrise = Constants.HIGHRISE_HOUSE_RATIO,
+}
+
 --- @param rootGui any
 --- @param constructionNeeds string[]
 --- @param city City
@@ -225,11 +230,11 @@ local function addConstructionMaterialsGui(rootGui, constructionNeeds, city, har
     if housingType ~= "simple" then
         local lowerTierCount = ((city.buildingCounts or {})[lowerTierMap[housingType]] or 0)
         local higherTierCount = ((city.buildingCounts or {})[housingType] or 0)
-        local numberOfLowerTierHousesNeeded = Util.countPendingLowerTierHouses(lowerTierCount, higherTierCount)
+        local numberOfLowerTierHousesNeeded = Util.countPendingLowerTierHouses(lowerTierCount, higherTierCount, house_ratios[housingType])
 
-        if numberOfLowerTierHousesNeeded == 0 and not Util.hasReachedLowerTierThreshold(city, housingType) then
-            numberOfLowerTierHousesNeeded = Util.lowerTierThreshold[housingType] - lowerTierCount
-        end
+        -- if numberOfLowerTierHousesNeeded == 0 and not Util.hasReachedLowerTierThreshold(city, housingType) then
+        --     numberOfLowerTierHousesNeeded = Util.lowerTierThreshold[housingType] - lowerTierCount
+        -- end
 
         if numberOfLowerTierHousesNeeded > 0 then
             constructionGui.add{type = "label", caption = {"", "[color=red]", {"tycoon-gui-grow-other-housing-tier", {"", {"technology-name.tycoon-" .. housingType .. "-housing"}}, numberOfLowerTierHousesNeeded, {"", {"technology-name.tycoon-" .. lowerTierMap[housingType] .. "-housing"}}}, "[/color]"}}
@@ -542,11 +547,14 @@ local function areConstructionNeedsMet(city, housingTier, stores)
     return true
 end
 
-local function getConstructionMaterialsLevelLocalised(city, housingTier)
+local function areThereEnoughConstructionMaterials(city, housingTier)
     local hardwareStores = listSpecialCityBuildings(city, "tycoon-hardware-store")
     local isMet = areConstructionNeedsMet(city, housingTier, hardwareStores)
+    return isMet
+end
 
-    if isMet then
+local function getConstructionMaterialsLevelLocalised(city, housingTier)
+    if areThereEnoughConstructionMaterials(city, housingTier) then
         return {"", "[color=green]", {"tycoon-gui-status-supplied"}, "[/color]"}
     else
         return {"", "[color=red]", {"tycoon-gui-status-missing"}, "[/color]"}
@@ -556,6 +564,11 @@ end
 local function getAllNeeds(city, tier)
     return MergeObjects(getBasicNeeds(city, tier), getAdditionalNeeds(city, tier))
 end
+
+local lowerTierMap = {
+    residential = "simple",
+    highrise = "residential"
+}
 
 --- @param city City
 --- @param housingType string
@@ -600,8 +613,45 @@ local function addHousingView(housingType, city, anchor)
     tbl.add{type = "label", caption = {"", {"tycoon-gui-construction-materials"}, ": "}}
     tbl.add{type = "label", caption = getConstructionMaterialsLevelLocalised(city, housingType)}
 
-    local growthChance = getGrowthChance(Consumption.getSupplyLevels(city, getBasicNeeds(city, housingType)), Consumption.getSupplyLevels(city, getAdditionalNeeds(city, housingType)))
-    stats.add{type = "label", caption = {"", {"tycoon-gui-growth-chance", math.floor(growthChance * 100), {"", {"technology-name.tycoon-" .. housingType .. "-housing"}}}}}
+    -- local growthChance = getGrowthChance(Consumption.getSupplyLevels(city, getBasicNeeds(city, housingType)), Consumption.getSupplyLevels(city, getAdditionalNeeds(city, housingType)))
+    -- stats.add{type = "label", caption = {"", {"tycoon-gui-growth-chance", math.floor(growthChance * 100), {"", {"technology-name.tycoon-" .. housingType .. "-housing"}}}}}
+
+    local construction_info = overview_container.add{type = "frame", direction = "vertical", caption = {"", {"tycoon-gui-construction-info"}}}
+
+    local lowerTierCount = ((city.buildingCounts or {})[lowerTierMap[housingType]] or 0)
+    local higherTierCount = ((city.buildingCounts or {})[housingType] or 0)
+    local numberOfLowerTierHousesNeeded
+    if lowerTierCount == 0 then
+        numberOfLowerTierHousesNeeded = house_ratios[housingType] or 0
+    else
+        numberOfLowerTierHousesNeeded = Util.countPendingLowerTierHouses(lowerTierCount, higherTierCount, house_ratios[housingType])
+    end
+
+    if #hardwareStores == 0 then
+        construction_info.add{type = "label", caption = {"", {"tycoon-housing-construction-missing-hardware-store"}}}
+    elseif housingType ~= "simple" and numberOfLowerTierHousesNeeded > 0 then
+        construction_info.add{type = "label", caption = {"",{"tycoon-gui-grow-other-housing-tier", {"", {"technology-name.tycoon-" .. housingType .. "-housing"}}, numberOfLowerTierHousesNeeded, {"", {"technology-name.tycoon-" .. lowerTierMap[housingType] .. "-housing"}}}}}
+    elseif not areThereEnoughConstructionMaterials(city, housingType) then
+        construction_info.add{type = "label", caption = {"", {"tycoon-housing-construction-missing-material"}}}
+    else
+        -- NEXT CONSTRUCTION DURATION
+        local timer = (city.construction_timers or {})[housingType] or {
+            last_construction = 0,
+            construction_interval = math.huge
+        }
+        local remainig_seconds = math.max(math.ceil(((timer.last_construction + timer.construction_interval) - game.tick) / 60), 0)
+        local minutes = math.floor(remainig_seconds / 60)
+        local seconds = remainig_seconds % 60
+        if minutes > 30 then
+            construction_info.add{type = "label", caption = {"", {"tycoon-housing-no-construction"}}}
+        else
+            construction_info.add{type = "label", caption = {"", {"tycoon-housing-construction-time-remaining", string.format("%02d", minutes), string.format("%02d", seconds)}}}
+        end
+    end
+
+
+
+
 
     local basic_needs_container = tabbed_pane.add{type = "scroll-pane", direction = "vertical"}
     tabbed_pane.add_tab(tab_basic_needs, basic_needs_container)

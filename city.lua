@@ -1,6 +1,7 @@
 DEBUG = require("debug")
 local Queue = require("queue")
 local Constants = require("constants")
+local Consumption = require("consumption")
 local GridUtil = require("grid-util")
 local Util = require("util")
 
@@ -1214,7 +1215,7 @@ local function completeConstruction(city, buildingTypes)
     return entityName
 end
 
-local upgradePaths = {
+local upgrade_paths = {
     simple = {
         waitTime = 300,
         previousStage = "simple",
@@ -1256,7 +1257,7 @@ local function findUpgradableCells(city, limit, upgradeTo)
     for _, coordinates in ipairs(city.houseLocations) do
         local cell = GridUtil.safeGridAccess(city, coordinates, "findUpgradableCells")
         if cell ~= nil and cell.type == "building" and cell.buildingType ~= nil then
-            local upgradePath = upgradePaths[cell.buildingType]
+            local upgradePath = upgrade_paths[cell.buildingType]
             if upgradePath ~= nil and upgradePath.nextStage == upgradeTo then
                 if (cell.createdAtTick + upgradePath.waitTime) < game.tick then
 
@@ -1332,6 +1333,9 @@ local function upgradeHouse(city, newStage)
         return false
     end
 
+    -- todo: rework this, see below
+    -- Move the check for player entities into the findUpgradableCells function. This will increase the likelihood of building something, and reduces the chance of getting stuck
+    -- if we are so unfortunate to only get cells with player entities.
     local upgradeCell = upgradeCells[city.generator(#upgradeCells)]
     -- If the player has built entities in this cell in the meantime, we can either not upgrade or destroy their entities. Staying safe and not upgrading is probably better.
     if hasPlayerEntities(city, upgradeCell) then
@@ -1342,12 +1346,275 @@ local function upgradeHouse(city, newStage)
 
     local upgradePath = upgradeCell.upgradePath
 
+    local constructionTimeInTicks = city.generator(upgradePath.upgradeDurationInSeconds[1] * 60, upgradePath.upgradeDurationInSeconds[2] * 60)
+
+
+    -- local constructionQueueIndex = game.tick + constructionTimeInTicks
+    -- -- 2100
+    -- for _ = 1, 100, 1 do
+    --     if global.tycoon_constructions[constructionQueueIndex] == nil then
+    --         -- 2100 blocked
+    --         -- insert
+    --         break
+    --     else
+    --         constructionQueueIndex = constructionQueueIndex + 5 + math.ceil(math.random() * 10)
+    --         -- 2100 + 7 => 2107
+    --         -- 10 * 60 => 600 / 3 => 200
+    --     end
+    -- end
+
+    -- local queue = {}
+    -- queue[4] = true
+    -- queue[7] = true
+    -- queue[9] = true
+    -- queue[15] = true
+
+    -- local completableConstructions = table.unpack(queue, nil, game.tick)
+
     startConstruction(city, {
         buildingType = upgradePath.nextStage,
-        constructionTimeInTicks = city.generator(upgradePath.upgradeDurationInSeconds[1] * 60, upgradePath.upgradeDurationInSeconds[2] * 60),
+        constructionTimeInTicks = constructionTimeInTicks,
     }, "buildingLocationQueue", {upgradeCell.coordinates})
 
     return true
+end
+
+-- local queue = {
+--     tycoon = "Hello Factorio!",
+-- }
+
+-- queue[5] = "test"
+-- queue[10] = "test"
+-- queue[15] = "test"
+
+-- table.drain(lessThan 10)
+
+-- table.
+
+local function construct_priority_buildings()
+    for _, city in ipairs(global.tycoon_cities or {}) do
+        local prio_building = table.remove(city.priority_buildings, 1)
+        if prio_building ~= nil then
+            local is_built = startConstruction(city, {
+                buildingType = prio_building.name,
+                -- Special buildings should be completed very quickly.
+                -- Here we just wait 2 seconds by default.
+                constructionTimeInTicks = 120,
+            }, "buildingLocationQueue")
+            if not is_built then
+                table.insert(city.priority_buildings, 1, prio_building)
+            end
+        end
+    end
+end
+
+local function construct_gardens()
+    for _, city in ipairs(global.tycoon_cities or {}) do
+        if city.gardenLocationQueue ~= nil and city.generator() < 0.25 and Queue.count(city.gardenLocationQueue, true) > 0 then
+            startConstruction(city, {
+                buildingType = "garden",
+                constructionTimeInTicks = city.generator(300, 600)
+            }, "gardenLocationQueue")
+        end
+    end
+end
+
+local housing_tiers = {"simple", "residential", "highrise"}
+local upgrade_paths = {
+    simple = "residential",
+    residential = "highrise"
+}
+
+local function list_special_city_buildings(city, name)
+    local entities = {}
+    if city.special_buildings.other[name] ~= nil and #city.special_buildings.other[name] > 0 then
+        entities = city.special_buildings.other[name]
+    else
+        entities = game.surfaces[1].find_entities_filtered{
+            name=name,
+            position=city.special_buildings.town_hall.position,
+            radius=1000
+        }
+        city.special_buildings.other[name] = entities
+    end
+
+    local result = {}
+    for _, entity in ipairs(entities) do
+        if entity ~= nil and entity.valid then
+            table.insert(result, entity)
+        end
+    end
+    return result
+end
+
+local house_ratios = {
+    residential = Constants.RESIDENTIAL_HOUSE_RATIO,
+    highrise = Constants.HIGHRISE_HOUSE_RATIO,
+}
+
+local function is_allowed_upgrade_to_tier(city, current_tier)
+    local next_tier = upgrade_paths[current_tier]
+    if not game.forces.player.technologies["tycoon-" .. next_tier .. "-housing"].researched then
+        return false
+    end
+
+    -- if not Util.hasReachedLowerTierThreshold(city, "highrise") then
+    --     return false
+    -- end
+
+    local current_tier_count = ((city.buildingCounts or {})[current_tier] or 0)
+    local next_tier_count = ((city.buildingCounts or {})[next_tier] or 0)
+    if Util.countPendingLowerTierHouses(current_tier_count, next_tier_count, house_ratios[next_tier]) > 0 then
+        return false
+    end
+
+    -- local gridSize = #city.grid
+    -- local highRisePercentage = math.ceil(gridSize * 0.01)
+    -- local highRisePercentageCount = highRisePercentage * highRisePercentage
+    -- return next_tier_count < highRisePercentageCount
+    return true
+end
+
+
+local function getBuildables(city, hardwareStores)
+    -- This array is ordered from most expensive to cheapest, so that
+    -- we do expensive upgrades first (instead of just letting the road always expand).
+    -- Sepcial buildings (like the treasury) are an exception that should ideally come first.
+    local constructionResources = {
+        specialBuildings = {{
+            name = "stone-brick",
+            required = 1,
+        }, {
+            name = "iron-plate",
+            required = 1,
+        }},
+        highrise = {{
+            name = "concrete",
+            required = 50,
+        }, {
+            name = "steel-plate",
+            required = 25,
+        }, {
+            name = "small-lamp",
+            required = 5,
+        }, {
+            name = "pump",
+            required = 2,
+        }, {
+            name = "pipe",
+            required = 10,
+        }},
+        residential = {{
+            name = "stone-brick",
+            required = 30,
+        }, {
+            name = "iron-plate",
+            required = 20,
+        }, {
+            name = "steel-plate",
+            required = 10,
+        }, {
+            name = "small-lamp",
+            required = 2,
+        }},
+        simple = {{
+            name = "stone-brick",
+            required = 10,
+        }, {
+            name = "iron-plate",
+            required = 5,
+        }},
+    }
+
+    local buildables = {}
+    for key, resources in pairs(constructionResources) do
+        local anyResourceMissing = false
+        for _, resource in ipairs(resources) do
+            for _, hardwareStore in ipairs(hardwareStores) do
+                local availableCount = hardwareStore.get_item_count(resource.name)
+                resource.available = (resource.available or 0) + availableCount
+            end
+
+            if resource.available < resource.required then
+                anyResourceMissing = true
+            end
+        end
+
+        if not anyResourceMissing then
+            buildables[key] = resources
+        end
+    end
+
+    return buildables
+end
+
+local function has_time_elapsed_for_construction(city, tier)
+    local timer = (city.construction_timers or {})[tier] or {
+        last_construction = 0,
+        construction_interval = math.huge
+    }
+    return timer.last_construction + timer.construction_interval < game.tick
+end
+
+local citizenCounts = {
+    simple = 4,
+    residential = 20,
+    highrise = 100,
+}
+
+local function growCitizenCount(city, count, tier)
+    if city.citizens[tier] == nil then
+        city.citizens[tier] = 0
+    end
+    city.citizens[tier] = city.citizens[tier] + count
+    if city.citizens[tier] < 0 then
+        -- This is just a coding safeguard in case there's buggy code that tries to lower it below 0.
+        city.citizens[tier] = 0
+    end
+    Consumption.updateNeeds(city)
+end
+
+local lower_tiers = {
+    residential = "simple",
+    highrise = "residential"
+}
+
+local function start_house_construction()
+    for _, city in ipairs(global.tycoon_cities or {}) do
+        -- Check if resources are available. Without resources no growth is possible.
+        local hardware_stores = list_special_city_buildings(city, "tycoon-hardware-store")
+        if #hardware_stores > 0 then
+
+            local buildables = getBuildables(city, hardware_stores)
+            -- If there are no hardware stores, then no construction resources are available.
+            for _, tier in ipairs(housing_tiers) do
+                if has_time_elapsed_for_construction(city, tier)
+                    and buildables[tier] ~= nil then
+                        
+                    assert((city.construction_timers or {})[tier], "Expected construction timer to be defined by them time the timer check resolves to true.")
+                    city.construction_timers[tier].last_construction = game.tick
+
+                    if tier == "simple" then
+                        startConstruction(city, {
+                            buildingType = "simple",
+                            constructionTimeInTicks = city.generator(600, 1200)
+                        }, "buildingLocationQueue")
+                    elseif is_allowed_upgrade_to_tier(city, tier) then
+                        local upgrade_started = upgradeHouse(city, tier)
+                        if upgrade_started then
+                            growCitizenCount(city, -1 * citizenCounts[lower_tiers[tier]], lower_tiers[tier])
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
+local function complete_house_construction()
+    for _, city in ipairs(global.tycoon_cities or {}) do
+        completeConstruction(city, {"simple", "residential", "highrise", "tycoon-treasury", "garden"})
+    end
 end
 
 local CITY = {
@@ -1356,7 +1623,11 @@ local CITY = {
     completeConstruction = completeConstruction,
     upgradeHouse = upgradeHouse,
     startConstruction = startConstruction,
-    isCellFree = isCellFree
+    isCellFree = isCellFree,
+    construct_priority_buildings = construct_priority_buildings,
+    construct_gardens = construct_gardens,
+    start_house_construction = start_house_construction,
+    complete_house_construction = complete_house_construction,
 }
 
 return CITY
