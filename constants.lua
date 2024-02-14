@@ -9,6 +9,8 @@ local CONSTANTS = {
     MORE_CITIES_TICKS = OneSecond * 120,
     INITIAL_CITY_TICK = 30,
     PASSENGER_SPAWNING_TICKS = OneSecond * 2,
+
+    STARTING_SURFACE_ID = 1,
 }
 
 return CONSTANTS

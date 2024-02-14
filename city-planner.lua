@@ -12,7 +12,7 @@ local function printTiles(startY, startX, map, tileName)
         for i = 1, #value do
             local char = string.sub(value, i, i)
             if char == "1" then
-                game.surfaces[1].set_tiles({{name = tileName, position = {x, y}}})
+                game.surfaces[Constants.STARTING_SURFACE_ID].set_tiles({{name = tileName, position = {x, y}}})
             end
             x = x + 1
         end
@@ -43,14 +43,14 @@ local function findNewCityPosition(isInitialTown)
     local scorings = {}
     -- make up to 10 attempts
     for i = 1, 10, 1 do
-        local chunk = game.surfaces[1].get_random_chunk()
+        local chunk = game.surfaces[Constants.STARTING_SURFACE_ID].get_random_chunk()
         if chunk ~= nil then
-            if game.forces.player.is_chunk_charted(game.surfaces[1], chunk) then
+            if game.forces.player.is_chunk_charted(game.surfaces[Constants.STARTING_SURFACE_ID], chunk) then
                 local position = { x = chunk.x * 32, y = chunk.y * 32 }
                 if isInitialTown or not isInRangeOfAnyCity(position) then
-                    local newCityPosition = game.surfaces[1].find_non_colliding_position("tycoon-town-center-virtual", position, Constants.CITY_RADIUS, 5, true)
+                    local newCityPosition = game.surfaces[Constants.STARTING_SURFACE_ID].find_non_colliding_position("tycoon-town-center-virtual", position, Constants.CITY_RADIUS, 5, true)
                     if newCityPosition ~= nil then
-                        local isChunkCharted = isInitialTown or game.forces.player.is_chunk_charted(game.surfaces[1], {
+                        local isChunkCharted = isInitialTown or game.forces.player.is_chunk_charted(game.surfaces[Constants.STARTING_SURFACE_ID], {
                             x = math.floor(newCityPosition.x / 32),
                             y = math.floor(newCityPosition.y / 32),
                         })
@@ -63,7 +63,7 @@ local function findNewCityPosition(isInitialTown)
                                 },
                             }
                             if not isInitialTown then
-                                local playerEntities = game.surfaces[1].find_entities_filtered{
+                                local playerEntities = game.surfaces[Constants.STARTING_SURFACE_ID].find_entities_filtered{
                                     position = newCityPosition,
                                     radius = Constants.CITY_RADIUS,
                                     force = game.forces.player,
@@ -73,7 +73,7 @@ local function findNewCityPosition(isInitialTown)
                             end
                             if not skip then
                                 local radius = 50 / i + 18
-                                local tiles = game.surfaces[1].find_tiles_filtered{
+                                local tiles = game.surfaces[Constants.STARTING_SURFACE_ID].find_tiles_filtered{
                                     position = newCityPosition,
                                     radius = radius, -- The initial grid is 6x3=18, so 50 allows for 32 more, or 16 on each side, which is nearly 3 more cells. That should give the city enough space to grow outwards.
                                     name = {
@@ -87,7 +87,7 @@ local function findNewCityPosition(isInitialTown)
                                         "water-wube",
                                     },
                                 }
-                                local entities = game.surfaces[1].find_entities_filtered({
+                                local entities = game.surfaces[Constants.STARTING_SURFACE_ID].find_entities_filtered({
                                     position = newCityPosition,
                                     radius = radius, -- The initial grid is 6x3=18, so 50 allows for 32 more, or 16 on each side, which is nearly 3 more cells. That should give the city enough space to grow outwards.
                                     name={"character", "tycoon-town-hall"},
@@ -106,10 +106,10 @@ local function findNewCityPosition(isInitialTown)
         end
     end
     
-    local tilesFactor = 3 / game.surfaces[1].map_gen_settings.water -- water is a percentage value
+    local tilesFactor = 3 / game.surfaces[Constants.STARTING_SURFACE_ID].map_gen_settings.water -- water is a percentage value
     local autoplaceTotal = 0
     local autoplaceCounter = 0
-    for _, value in pairs(game.surfaces[1].map_gen_settings.autoplace_controls) do
+    for _, value in pairs(game.surfaces[Constants.STARTING_SURFACE_ID].map_gen_settings.autoplace_controls) do
         autoplaceTotal = autoplaceTotal + value.frequency
         autoplaceCounter = autoplaceCounter + 1
     end
@@ -194,7 +194,7 @@ local function initializeCity(city)
             {x - 1, y - 1},
             {x + Constants.CELL_SIZE + 1, y + Constants.CELL_SIZE + 1}
         }
-        local removables = game.surfaces[1].find_entities_filtered({
+        local removables = game.surfaces[Constants.STARTING_SURFACE_ID].find_entities_filtered({
             area=area,
             name={"character", "tycoon-town-hall"},
             invert=true
@@ -221,13 +221,13 @@ local function initializeCity(city)
                         x = startCoordinates.x - 1 + Constants.CELL_SIZE / 2, 
                         y = startCoordinates.y - 1 + Constants.CELL_SIZE / 2,
                     }
-                    local townHall = game.surfaces[1].create_entity{
+                    local townHall = game.surfaces[Constants.STARTING_SURFACE_ID].create_entity{
                         name = "tycoon-town-hall",
                         position = thPosition,
                         force = "neutral",
                         move_stuck_players = true
                     }
-                    game.surfaces[1].create_entity{
+                    game.surfaces[Constants.STARTING_SURFACE_ID].create_entity{
                         name = "hiddenlight-60",
                         position = thPosition,
                         force = "neutral",
@@ -328,7 +328,7 @@ local function addCity(position, predefinedCityName)
     local generatorSalt = cityId * 1337
     table.insert(global.tycoon_cities, {
         id = cityId,
-        generator = game.create_random_generator(game.surfaces[1].map_gen_settings.seed + generatorSalt),
+        generator = game.create_random_generator(game.surfaces[Constants.STARTING_SURFACE_ID].map_gen_settings.seed + generatorSalt),
         grid = {},
         pending_cells = {},
         priority_buildings = {},
@@ -359,7 +359,7 @@ local function getRequiredFundsForNextCity()
 end
 
 local function getTotalAvailableFunds()
-    local urbanPlanningCenters = game.surfaces[1].find_entities_filtered{
+    local urbanPlanningCenters = game.surfaces[Constants.STARTING_SURFACE_ID].find_entities_filtered{
         name = "tycoon-urban-planning-center"
     }
 
@@ -404,7 +404,7 @@ local function addMoreCities(isInitialCity, skipPayment)
         game.print({"", "[color=orange]Factorio Tycoon:[/color] ", {"tycooon-new-city", cityName}, ": ", "[gps=" .. (newCityPosition.x + 1.5 * Constants.CELL_SIZE) .. "," .. (newCityPosition.y + 1.5 * Constants.CELL_SIZE) .. "]"})
 
         if not skipPayment then
-            local urbanPlanningCenters = game.surfaces[1].find_entities_filtered{
+            local urbanPlanningCenters = game.surfaces[Constants.STARTING_SURFACE_ID].find_entities_filtered{
                 name = "tycoon-urban-planning-center"
             } or {}
             -- sort the centers with most currency first, so that we need to remove from fewer centers
