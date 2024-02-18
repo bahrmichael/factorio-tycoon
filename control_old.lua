@@ -32,7 +32,7 @@ local function listSpecialCityBuildings(city, name)
     if city.special_buildings.other[name] ~= nil and #city.special_buildings.other[name] > 0 then
         entities = city.special_buildings.other[name]
     else
-        entities = game.surfaces[1].find_entities_filtered{
+        entities = game.surfaces[Constants.STARTING_SURFACE_ID].find_entities_filtered{
             name=name,
             position=city.special_buildings.town_hall.position,
             radius=1000
@@ -105,7 +105,7 @@ end
 local function placePrimaryIndustryAtPosition(position, entityName)
     if position ~= nil then
         -- This is mainly here to avoid two industries being right next to each other, blocking each others pipes
-        local nearbyPrimaryIndustries = game.surfaces[1].find_entities_filtered{
+        local nearbyPrimaryIndustries = game.surfaces[Constants.STARTING_SURFACE_ID].find_entities_filtered{
             position = position,
             radius = 20,
             name = primary_industry_names,
@@ -117,7 +117,7 @@ local function placePrimaryIndustryAtPosition(position, entityName)
         -- fisheries don't have a pipe input and therfore don't need this condition
         -- they are also placed near water, so this would lead to no fisheries being placed anywhere
         if entityName ~= "tycoon-fishery" then
-            local nearbyCliffOrWater = game.surfaces[1].find_tiles_filtered{
+            local nearbyCliffOrWater = game.surfaces[Constants.STARTING_SURFACE_ID].find_tiles_filtered{
                 position = position,
                 radius = 10,
                 name = {"cliff", "water", "deepwater"},
@@ -127,7 +127,7 @@ local function placePrimaryIndustryAtPosition(position, entityName)
                 return nil
             end
         end
-        local tag = game.forces.player.add_chart_tag(game.surfaces[1],
+        local tag = game.forces.player.add_chart_tag(game.surfaces[Constants.STARTING_SURFACE_ID],
             {
                 position = {x = position.x, y = position.y},
                 icon = {
@@ -138,7 +138,7 @@ local function placePrimaryIndustryAtPosition(position, entityName)
             }
         )
         if tag ~= nil then
-            local entity = game.surfaces[1].create_entity{
+            local entity = game.surfaces[Constants.STARTING_SURFACE_ID].create_entity{
                 name = entityName,
                 position = {x = position.x, y = position.y},
                 force = "neutral",
@@ -185,7 +185,7 @@ script.on_event({defines.events.on_built_entity, defines.events.on_robot_built_e
     local entity = event.created_entity
 
     if isSupplyBuilding(entity.name) or entity.name == "tycoon-passenger-train-station" then
-        local nearbyTownHall = game.surfaces[1].find_entities_filtered{position=entity.position, radius=Constants.CITY_RADIUS, name="tycoon-town-hall", limit=1}
+        local nearbyTownHall = game.surfaces[Constants.STARTING_SURFACE_ID].find_entities_filtered{position=entity.position, radius=Constants.CITY_RADIUS, name="tycoon-town-hall", limit=1}
         if #nearbyTownHall == 0 then
             if event.player_index ~= nil then
                 game.players[event.player_index].print({"", {"tycoon-supply-building-not-connected"}})
@@ -242,7 +242,7 @@ script.on_event({
 
     if isSupplyBuilding(building.entity_name) or building.entity_name == "tycoon-passenger-train-station" then
         
-        local nearbyTownHall = game.surfaces[1].find_entities_filtered{position=building.entity.position, radius=Constants.CITY_RADIUS, name="tycoon-town-hall", limit=1}
+        local nearbyTownHall = game.surfaces[Constants.STARTING_SURFACE_ID].find_entities_filtered{position=building.entity.position, radius=Constants.CITY_RADIUS, name="tycoon-town-hall", limit=1}
         if #nearbyTownHall == 0 then
             -- If there's no town hall in range then it probably was destroyed
             -- todo: how should we handle that situation? Is the whole city gone?
@@ -312,7 +312,7 @@ script.on_event(defines.events.on_chunk_charted, function (chunk)
         local position
         if industryName == "tycoon-fishery" then
             -- To make it look prettier, we place fisheries near water
-            local tiles = game.surfaces[1].find_tiles_filtered{
+            local tiles = game.surfaces[Constants.STARTING_SURFACE_ID].find_tiles_filtered{
                 area = chunk.area,
             }
             local countWater = 0
@@ -330,18 +330,18 @@ script.on_event(defines.events.on_chunk_charted, function (chunk)
                 return
             end
 
-            position = game.surfaces[1].find_non_colliding_position(industryName, aWaterTile.position, 100, 1, true)
+            position = game.surfaces[Constants.STARTING_SURFACE_ID].find_non_colliding_position(industryName, aWaterTile.position, 100, 1, true)
         else
-            position = game.surfaces[1].find_non_colliding_position_in_box(industryName, chunk.area, 2, true)
+            position = game.surfaces[Constants.STARTING_SURFACE_ID].find_non_colliding_position_in_box(industryName, chunk.area, 2, true)
         end
         if position ~= nil then
             local minDistance = 500
             if industryName == "tycoon-fishery" then
                 -- map_gen_settings.water is a percentage value. As the amount of water on the map decreases, we want to spawn more fisheries per given area.
                 -- Don't go below 50 though
-                minDistance = math.max(200 * game.surfaces[1].map_gen_settings.water, 50)
+                minDistance = math.max(200 * game.surfaces[Constants.STARTING_SURFACE_ID].map_gen_settings.water, 50)
             end
-            local nearbyBlockingEntities = game.surfaces[1].find_entities_filtered{position=position, radius=minDistance, name=industryName, limit=1}
+            local nearbyBlockingEntities = game.surfaces[Constants.STARTING_SURFACE_ID].find_entities_filtered{position=position, radius=minDistance, name=industryName, limit=1}
             if #nearbyBlockingEntities == 0 then
                 local p = placePrimaryIndustryAtPosition(position, industryName)
                 addToGlobalPrimaryIndustries(p)
@@ -535,7 +535,7 @@ script.on_event(defines.events.on_player_cursor_stack_changed, function(event)
                         radius = Constants.CITY_RADIUS,
                         filled = true,
                         target = city.special_buildings.town_hall,
-                        surface = game.surfaces[1],
+                        surface = game.surfaces[Constants.STARTING_SURFACE_ID],
                         draw_on_ground = true,
                     }
 
@@ -901,7 +901,7 @@ end
 end
 
 local function placeInitialAppleFarm(city)
-    local waterTiles = game.surfaces[1].find_tiles_filtered{
+    local waterTiles = game.surfaces[Constants.STARTING_SURFACE_ID].find_tiles_filtered{
         position = city.center,
         -- 1000 is the max range that the search algorithm may extend to, it's not related to the city radius
         radius = math.min(global.tycoon_initial_apple_farm_radius or 100, 1000),
@@ -914,9 +914,9 @@ local function placeInitialAppleFarm(city)
 
     local waterPosition = waterTiles[1].position
     local coordinates = interpolateCoordinates(city.center, waterPosition, 0.5)
-    local position = game.surfaces[1].find_non_colliding_position("tycoon-apple-farm", coordinates, 200, 5, true)
+    local position = game.surfaces[Constants.STARTING_SURFACE_ID].find_non_colliding_position("tycoon-apple-farm", coordinates, 200, 5, true)
     -- make sure this doesn't spawn too close to town halls
-    local townHalls = game.surfaces[1].find_entities_filtered{
+    local townHalls = game.surfaces[Constants.STARTING_SURFACE_ID].find_entities_filtered{
         position = position,
         radius = 50,
         name = "tycoon-town-hall",
@@ -944,17 +944,17 @@ local function spawnPrimaryIndustries()
         for i, primaryIndustry in ipairs(global.tycoon_new_primary_industries) do
             local x, y
             if primaryIndustry.startCoordinates == nil then
-                local chunk = game.surfaces[1].get_random_chunk()
+                local chunk = game.surfaces[Constants.STARTING_SURFACE_ID].get_random_chunk()
                 x = chunk.x * 32
                 y = chunk.y * 32
             else
                 x = primaryIndustry.startCoordinates.x
                 y = primaryIndustry.startCoordinates.y
             end
-            local position = game.surfaces[1].find_non_colliding_position(primaryIndustry.name, {x, y}, 200, 5, true)
+            local position = game.surfaces[Constants.STARTING_SURFACE_ID].find_non_colliding_position(primaryIndustry.name, {x, y}, 200, 5, true)
 
             -- make sure this doesn't spawn too close to existing player entities
-            local playerEntities = game.surfaces[1].find_entities_filtered{
+            local playerEntities = game.surfaces[Constants.STARTING_SURFACE_ID].find_entities_filtered{
                 position = position,
                 radius = 50,
                 force = game.forces.player,
@@ -1064,7 +1064,7 @@ script.on_nth_tick(Constants.CITY_GROWTH_TICKS, function(event)
 
     if not global.tycoon_intro_message_displayed then
         game.print({"", "[color=orange]Factorio Tycoon:[/color] ", {"tycooon-intro-message-welcome"}})
-        if game.surfaces[1].map_gen_settings.autoplace_controls["enemy-base"].size > 0 then
+        if game.surfaces[Constants.STARTING_SURFACE_ID].map_gen_settings.autoplace_controls["enemy-base"].size > 0 then
             game.print({"", "[color=orange]Factorio Tycoon:[/color] ", {"tycooon-intro-message-peaceful-warning"}})
         end
         global.tycoon_intro_message_displayed = true
@@ -1099,7 +1099,7 @@ script.on_nth_tick(Constants.CITY_GROWTH_TICKS, function(event)
             -- We need to initialize the tag here, because tags can only be placed on charted chunks.
             -- And the game needs a moment to start and chart the initial chunks, even if it can already place entities.
             if city.tag == nil and city.special_buildings.town_hall ~= nil then
-                local tag = game.forces.player.add_chart_tag(game.surfaces[1],
+                local tag = game.forces.player.add_chart_tag(game.surfaces[Constants.STARTING_SURFACE_ID],
                     {
                         position = {x = city.special_buildings.town_hall.position.x, y = city.special_buildings.town_hall.position.y},
                         text = city.name
@@ -1168,11 +1168,11 @@ end)
 
 local function spawnSuppliedBuilding(city, entityName, supplyName, supplyAmount)
 
-    local position = game.surfaces[1].find_non_colliding_position(entityName, city.center, 200, 5, true)
+    local position = game.surfaces[Constants.STARTING_SURFACE_ID].find_non_colliding_position(entityName, city.center, 200, 5, true)
     position.x = math.floor(position.x)
     position.y = math.floor(position.y) + 20
 
-    local e = game.surfaces[1].create_entity{
+    local e = game.surfaces[Constants.STARTING_SURFACE_ID].create_entity{
         name = entityName,
         position = position,
         force = "neutral",

@@ -68,7 +68,7 @@ local function place_primary_industry_at_position(position, entity_name)
     if position ~= nil then
         -- This is mainly here to avoid two industries being right next to each other, 
         -- blocking each others pipes.
-        local nearby_primary_industries_count = game.surfaces[1].count_entities_filtered{
+        local nearby_primary_industries_count = game.surfaces[Constants.STARTING_SURFACE_ID].count_entities_filtered{
             position = position,
             radius = 20,
             name = Constants.PRIMARY_INDUSTRIES,
@@ -80,7 +80,7 @@ local function place_primary_industry_at_position(position, entity_name)
         -- Fisheries don't have a pipe input and therfore don't need this condition
         -- they are also placed near water, so this would lead to no fisheries being placed anywhere.
         if entity_name ~= "tycoon-fishery" then
-            local nearby_cliffs_or_water_count = game.surfaces[1].count_tiles_filtered{
+            local nearby_cliffs_or_water_count = game.surfaces[Constants.STARTING_SURFACE_ID].count_tiles_filtered{
                 position = position,
                 radius = 10,
                 name = {"cliff", "water", "deepwater"},
@@ -90,7 +90,7 @@ local function place_primary_industry_at_position(position, entity_name)
                 return nil
             end
         end
-        local tag = game.forces.player.add_chart_tag(game.surfaces[1],
+        local tag = game.forces.player.add_chart_tag(game.surfaces[Constants.STARTING_SURFACE_ID],
             {
                 position = {x = position.x, y = position.y},
                 icon = {
@@ -101,7 +101,7 @@ local function place_primary_industry_at_position(position, entity_name)
             }
         )
         if tag ~= nil then
-            local entity = game.surfaces[1].create_entity{
+            local entity = game.surfaces[Constants.STARTING_SURFACE_ID].create_entity{
                 name = entity_name,
                 position = {x = position.x, y = position.y},
                 force = "neutral",
@@ -131,17 +131,17 @@ local function find_position_for_initial_apple_farm()
     for _ = 1, 5, 1 do
         
         local starting_position = {math.random(-30, 30), math.random(-30, 30)}
-        local position = game.surfaces[1].find_non_colliding_position("tycoon-apple-farm", starting_position, 200, 5, true)
+        local position = game.surfaces[Constants.STARTING_SURFACE_ID].find_non_colliding_position("tycoon-apple-farm", starting_position, 200, 5, true)
         if position ~= nil then
             
-            local water_tiles = game.surfaces[1].find_tiles_filtered{
+            local water_tiles = game.surfaces[Constants.STARTING_SURFACE_ID].find_tiles_filtered{
                 position = position,
                 radius = 100,
                 name={"water", "deepwater"},
                 limit = 1,
             }
 
-            local town_halls = game.surfaces[1].find_entities_filtered{
+            local town_halls = game.surfaces[Constants.STARTING_SURFACE_ID].find_entities_filtered{
                 position = position,
                 radius = 100,
                 name = "tycoon-town-hall",
@@ -210,17 +210,17 @@ end
 --         for i, primaryIndustry in ipairs(global.tycoon_new_primary_industries or {}) do
 --             local x, y
 --             if primaryIndustry.startCoordinates == nil then
---                 local chunk = game.surfaces[1].get_random_chunk()
+--                 local chunk = game.surfaces[Constants.STARTING_SURFACE_ID].get_random_chunk()
 --                 x = chunk.x * 32
 --                 y = chunk.y * 32
 --             else
 --                 x = primaryIndustry.startCoordinates.x
 --                 y = primaryIndustry.startCoordinates.y
 --             end
---             local position = game.surfaces[1].find_non_colliding_position(primaryIndustry.name, {x, y}, 200, 5, true)
+--             local position = game.surfaces[Constants.STARTING_SURFACE_ID].find_non_colliding_position(primaryIndustry.name, {x, y}, 200, 5, true)
 
 --             -- make sure this doesn't spawn too close to existing player entities
---             local player_entities_count = game.surfaces[1].count_entities_filtered{
+--             local player_entities_count = game.surfaces[Constants.STARTING_SURFACE_ID].count_entities_filtered{
 --                 position = position,
 --                 radius = 50,
 --                 force = game.forces.player,

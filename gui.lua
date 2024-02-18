@@ -214,12 +214,6 @@ local function addConstructionMaterialsGui(rootGui, constructionNeeds, city, har
     constructionGui.add{type = "label", caption = {"", {"tycoon-gui-construction-requirement-1"}}}
     constructionGui.add{type = "label", caption = {"", {"tycoon-gui-construction-requirement-2"}}}
 
-    if housingType ~= "simple" then
-        constructionGui.add{type = "label", caption = {"", {"tycoon-gui-urbanization-requirement-1"}}}
-        constructionGui.add{type = "label", caption = {"", {"tycoon-gui-urbanization-requirement-2"}}}
-    end
-
-
     constructionGui.add{type = "line"}
 
     local lowerTierMap = {
@@ -467,7 +461,7 @@ local function listSpecialCityBuildings(city, name)
     if city.special_buildings.other[name] ~= nil and #city.special_buildings.other[name] > 0 then
         entities = city.special_buildings.other[name]
     else
-        entities = game.surfaces[1].find_entities_filtered{
+        entities = game.surfaces[Constants.STARTING_SURFACE_ID].find_entities_filtered{
             name=name,
             position=city.special_buildings.town_hall.position,
             radius=Constants.CITY_RADIUS
@@ -570,6 +564,10 @@ local lowerTierMap = {
     highrise = "residential"
 }
 
+local function get_colouring(isTrue) 
+    return isTrue and "[color=green]" or "[color=red]"
+end
+
 --- @param city City
 --- @param housingType string
 local function addHousingView(housingType, city, anchor)
@@ -627,32 +625,47 @@ local function addHousingView(housingType, city, anchor)
         numberOfLowerTierHousesNeeded = Util.countPendingLowerTierHouses(lowerTierCount, higherTierCount, house_ratios[housingType])
     end
 
-    if #hardwareStores == 0 then
-        construction_info.add{type = "label", caption = {"", {"tycoon-housing-construction-missing-hardware-store"}}}
-    elseif housingType ~= "simple" and numberOfLowerTierHousesNeeded > 0 then
-        construction_info.add{type = "label", caption = {"",{"tycoon-gui-grow-other-housing-tier", {"", {"technology-name.tycoon-" .. housingType .. "-housing"}}, numberOfLowerTierHousesNeeded, {"", {"technology-name.tycoon-" .. lowerTierMap[housingType] .. "-housing"}}}}}
-    elseif not areThereEnoughConstructionMaterials(city, housingType) then
-        construction_info.add{type = "label", caption = {"", {"tycoon-housing-construction-missing-material"}}}
-    else
-        -- NEXT CONSTRUCTION DURATION
-        local timer = (city.construction_timers or {})[housingType] or {
-            last_construction = 0,
-            construction_interval = math.huge
-        }
-        local remainig_seconds = math.max(math.ceil(((timer.last_construction + timer.construction_interval) - game.tick) / 60), 0)
-        local minutes = math.floor(remainig_seconds / 60)
-        local seconds = remainig_seconds % 60
-        if minutes > 30 then
-            construction_info.add{type = "label", caption = {"", {"tycoon-housing-no-construction"}}}
-        else
-            construction_info.add{type = "label", caption = {"", {"tycoon-housing-construction-time-remaining", string.format("%02d", minutes), string.format("%02d", seconds)}}}
-        end
+    local met_hardware_store = #hardwareStores > 0
+    local met_construction_material = areThereEnoughConstructionMaterials(city, housingType)
+    local met_lower_tier_houses = housingType == "simple" or numberOfLowerTierHousesNeeded == 0
+
+    local construction_info_table = construction_info.add{type = "table", column_count = 3, draw_horizontal_lines = true}
+
+    construction_info_table.add{type = "label", caption = {"", {"item-name.tycoon-hardware-store"}}}
+    local hardware_store_status = not met_hardware_store and "tycoon-gui-status-missing" or "tycoon-gui-status-built"
+    construction_info_table.add{type = "label", caption = " "}
+    construction_info_table.add{type = "label", caption = {"", get_colouring(met_hardware_store), {hardware_store_status},"[/color]"}}
+
+    construction_info_table.add{type = "label", caption = {"", {"tycoon-gui-construction-materials"}}}
+    local construction_material_status = met_construction_material and "tycoon-gui-status-supplied" or "tycoon-gui-status-missing"
+    construction_info_table.add{type = "label", caption = " "}
+    construction_info_table.add{type = "label", caption = {"", get_colouring(met_construction_material), {construction_material_status},"[/color]"}}
+
+    if housingType ~= "simple" then
+        construction_info_table.add{type = "label", caption = {"", {"tycoon-gui-lower-tier-houses-requirement"}}}
+        construction_info_table.add{type = "label", caption = " "}
+        construction_info_table.add{type = "label", caption = {"", get_colouring(met_lower_tier_houses), numberOfLowerTierHousesNeeded,"[/color]"}}
     end
 
+    construction_info_table.add{type = "label", caption = {"", {"tycoon-gui-next-construction"}}}
+    construction_info_table.add{type = "label", caption = " "}
+    local timer = (city.construction_timers or {})[housingType] or {
+        last_construction = 0,
+        construction_interval = math.huge
+    }
+    local remainig_seconds = math.max(math.ceil(((timer.last_construction + timer.construction_interval) - game.tick) / 60), 0)
+    local minutes = math.floor(remainig_seconds / 60)
+    local seconds = remainig_seconds % 60
+    if not (met_hardware_store and met_construction_material and met_lower_tier_houses) or minutes > 30 then
+        construction_info_table.add{type = "label", caption = {"", "[color=red]", {"tycoon-housing-missing-prerequisites"}, "[/color]"}}
+    elseif minutes > 10 then
+        construction_info_table.add{type = "label", caption = {"", "[color=orange]", {"tycoon-housing-construction-time-remaining", string.format("%02d", minutes), string.format("%02d", seconds)},"[/color]"}}
+    else
+        construction_info_table.add{type = "label", caption = {"", "[color=green]", {"tycoon-housing-construction-time-remaining", string.format("%02d", minutes), string.format("%02d", seconds)},"[/color]"}}
+    end
 
-
-
-
+    construction_info.add{type = "label", caption = {"", {"tycoon-gui-boost-construction-speed"}}}
+    
     local basic_needs_container = tabbed_pane.add{type = "scroll-pane", direction = "vertical"}
     tabbed_pane.add_tab(tab_basic_needs, basic_needs_container)
     addBasicNeedsView(basic_needs_container, basicNeeds[housingType], city, waterTowers, markets, housingType)

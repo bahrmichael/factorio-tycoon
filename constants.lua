@@ -18,7 +18,7 @@ local CONSTANTS = {
         highrise = 100,
     },
 
-    SURFACE_INDEX = 1,
+    STARTING_SURFACE_ID = 1,
 
     RESIDENTIAL_HOUSE_RATIO = 3,
     HIGHRISE_HOUSE_RATIO = 5,

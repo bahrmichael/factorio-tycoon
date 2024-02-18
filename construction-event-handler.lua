@@ -25,7 +25,7 @@ local function on_built(event)
     local entity = event.created_entity
 
     if Util.isSupplyBuilding(entity.name) or entity.name == "tycoon-passenger-train-station" then
-        local nearbyTownHall = game.surfaces[1].find_entities_filtered{
+        local nearbyTownHall = game.surfaces[Constants.STARTING_SURFACE_ID].find_entities_filtered{
             position=entity.position,
             radius=Constants.CITY_RADIUS,
             name="tycoon-town-hall",
@@ -74,7 +74,7 @@ local function on_removed(event)
 
     if Util.isSupplyBuilding(building.entity_name) or building.entity_name == "tycoon-passenger-train-station" then
         
-        local nearby_town_hall = game.surfaces[1].find_entities_filtered{
+        local nearby_town_hall = game.surfaces[Constants.STARTING_SURFACE_ID].find_entities_filtered{
             position=building.entity.position,
             radius=Constants.CITY_RADIUS,
             name="tycoon-town-hall",

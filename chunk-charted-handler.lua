@@ -18,7 +18,7 @@ local function on_chunk_charted(event)
         local entity_name = randomPrimaryIndustry()
         local position
         if entity_name == "tycoon-fishery" then
-            local water_tile_count = game.surfaces[1].count_tiles_filtered{
+            local water_tile_count = game.surfaces[Constants.STARTING_SURFACE_ID].count_tiles_filtered{
                 area = event.area,
                 name = { "water", "deepwater" }
             }
@@ -29,9 +29,9 @@ local function on_chunk_charted(event)
                 return
             end
 
-            position = game.surfaces[1].find_non_colliding_position(entity_name, event.area.left_top, 100, 1, true)
+            position = game.surfaces[Constants.STARTING_SURFACE_ID].find_non_colliding_position(entity_name, event.area.left_top, 100, 1, true)
         else
-            position = game.surfaces[1].find_non_colliding_position_in_box(entity_name, event.area, 2, true)
+            position = game.surfaces[Constants.STARTING_SURFACE_ID].find_non_colliding_position_in_box(entity_name, event.area, 2, true)
         end
 
         if position ~= nil then
@@ -42,9 +42,9 @@ local function on_chunk_charted(event)
                 -- The game slider allows between 17% and 600%.
                 -- 17% * 200 = 34
                 -- 600% * 200 = 1200
-                min_distance = math.max(200 * game.surfaces[1].map_gen_settings.water, 50)
+                min_distance = math.max(200 * game.surfaces[Constants.STARTING_SURFACE_ID].map_gen_settings.water, 50)
             end
-            local nearby_same_primary_industries_count = game.surfaces[1].count_entities_filtered{
+            local nearby_same_primary_industries_count = game.surfaces[Constants.STARTING_SURFACE_ID].count_entities_filtered{
                 position=position,
                 radius=min_distance,
                 name=entity_name,

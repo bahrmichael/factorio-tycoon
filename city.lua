@@ -118,7 +118,7 @@ end
 --- @param area any
 --- @param ignorables string[] | nil
 local function removeColldingEntities(area, ignorables)
-    local printEntities = game.surfaces[1].find_entities_filtered({
+    local printEntities = game.surfaces[Constants.STARTING_SURFACE_ID].find_entities_filtered({
         area=area,
         type = {"tree", "simple-entity"}
     })
@@ -132,7 +132,7 @@ local function removeColldingEntities(area, ignorables)
 end
 
 local function hasCliffsOrWater(area)
-    local water = game.surfaces[1].find_tiles_filtered{
+    local water = game.surfaces[Constants.STARTING_SURFACE_ID].find_tiles_filtered{
         area = area,
         name = {
             "deepwater",
@@ -146,7 +146,7 @@ local function hasCliffsOrWater(area)
         },
         limit = 1
     }
-    local cliffs = game.surfaces[1].find_entities_filtered{
+    local cliffs = game.surfaces[Constants.STARTING_SURFACE_ID].find_entities_filtered{
         area = area,
         name = { "cliff" },
         limit = 1
@@ -169,7 +169,7 @@ local function isAreaFree(area, additionalIgnorables)
         end
     end
 
-    local entities = game.surfaces[1].find_entities_filtered({
+    local entities = game.surfaces[Constants.STARTING_SURFACE_ID].find_entities_filtered({
         area=area,
         type={"tree"},
         name=ignorables,
@@ -202,7 +202,7 @@ local function checkForCollidables(city, coordinates, additionalIgnorables)
     end
 
     -- Too many trees / Other entities
-    local entities = game.surfaces[1].find_entities_filtered({
+    local entities = game.surfaces[Constants.STARTING_SURFACE_ID].find_entities_filtered({
         area=area,
         type={"tree"},
         name=ignorables,
@@ -354,7 +354,7 @@ local function areStraightRailsOrthogonal(city, coordinates, direction)
     }
 
     -- Too many trees / Other entities
-    local entities = game.surfaces[1].find_entities_filtered({
+    local entities = game.surfaces[Constants.STARTING_SURFACE_ID].find_entities_filtered({
         area=area,
         name={"straight-rail"},
         -- Only test 10 rail pieces, that should give us enough info
@@ -582,7 +582,7 @@ local function printTiles(start, map, tileName)
         x = start.x
         y = y + 1
     end
-    game.surfaces[1].set_tiles(tiles)
+    game.surfaces[Constants.STARTING_SURFACE_ID].set_tiles(tiles)
 end
 
 --- @param direction Direction
@@ -840,7 +840,7 @@ local function startConstruction(city, buildingConstruction, queueIndex, allowed
             removeColldingEntities(area)
 
             -- Place an excavation site entity that will be later replaced with the actual building
-            local excavationPit = game.surfaces[1].create_entity{
+            local excavationPit = game.surfaces[Constants.STARTING_SURFACE_ID].create_entity{
                 name = getIteratedExcavationPitName(),
                 position = {x = startCoordinates.x - 0.5 + Constants.CELL_SIZE / 2, y = startCoordinates.y - 0.5  + Constants.CELL_SIZE / 2},
                 force = "player",
@@ -874,7 +874,7 @@ local function isCharted(city, coordinates)
         y = math.floor((GridUtil.getOffsetY(city) + coordinates.y * Constants.CELL_SIZE) / 32),
         x = math.floor((GridUtil.getOffsetX(city) + coordinates.x * Constants.CELL_SIZE) / 32),
     }
-    return game.forces.player.is_chunk_charted(game.surfaces[1], chunkPosition)
+    return game.forces.player.is_chunk_charted(game.surfaces[Constants.STARTING_SURFACE_ID], chunkPosition)
 end
 
 --- @param coordinates Coordinates
@@ -1075,13 +1075,13 @@ end
 local function createLight(houseUnitNumber, mapPosition, buildingType)
     local light
     if buildingType == "residential" then
-        light = game.surfaces[1].create_entity{
+        light = game.surfaces[Constants.STARTING_SURFACE_ID].create_entity{
             name = "hiddenlight-40",
             position = mapPosition,
             force = "neutral",
         }
     elseif buildingType == "highrise" then
-        light = game.surfaces[1].create_entity{
+        light = game.surfaces[Constants.STARTING_SURFACE_ID].create_entity{
             name = "hiddenlight-60",
             position = mapPosition,
             force = "neutral",
@@ -1090,6 +1090,24 @@ local function createLight(houseUnitNumber, mapPosition, buildingType)
     if light ~= nil then
         setHouseLight(houseUnitNumber, light)
     end
+end
+
+local citizenCounts = {
+    simple = 4,
+    residential = 20,
+    highrise = 100,
+}
+
+local function growCitizenCount(city, count, tier)
+    if city.citizens[tier] == nil then
+        city.citizens[tier] = 0
+    end
+    city.citizens[tier] = city.citizens[tier] + count
+    if city.citizens[tier] < 0 then
+        -- This is just a coding safeguard in case there's buggy code that tries to lower it below 0.
+        city.citizens[tier] = 0
+    end
+    Consumption.updateNeeds(city)
 end
 
 --- @param city City
@@ -1130,7 +1148,7 @@ local function completeConstruction(city, buildingTypes)
             yModifier = -0.5
         end
         local position = {x = startCoordinates.x + Constants.CELL_SIZE / 2 + xModifier, y = startCoordinates.y + Constants.CELL_SIZE / 2 + yModifier}
-        entity = game.surfaces[1].create_entity{
+        entity = game.surfaces[Constants.STARTING_SURFACE_ID].create_entity{
             name = getIteratedHouseName(entityName),
             position = position,
             force = "player",
@@ -1174,8 +1192,10 @@ local function completeConstruction(city, buildingTypes)
                 end
             end
         end
+
+        growCitizenCount(city, citizenCounts[entityName], entityName)
     elseif entityName == "garden" then
-        entity = game.surfaces[1].create_entity{
+        entity = game.surfaces[Constants.STARTING_SURFACE_ID].create_entity{
             name = getIteratedGardenName(),
             position = {x = startCoordinates.x + Constants.CELL_SIZE / 2, y = startCoordinates.y  + Constants.CELL_SIZE / 2},
             force = "player",
@@ -1187,7 +1207,7 @@ local function completeConstruction(city, buildingTypes)
             xModifier = -0.5
             yModifier = 0
         end
-        entity = game.surfaces[1].create_entity{
+        entity = game.surfaces[Constants.STARTING_SURFACE_ID].create_entity{
             name = entityName,
             position = {x = startCoordinates.x + Constants.CELL_SIZE / 2 + xModifier, y = startCoordinates.y  + Constants.CELL_SIZE / 2 + yModifier},
             force = "player",
@@ -1220,15 +1240,13 @@ local upgrade_paths = {
         waitTime = 300,
         previousStage = "simple",
         nextStage = "residential",
-        upgradeDurationInSeconds = {30, 60},
-        requiresUsedAreaSize = 2
+        upgradeDurationInSeconds = {30, 60}
     },
     residential = {
         waitTime = 600,
         previousStage = "residential",
         nextStage = "highrise",
-        upgradeDurationInSeconds = {120, 240},
-        requiresUsedAreaSize = 3
+        upgradeDurationInSeconds = {120, 240}
     }
 }
 
@@ -1249,12 +1267,32 @@ local function hasEmptySurroundingSpace(city, coordinates, size)
     return false
 end
 
+local function hasPlayerEntities(city, coordinates)
+    local startCoordinates = GridUtil.translateCityGridToTileCoordinates(city, coordinates)
+    local area = {
+        {x = startCoordinates.x, y = startCoordinates.y},
+        {x = startCoordinates.x + Constants.CELL_SIZE, y = startCoordinates.y + Constants.CELL_SIZE}
+    }
+    local playerEntities = game.surfaces[Constants.STARTING_SURFACE_ID].find_entities_filtered({
+        area=area,
+        force=game.forces.player,
+        limit=1
+    })
+    local countNonHouses = 0
+    for _, v in ipairs(playerEntities) do
+        if not string.find(v.name, "tycoon-house-", 1, true) then
+            countNonHouses = countNonHouses + 1
+        end
+    end
+    return countNonHouses > 0
+end
+
 --- @param city City
 --- @param limit number
 --- @param upgradeTo BuildingType
 local function findUpgradableCells(city, limit, upgradeTo)
     local upgradeCells = {}
-    for _, coordinates in ipairs(city.houseLocations) do
+    for _, coordinates in ipairs(city.houseLocations or {}) do
         local cell = GridUtil.safeGridAccess(city, coordinates, "findUpgradableCells")
         if cell ~= nil and cell.type == "building" and cell.buildingType ~= nil then
             local upgradePath = upgrade_paths[cell.buildingType]
@@ -1262,9 +1300,10 @@ local function findUpgradableCells(city, limit, upgradeTo)
                 if (cell.createdAtTick + upgradePath.waitTime) < game.tick then
 
                     -- Check that all surrounding cells are in use. It would be odd to build a skyscraper in open space.
-                    local emptySurroundingSpace = hasEmptySurroundingSpace(city, coordinates, upgradePath.requiresUsedAreaSize)
+                    local emptySurroundingSpace = hasEmptySurroundingSpace(city, coordinates, 1)
 
-                    if not emptySurroundingSpace then
+                    -- If the player has built entities in this cell in the meantime, we can either not upgrade or destroy their entities. Staying safe and not upgrading is probably better.
+                    if not emptySurroundingSpace and not hasPlayerEntities(city, coordinates) then
                         table.insert(upgradeCells, {
                             cell = cell,
                             upgradePath = upgradePath,
@@ -1303,28 +1342,8 @@ local function clearCell(city, upgradeCell)
     end
 end
 
-local function hasPlayerEntities(city, cell)
-    local startCoordinates = GridUtil.translateCityGridToTileCoordinates(city, cell.coordinates)
-    local area = {
-        {x = startCoordinates.x, y = startCoordinates.y},
-        {x = startCoordinates.x + Constants.CELL_SIZE, y = startCoordinates.y + Constants.CELL_SIZE}
-    }
-    local playerEntities = game.surfaces[1].find_entities_filtered({
-        area=area,
-        force=game.forces.player,
-        limit=1
-    })
-    local countNonHouses = 0
-    for _, v in ipairs(playerEntities) do
-        if not string.find(v.name, "tycoon-house-", 1, true) then
-            countNonHouses = countNonHouses + 1
-        end
-    end
-    return countNonHouses > 0
-end
-
 --- @param city City
---- @return boolean upgradeStarted
+--- @param newStage string
 local function upgradeHouse(city, newStage)
     -- todo: test if the game destroying an entity also triggers the destroy hook (and change the citizen counter reduction accordingly)
     local upgradeCells = findUpgradableCells(city, 10, newStage)
@@ -1333,14 +1352,7 @@ local function upgradeHouse(city, newStage)
         return false
     end
 
-    -- todo: rework this, see below
-    -- Move the check for player entities into the findUpgradableCells function. This will increase the likelihood of building something, and reduces the chance of getting stuck
-    -- if we are so unfortunate to only get cells with player entities.
     local upgradeCell = upgradeCells[city.generator(#upgradeCells)]
-    -- If the player has built entities in this cell in the meantime, we can either not upgrade or destroy their entities. Staying safe and not upgrading is probably better.
-    if hasPlayerEntities(city, upgradeCell) then
-        return false
-    end
 
     clearCell(city, upgradeCell)
 
@@ -1348,35 +1360,10 @@ local function upgradeHouse(city, newStage)
 
     local constructionTimeInTicks = city.generator(upgradePath.upgradeDurationInSeconds[1] * 60, upgradePath.upgradeDurationInSeconds[2] * 60)
 
-
-    -- local constructionQueueIndex = game.tick + constructionTimeInTicks
-    -- -- 2100
-    -- for _ = 1, 100, 1 do
-    --     if global.tycoon_constructions[constructionQueueIndex] == nil then
-    --         -- 2100 blocked
-    --         -- insert
-    --         break
-    --     else
-    --         constructionQueueIndex = constructionQueueIndex + 5 + math.ceil(math.random() * 10)
-    --         -- 2100 + 7 => 2107
-    --         -- 10 * 60 => 600 / 3 => 200
-    --     end
-    -- end
-
-    -- local queue = {}
-    -- queue[4] = true
-    -- queue[7] = true
-    -- queue[9] = true
-    -- queue[15] = true
-
-    -- local completableConstructions = table.unpack(queue, nil, game.tick)
-
     startConstruction(city, {
         buildingType = upgradePath.nextStage,
         constructionTimeInTicks = constructionTimeInTicks,
     }, "buildingLocationQueue", {upgradeCell.coordinates})
-
-    return true
 end
 
 -- local queue = {
@@ -1424,13 +1411,17 @@ local upgrade_paths = {
     simple = "residential",
     residential = "highrise"
 }
+local lower_tiers = {
+    highrise = "residential",
+    residential = "simple"
+}
 
 local function list_special_city_buildings(city, name)
     local entities = {}
     if city.special_buildings.other[name] ~= nil and #city.special_buildings.other[name] > 0 then
         entities = city.special_buildings.other[name]
     else
-        entities = game.surfaces[1].find_entities_filtered{
+        entities = game.surfaces[Constants.STARTING_SURFACE_ID].find_entities_filtered{
             name=name,
             position=city.special_buildings.town_hall.position,
             radius=1000
@@ -1452,8 +1443,7 @@ local house_ratios = {
     highrise = Constants.HIGHRISE_HOUSE_RATIO,
 }
 
-local function is_allowed_upgrade_to_tier(city, current_tier)
-    local next_tier = upgrade_paths[current_tier]
+local function is_allowed_upgrade_to_tier(city, next_tier)
     if not game.forces.player.technologies["tycoon-" .. next_tier .. "-housing"].researched then
         return false
     end
@@ -1462,7 +1452,7 @@ local function is_allowed_upgrade_to_tier(city, current_tier)
     --     return false
     -- end
 
-    local current_tier_count = ((city.buildingCounts or {})[current_tier] or 0)
+    local current_tier_count = ((city.buildingCounts or {})[lower_tiers[next_tier]] or 0)
     local next_tier_count = ((city.buildingCounts or {})[next_tier] or 0)
     if Util.countPendingLowerTierHouses(current_tier_count, next_tier_count, house_ratios[next_tier]) > 0 then
         return false
@@ -1556,29 +1546,6 @@ local function has_time_elapsed_for_construction(city, tier)
     return timer.last_construction + timer.construction_interval < game.tick
 end
 
-local citizenCounts = {
-    simple = 4,
-    residential = 20,
-    highrise = 100,
-}
-
-local function growCitizenCount(city, count, tier)
-    if city.citizens[tier] == nil then
-        city.citizens[tier] = 0
-    end
-    city.citizens[tier] = city.citizens[tier] + count
-    if city.citizens[tier] < 0 then
-        -- This is just a coding safeguard in case there's buggy code that tries to lower it below 0.
-        city.citizens[tier] = 0
-    end
-    Consumption.updateNeeds(city)
-end
-
-local lower_tiers = {
-    residential = "simple",
-    highrise = "residential"
-}
-
 local function start_house_construction()
     for _, city in ipairs(global.tycoon_cities or {}) do
         -- Check if resources are available. Without resources no growth is possible.
@@ -1600,10 +1567,7 @@ local function start_house_construction()
                             constructionTimeInTicks = city.generator(600, 1200)
                         }, "buildingLocationQueue")
                     elseif is_allowed_upgrade_to_tier(city, tier) then
-                        local upgrade_started = upgradeHouse(city, tier)
-                        if upgrade_started then
-                            growCitizenCount(city, -1 * citizenCounts[lower_tiers[tier]], lower_tiers[tier])
-                        end
+                        upgradeHouse(city, tier)
                     end
                 end
             end
@@ -1621,7 +1585,6 @@ local CITY = {
     growAtRandomRoadEnd = growAtRandomRoadEnd,
     updatepossibleBuildingLocations = addBuildingLocations,
     completeConstruction = completeConstruction,
-    upgradeHouse = upgradeHouse,
     startConstruction = startConstruction,
     isCellFree = isCellFree,
     construct_priority_buildings = construct_priority_buildings,
