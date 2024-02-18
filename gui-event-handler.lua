@@ -99,8 +99,7 @@ end
 
 local function on_gui_text_changed(event)
     if string.find(event.element.name, "train_station_limit", 1, true) then
-        -- todo: delimiter is undefined, no idea why this worked so far. might crash.
-        local trainStationUnitNumber = tonumber(Util.splitString(event.element.name, delimiter)[2])
+        local trainStationUnitNumber = tonumber(Util.splitString(event.element.name, ":")[2])
         assert(trainStationUnitNumber, "Failed to resolve train station unit number in on_gui_text_changed.")
         global.tycoon_train_station_limits[trainStationUnitNumber] = math.min(tonumber(event.text) or 0, 100)
     end

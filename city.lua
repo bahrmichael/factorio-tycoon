@@ -1403,7 +1403,7 @@ local function list_special_city_buildings(city, name)
         entities = game.surfaces[Constants.STARTING_SURFACE_ID].find_entities_filtered{
             name=name,
             position=city.special_buildings.town_hall.position,
-            radius=1000
+            radius=Constants.CITY_RADIUS,
         }
         city.special_buildings.other[name] = entities
     end

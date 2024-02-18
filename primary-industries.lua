@@ -189,14 +189,16 @@ local function spawn_initial_industry()
     if not global.tycoon_has_initial_apple_farm and #(global.tycoon_cities or {}) > 0 then
         local position = find_position_for_initial_apple_farm()
         if position == nil then
-            game.print({"[color=red]", {"tycoon-warning-failed-to-place-first-apple-farm"} ,"[/color]"})
+            -- we don't need to do anything here, it will be reattempted next loop
+            return
         else
             local entity = place_primary_industry_at_position(position, "tycoon-apple-farm")
             if entity ~= nil then
                 add_to_global_primary_industries(entity)
                 global.tycoon_has_initial_apple_farm = true
             else
-                game.print({"[color=red]", {"tycoon-warning-failed-to-place-first-apple-farm"} ,"[/color]"})
+                -- we don't need to do anything here, it will be reattempted next loop
+                return
             end
         end
     end

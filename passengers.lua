@@ -65,7 +65,7 @@ local function getRandomCityName(city, excludedNames)
     return nil
 end
 
---- @param cityName String
+--- @param cityName string
 --- @return number | nil
 local function get_max_departing_passengers_for_destination(cityName)
     local destinationCity = nil

@@ -8,6 +8,8 @@ local function show_info_messages()
         end
         global.tycoon_intro_message_displayed = true
     end
+
+    -- todo: mention 1 minute consumption and update cycle
     
     -- show the primary industries message after 10 minutes
     if not global.tycoon_info_message_primary_industries_displayed and game.tick > 60 * 60 * 10 then
