@@ -15,6 +15,8 @@ Date: 18. 02. 2023
   Changes:
     - Removed urbanization requirements: Residential and highrise houses don't need a certain amount of houses or roads around them anymore.
     - Updated the picture for dairy products tech.
+  Bugfixes:
+    - In multiplayer games city range overlays disappeared when another player put a supply building into their hand. This is now fixed, and only your cursor is checked.
 ---------------------------------------------------------------------------------------------------
 Version: 0.3.14
 Date: 19. 01. 2024
