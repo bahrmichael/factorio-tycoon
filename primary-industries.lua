@@ -124,8 +124,6 @@ function distance( x1, y1, x2, y2 )
 	return math.sqrt( (x2-x1)^2 + (y2-y1)^2 )
 end
 
--- add_to_global_primary_industries(entity)
-
 local function find_position_for_initial_apple_farm()
     local coordinate_candidates = {}
     for _ = 1, 5, 1 do
@@ -191,57 +189,21 @@ local function spawn_initial_industry()
     if not global.tycoon_has_initial_apple_farm and #(global.tycoon_cities or {}) > 0 then
         local position = find_position_for_initial_apple_farm()
         if position == nil then
-            -- todo: print warning, or retry
+            game.print({"[color=red]", {"tycoon-warning-failed-to-place-first-apple-farm"} ,"[/color]"})
         else
             local entity = place_primary_industry_at_position(position, "tycoon-apple-farm")
             if entity ~= nil then
                 add_to_global_primary_industries(entity)
                 global.tycoon_has_initial_apple_farm = true
             else
-                -- todo: print warning, or retry
+                game.print({"[color=red]", {"tycoon-warning-failed-to-place-first-apple-farm"} ,"[/color]"})
             end
         end
     end
 end
 
-
--- local function spawn_industry()
---     if #(global.tycoon_new_primary_industries or {}) > 0 then
---         for i, primaryIndustry in ipairs(global.tycoon_new_primary_industries or {}) do
---             local x, y
---             if primaryIndustry.startCoordinates == nil then
---                 local chunk = game.surfaces[Constants.STARTING_SURFACE_ID].get_random_chunk()
---                 x = chunk.x * 32
---                 y = chunk.y * 32
---             else
---                 x = primaryIndustry.startCoordinates.x
---                 y = primaryIndustry.startCoordinates.y
---             end
---             local position = game.surfaces[Constants.STARTING_SURFACE_ID].find_non_colliding_position(primaryIndustry.name, {x, y}, 200, 5, true)
-
---             -- make sure this doesn't spawn too close to existing player entities
---             local player_entities_count = game.surfaces[Constants.STARTING_SURFACE_ID].count_entities_filtered{
---                 position = position,
---                 radius = 50,
---                 force = game.forces.player,
---                 limit = 1
---             }
---             if player_entities_count > 0 then
---                 return
---             end
-
---             local entity = place_primary_industry_at_position(position, primaryIndustry.name)
---             if entity ~= nil then
---                 add_to_global_primary_industries(entity)
---                 table.remove(global.tycoon_new_primary_industries, i)
---             end
---         end
---     end
--- end
-
 return {
     place_primary_industry_at_position = place_primary_industry_at_position,
     add_to_global_primary_industries = add_to_global_primary_industries,
     spawn_initial_industry = spawn_initial_industry,
-    -- spawn_industry = spawn_industry,
 }

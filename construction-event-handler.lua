@@ -56,7 +56,6 @@ local function on_built(event)
 end
 
 local function on_removed(event)
-    -- assert(event.unit_number, "Called on_removed without a unit_number. Wrong event?")
     local unit_number = event.unit_number
     if unit_number == nil then
         return

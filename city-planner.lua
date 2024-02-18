@@ -39,15 +39,25 @@ local function isInRangeOfAnyCity(position)
     return false
 end
 
+local function find_random_city_position()
+    local chunk = game.surfaces[Constants.STARTING_SURFACE_ID].get_random_chunk()
+    if chunk ~= nil then
+        if game.forces.player.is_chunk_charted(game.surfaces[Constants.STARTING_SURFACE_ID], chunk) then
+            return {
+                x = chunk.x * 32,
+                y = chunk.y * 32,
+            }
+        end
+    end
+    return nil
+end
+
 local function findNewCityPosition(isInitialTown)
     local scorings = {}
     -- make up to 10 attempts
     for i = 1, 10, 1 do
-        -- local chunk = game.surfaces[Constants.STARTING_SURFACE_ID].get_random_chunk()
-        -- if chunk ~= nil then
-        --     if game.forces.player.is_chunk_charted(game.surfaces[Constants.STARTING_SURFACE_ID], chunk) then
-        local position = { x = math.random(-50, 50), y = math.random(-50, 50) }
-        if isInitialTown or not isInRangeOfAnyCity(position) then
+        local position = isInitialTown and { x = math.random(-50, 50), y = math.random(-50, 50) } or find_random_city_position()
+        if position ~= nil and (isInitialTown or not isInRangeOfAnyCity(position)) then
             local newCityPosition = game.surfaces[Constants.STARTING_SURFACE_ID].find_non_colliding_position("tycoon-town-center-virtual", position,
                 Constants.CITY_RADIUS, 5, true)
             if newCityPosition ~= nil then
@@ -103,8 +113,6 @@ local function findNewCityPosition(isInitialTown)
                 end
             end
         end
-        --     end
-        -- end
     end
 
     local tilesFactor = 3 / game.surfaces[Constants.STARTING_SURFACE_ID].map_gen_settings.water -- water is a percentage value

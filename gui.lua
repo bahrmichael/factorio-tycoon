@@ -226,49 +226,10 @@ local function addConstructionMaterialsGui(rootGui, constructionNeeds, city, har
         local higherTierCount = ((city.buildingCounts or {})[housingType] or 0)
         local numberOfLowerTierHousesNeeded = Util.countPendingLowerTierHouses(lowerTierCount, higherTierCount, house_ratios[housingType])
 
-        -- if numberOfLowerTierHousesNeeded == 0 and not Util.hasReachedLowerTierThreshold(city, housingType) then
-        --     numberOfLowerTierHousesNeeded = Util.lowerTierThreshold[housingType] - lowerTierCount
-        -- end
-
         if numberOfLowerTierHousesNeeded > 0 then
             constructionGui.add{type = "label", caption = {"", "[color=red]", {"tycoon-gui-grow-other-housing-tier", {"", {"technology-name.tycoon-" .. housingType .. "-housing"}}, numberOfLowerTierHousesNeeded, {"", {"technology-name.tycoon-" .. lowerTierMap[housingType] .. "-housing"}}}, "[/color]"}}
         end
     end
-end
-
--- --- @param supplyLevels number[]
--- --- @return number growthChance
--- local function getGrowthChance(supplyLevels)
---     -- https://mods.factorio.com/mod/tycoon/discussion/6565de7d3e4062cbd3213508
---     -- ((S1/D1 + S2/D2 + ... + Sn/Dn) / n)²
---     local innerSum = 0;
---     for _, value in pairs(supplyLevels) do
---         innerSum = innerSum + math.min(1, value)
---     end
-
---     local growthChance = math.pow((innerSum / #supplyLevels), 4)
-
---     return growthChance
--- end
-
---- @param mandatorySupplyLevels number[]
---- @param additionalSupplyLeevls number[]
---- @return number growthChance
-local function getGrowthChance(mandatorySupplyLevels, additionalSupplyLeevls)
-    -- https://mods.factorio.com/mod/tycoon/discussion/6565de7d3e4062cbd3213508
-    -- ((S1/D1 + S2/D2 + ... + Sn/Dn) / n)²
-    local innerSum = 0;
-    for _, value in pairs(mandatorySupplyLevels) do
-        innerSum = innerSum + math.min(1, value)
-    end
-
-    local growthChance = math.pow((innerSum / #mandatorySupplyLevels), 4)
-    local additionalGrowth = 0;
-    for _, value in pairs(additionalSupplyLeevls) do
-        additionalGrowth = additionalGrowth + (math.min(1, value) * 0.05)
-    end
-
-    return math.min(1, growthChance + additionalGrowth)
 end
 
 --- @param rootGui any
@@ -555,10 +516,6 @@ local function getConstructionMaterialsLevelLocalised(city, housingTier)
     end
 end
 
-local function getAllNeeds(city, tier)
-    return MergeObjects(getBasicNeeds(city, tier), getAdditionalNeeds(city, tier))
-end
-
 local lowerTierMap = {
     residential = "simple",
     highrise = "residential"
@@ -596,11 +553,8 @@ local function addHousingView(housingType, city, anchor)
 
     local basicNeedsSupplyLevelsSummary = getSupplyLevelsSummary(Consumption.getSupplyLevels(city, getBasicNeeds(city, housingType)));
     local additionalNeedsSupplyLevelsSummary = getSupplyLevelsSummary(Consumption.getSupplyLevels(city, getAdditionalNeeds(city, housingType)));
-    -- local constructionMaterialsSupplyLevelsSummary = getSupplyLevelsSummary(Consumption.getSupplyLevels(city, getAdditionalNeeds(city, housingType)));
+    
     local tbl = stats.add{type = "table", column_count = 2, draw_horizontal_lines = true}
-    -- citizen count
-    -- tbl.add{type = "label", caption = {"", {"tycoon-gui-citizens"}, ": "}}
-    -- tbl.add{type = "label", caption = {"", countCitizens(city)}}
     -- overall basic needs status
     tbl.add{type = "label", caption = {"", {"tycoon-gui-basic-needs"}, ": "}}
     tbl.add{type = "label", caption = mapSupplyLevelToLocalised(basicNeedsSupplyLevelsSummary)}
@@ -610,9 +564,6 @@ local function addHousingView(housingType, city, anchor)
     -- overall construction materials status
     tbl.add{type = "label", caption = {"", {"tycoon-gui-construction-materials"}, ": "}}
     tbl.add{type = "label", caption = getConstructionMaterialsLevelLocalised(city, housingType)}
-
-    -- local growthChance = getGrowthChance(Consumption.getSupplyLevels(city, getBasicNeeds(city, housingType)), Consumption.getSupplyLevels(city, getAdditionalNeeds(city, housingType)))
-    -- stats.add{type = "label", caption = {"", {"tycoon-gui-growth-chance", math.floor(growthChance * 100), {"", {"technology-name.tycoon-" .. housingType .. "-housing"}}}}}
 
     local construction_info = overview_container.add{type = "frame", direction = "vertical", caption = {"", {"tycoon-gui-construction-info"}}}
 

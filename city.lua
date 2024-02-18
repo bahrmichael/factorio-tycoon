@@ -1092,12 +1092,6 @@ local function createLight(houseUnitNumber, mapPosition, buildingType)
     end
 end
 
-local citizenCounts = {
-    simple = 4,
-    residential = 20,
-    highrise = 100,
-}
-
 local function growCitizenCount(city, count, tier)
     if city.citizens[tier] == nil then
         city.citizens[tier] = 0
@@ -1193,7 +1187,7 @@ local function completeConstruction(city, buildingTypes)
             end
         end
 
-        growCitizenCount(city, citizenCounts[entityName], entityName)
+        growCitizenCount(city, Constants.CITIZEN_COUNTS[entityName], entityName)
     elseif entityName == "garden" then
         entity = game.surfaces[Constants.STARTING_SURFACE_ID].create_entity{
             name = getIteratedGardenName(),
@@ -1366,18 +1360,6 @@ local function upgradeHouse(city, newStage)
     }, "buildingLocationQueue", {upgradeCell.coordinates})
 end
 
--- local queue = {
---     tycoon = "Hello Factorio!",
--- }
-
--- queue[5] = "test"
--- queue[10] = "test"
--- queue[15] = "test"
-
--- table.drain(lessThan 10)
-
--- table.
-
 local function construct_priority_buildings()
     for _, city in ipairs(global.tycoon_cities or {}) do
         local prio_building = table.remove(city.priority_buildings, 1)
@@ -1407,10 +1389,7 @@ local function construct_gardens()
 end
 
 local housing_tiers = {"simple", "residential", "highrise"}
-local upgrade_paths = {
-    simple = "residential",
-    residential = "highrise"
-}
+
 local lower_tiers = {
     highrise = "residential",
     residential = "simple"
@@ -1448,20 +1427,12 @@ local function is_allowed_upgrade_to_tier(city, next_tier)
         return false
     end
 
-    -- if not Util.hasReachedLowerTierThreshold(city, "highrise") then
-    --     return false
-    -- end
-
     local current_tier_count = ((city.buildingCounts or {})[lower_tiers[next_tier]] or 0)
     local next_tier_count = ((city.buildingCounts or {})[next_tier] or 0)
     if Util.countPendingLowerTierHouses(current_tier_count, next_tier_count, house_ratios[next_tier]) > 0 then
         return false
     end
-
-    -- local gridSize = #city.grid
-    -- local highRisePercentage = math.ceil(gridSize * 0.01)
-    -- local highRisePercentageCount = highRisePercentage * highRisePercentage
-    -- return next_tier_count < highRisePercentageCount
+    
     return true
 end
 

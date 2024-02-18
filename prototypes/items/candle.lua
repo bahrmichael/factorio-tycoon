@@ -6,6 +6,6 @@ data:extend{
       icon_size = 256,
       subgroup = "tycoon-finished-products",
       order = "a[tycoon]-a[candle]",
-      stack_size = 10
+      stack_size = 100
     }
   }
