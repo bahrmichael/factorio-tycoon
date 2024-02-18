@@ -1,4 +1,23 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.4.0
+Date: 18. 02. 2023
+  Major Features:
+    - WARNING! This is a major breaking change. You may have to update your Tycoon factories or start a new game. Read more below.
+    - Breaking change: I didn't test this for backwards compatibility due to time constraints and the amount of changes we made. Let me know if something breaks.
+    - Breaking change: Recipes for Tycoon goods have changed across the board, and ratios are now different.
+    - New additional needs: A new set of items has been introduced, with which you can further boost city growth and generate more currency.
+    - Cities grow very differently now, and the growth should feel much smoother. The cities always build roads to have space to construct houses. Each housing tier grows independently from each other. Each tier must be provided with construction to grow at all. If you don't provide basic needs, they will grow roughly 30 minutes. When you supply basic needs, you can get that down to every minute. By providing additional needs, you can lower it down to one construction every 10 seconds.
+    - The city GUI now shows how soon a construction will happen (e.g. in 01:20 (mm:ss)), instead of the previous chance to grow every minute.
+    - Prices for items that the city buys have been rebalanced. You can see what each item yields by opening the city's GUI and looking at the different needs.
+  Minor Features:
+    - The city GUI has been restructed a bit. You may need to click an additional tab here or there, but things are mostly the same.
+    - The passenger spawn rate now also takes the size of destination cities into account. The larger your average city, the more passengers will show up.
+  Changes:
+    - Removed urbanization requirements: Residential and highrise houses don't need a certain amount of houses or roads around them anymore.
+    - Updated the picture for dairy products tech.
+  Bugfixes:
+    - In multiplayer games city range overlays disappeared when another player put a supply building into their hand. This is now fixed, and only your cursor is checked.
+---------------------------------------------------------------------------------------------------
 Version: 0.3.14
 Date: 19. 01. 2024
   Locale:
@@ -36,7 +55,7 @@ Date: 19. 12. 2023
 Version: 0.3.9
 Date: 18. 12. 2023
   Bugfixes:
-    - Fixed an issue where supply buildings an train stations would not connect to city when placed by robots.
+    - Fixed an issue where supply buildings and train stations would not connect to city when placed by robots.
 ---------------------------------------------------------------------------------------------------
 Version: 0.3.8
 Date: 18. 12. 2023

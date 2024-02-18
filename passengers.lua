@@ -25,7 +25,7 @@ local function listSpecialCityBuildings(city, name)
         if not city.special_buildings.town_hall.valid then
             return {}
         end
-        entities = game.surfaces[1].find_entities_filtered{
+        entities = game.surfaces[Constants.STARTING_SURFACE_ID].find_entities_filtered{
             name=name,
             position=city.special_buildings.town_hall.position,
             radius=Constants.CITY_RADIUS
@@ -63,6 +63,27 @@ local function getRandomCityName(city, excludedNames)
         end
     end
     return nil
+end
+
+--- @param cityName string
+--- @return number | nil
+local function get_max_departing_passengers_for_destination(cityName)
+    local destinationCity = nil
+    for id, city in ipairs(global.tycoon_cities or {}) do
+        if city.name == cityName then
+            destinationCity = city
+            break
+        end
+    end
+
+    if destinationCity == nil then
+        return nil
+    end
+
+    local citizenCount = countCitizens(destinationCity)
+    -- This function gives us a value that scales to 2/3 at x=1000 and to 0.9 at 5000
+    local citizenFactor = citizenCount / (citizenCount + 500)
+    return math.floor(citizenCount / 10 * citizenFactor)
 end
 
 --- @param city City
@@ -107,12 +128,26 @@ local function spawnPassengers(city)
                         end
                     end
                 end
+
                 local destination = getRandomCityName(city, excludedCityNames)
                 if destination == nil then
                     return
                 end
+
+                local currentPassengersForDestination = 0
+                for name, count in pairs(selectedTrainStation.get_inventory(1).get_contents()) do
+                    if name == "tycoon-passenger-" .. string.lower(destination) then
+                        currentPassengersForDestination = currentPassengersForDestination + count
+                    end
+                end
+                local maxForDestination = get_max_departing_passengers_for_destination(destination)
+                if maxForDestination == nil or maxForDestination == 0 then
+                    return
+                end
+
+
                 local passenger = "tycoon-passenger-" .. string.lower(destination)
-                local insertedPassengerCount = selectedTrainStation.insert{name = passenger, count = newPassengerCount}
+                local insertedPassengerCount = selectedTrainStation.insert{name = passenger, count = math.min(newPassengerCount, maxForDestination)}
                 for player_index, _ in pairs(game.players) do
                     game.players[player_index].create_local_flying_text{
                         text = {"", {"tycoon-passengers-new", insertedPassengerCount}},
