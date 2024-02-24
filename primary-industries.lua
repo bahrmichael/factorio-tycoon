@@ -10,7 +10,8 @@ local function add_to_global_primary_industries(entity)
     if global.tycoon_primary_industries[entity.name] == nil then
         global.tycoon_primary_industries[entity.name] = {}
     end
-    table.insert(global.tycoon_primary_industries[entity.name], entity.unit_number, entity)
+    -- WARN: do not insert with unit_number as it converts array to a dict
+    table.insert(global.tycoon_primary_industries[entity.name], entity)
 end
 
 local function getItemForPrimaryProduction(name)
