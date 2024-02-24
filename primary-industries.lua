@@ -25,16 +25,16 @@ local function getItemForPrimaryProduction(name)
     end
 end
 
+-- TODO: use localized names from locale/$LANG/entity-names.cfg and remove this table
+local LOCALIZE_PRIMARY = {
+    ["tycoon-apple-farm"] = "Apple Farm",
+    ["tycoon-wheat-farm"] = "Wheat Farm",
+    ["tycoon-fishery"] = "Fishery",
+}
 local function localizePrimaryProductionName(name)
-    if name == "tycoon-apple-farm" then
-        return "Apple Farm"
-    elseif name == "tycoon-wheat-farm" then
-        return "Wheat Farm"
-    elseif name == "tycoon-fishery" then
-        return "Fishery"
-    else
-        return "Primary Production"
-    end
+    local length = (settings.global["tycoon-tags-text-length"] or {}).value
+    local text = LOCALIZE_PRIMARY[name] or "Primary Production"
+    return text:sub(1, length)
 end
 
 local function findHighestProductivityLevel(prefix)
