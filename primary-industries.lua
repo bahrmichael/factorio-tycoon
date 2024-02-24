@@ -37,28 +37,16 @@ local function localizePrimaryProductionName(name)
     return text:sub(1, length)
 end
 
-local function findHighestProductivityLevel(prefix)
-    for i = 1, 20, 1 do
-        if (game.forces.player.technologies[prefix .. "-" .. i] or {}).researched == true then
-            -- noop, attempt the next level
-        else
-            return i
-        end
-    end
-    return 1
-end
-
+-- WARN: multiple forces are not supported, only one is: "player"
 local function getFixedRecipeForIndustry(industryName)
+    local level = (game.forces.player.technologies[industryName .. "-productivity"] or {}).level or 1
     if industryName == "tycoon-apple-farm" then
-        local level = findHighestProductivityLevel("tycoon-apple-farm-productivity")
         local recipe = "tycoon-grow-apples-with-water-" .. level
         return recipe
     elseif industryName == "tycoon-wheat-farm" then
-        local level = findHighestProductivityLevel("tycoon-wheat-farm-productivity")
         local recipe = "tycoon-grow-wheat-with-water-" .. level
         return recipe
     elseif industryName == "tycoon-fishery" then
-        local level = findHighestProductivityLevel("tycoon-fishery-productivity")
         local recipe = "tycoon-fishing-" .. level
         return recipe
     end
