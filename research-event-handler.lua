@@ -1,5 +1,5 @@
 local function increase_productivity(new_recipe, entity_name)
-    for i, primary_industry in ipairs(global.tycoon_primary_industries[entity_name] or {}) do
+    for i, primary_industry in pairs(global.tycoon_primary_industries[entity_name] or {}) do
         if primary_industry.valid then
             primary_industry.set_recipe(new_recipe)
             primary_industry.recipe_locked = true
