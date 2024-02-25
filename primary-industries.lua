@@ -1,4 +1,5 @@
 local Constants = require("constants")
+local Util = require("util")
 
 local function add_to_global_primary_industries(entity)
     if entity == nil then
@@ -10,7 +11,8 @@ local function add_to_global_primary_industries(entity)
     if global.tycoon_primary_industries[entity.name] == nil then
         global.tycoon_primary_industries[entity.name] = {}
     end
-    table.insert(global.tycoon_primary_industries[entity.name], entity.unit_number, entity)
+    -- WARN: do not insert with unit_number as it converts array to a dict
+    table.insert(global.tycoon_primary_industries[entity.name], entity)
 end
 
 local function getItemForPrimaryProduction(name)
@@ -25,40 +27,28 @@ local function getItemForPrimaryProduction(name)
     end
 end
 
+-- TODO: use localized names from locale/$LANG/entity-names.cfg and remove this table
+local LOCALIZE_PRIMARY = {
+    ["tycoon-apple-farm"] = "Apple Farm",
+    ["tycoon-wheat-farm"] = "Wheat Farm",
+    ["tycoon-fishery"] = "Fishery",
+}
 local function localizePrimaryProductionName(name)
-    if name == "tycoon-apple-farm" then
-        return "Apple Farm"
-    elseif name == "tycoon-wheat-farm" then
-        return "Wheat Farm"
-    elseif name == "tycoon-fishery" then
-        return "Fishery"
-    else
-        return "Primary Production"
-    end
+    local length = (settings.global["tycoon-tags-text-length"] or {}).value
+    local text = LOCALIZE_PRIMARY[name] or "Primary Production"
+    return text:sub(1, length)
 end
 
-local function findHighestProductivityLevel(prefix)
-    for i = 1, 20, 1 do
-        if (game.forces.player.technologies[prefix .. "-" .. i] or {}).researched == true then
-            -- noop, attempt the next level
-        else
-            return i
-        end
-    end
-    return 1
-end
-
+-- WARN: multiple forces are not supported, only one is: "player"
 local function getFixedRecipeForIndustry(industryName)
+    local level = (game.forces.player.technologies[industryName .. "-productivity"] or {}).level or 1
     if industryName == "tycoon-apple-farm" then
-        local level = findHighestProductivityLevel("tycoon-apple-farm-productivity")
         local recipe = "tycoon-grow-apples-with-water-" .. level
         return recipe
     elseif industryName == "tycoon-wheat-farm" then
-        local level = findHighestProductivityLevel("tycoon-wheat-farm-productivity")
         local recipe = "tycoon-grow-wheat-with-water-" .. level
         return recipe
     elseif industryName == "tycoon-fishery" then
-        local level = findHighestProductivityLevel("tycoon-fishery-productivity")
         local recipe = "tycoon-fishing-" .. level
         return recipe
     end
@@ -120,10 +110,6 @@ local function place_primary_industry_at_position(position, entity_name)
     end
 end
 
-function distance( x1, y1, x2, y2 )
-	return math.sqrt( (x2-x1)^2 + (y2-y1)^2 )
-end
-
 local function find_position_for_initial_apple_farm()
     local coordinate_candidates = {}
     for _ = 1, 5, 1 do
@@ -152,7 +138,7 @@ local function find_position_for_initial_apple_farm()
                 -- bad, no water nearby
             else
                 local water_position = water_tiles[1].position
-                local distance_to_water = distance(water_position.x, water_position.y, position.x, position.y)
+                local distance_to_water = Util.calculateDistance(water_position, position)
 
                 local water_score = 100 / math.pow(distance_to_water - 50, 2)
 
@@ -163,8 +149,8 @@ local function find_position_for_initial_apple_farm()
                 -- bad, no town hall nearby
             else
                 local town_hall_position = town_halls[1].position
-                local distance_to_town_hall = distance(town_hall_position.x, town_hall_position.y, position.x, position.y)
-                
+                local distance_to_town_hall = Util.calculateDistance(town_hall_position, position)
+
                 local town_hall_score = 100 / math.pow(distance_to_town_hall - 50, 2)
 
                 score = score + town_hall_score

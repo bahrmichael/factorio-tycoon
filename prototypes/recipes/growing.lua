@@ -23,7 +23,10 @@ local function add_incresing_tech(recipe_name_base, recipe_category, result_name
                     { type = "fluid", name = "water", amount = 300 },
                 },
                 result = result_name,
-                result_count = i == 1 and 50 or (16+math.pow(i*3, 2)),
+                -- power fit from ~100/min to ~1800/min, (energy_required=30 needs half of that)
+                -- lvl  1: ( 1+f) / (11+f) = sqrt( 100/min) => f = ~2.084
+                -- lvl 11: (11+f) / (11+f) = sqrt(1800/min)
+                result_count = (30/60) * 1800 * math.pow((i+2.084) / (11+2.084), 2),
                 hidden = true,
                 hidden_from_player_crafting = true,
             },
