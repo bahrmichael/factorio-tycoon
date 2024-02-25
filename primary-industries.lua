@@ -1,4 +1,5 @@
 local Constants = require("constants")
+local Util = require("util")
 
 local function add_to_global_primary_industries(entity)
     if entity == nil then
@@ -109,10 +110,6 @@ local function place_primary_industry_at_position(position, entity_name)
     end
 end
 
-function distance( x1, y1, x2, y2 )
-	return math.sqrt( (x2-x1)^2 + (y2-y1)^2 )
-end
-
 local function find_position_for_initial_apple_farm()
     local coordinate_candidates = {}
     for _ = 1, 5, 1 do
@@ -141,7 +138,7 @@ local function find_position_for_initial_apple_farm()
                 -- bad, no water nearby
             else
                 local water_position = water_tiles[1].position
-                local distance_to_water = distance(water_position.x, water_position.y, position.x, position.y)
+                local distance_to_water = Util.calculateDistance(water_position, position)
 
                 local water_score = 100 / math.pow(distance_to_water - 50, 2)
 
@@ -152,8 +149,8 @@ local function find_position_for_initial_apple_farm()
                 -- bad, no town hall nearby
             else
                 local town_hall_position = town_halls[1].position
-                local distance_to_town_hall = distance(town_hall_position.x, town_hall_position.y, position.x, position.y)
-                
+                local distance_to_town_hall = Util.calculateDistance(town_hall_position, position)
+
                 local town_hall_score = 100 / math.pow(distance_to_town_hall - 50, 2)
 
                 score = score + town_hall_score
