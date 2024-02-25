@@ -194,4 +194,5 @@ return {
     place_primary_industry_at_position = place_primary_industry_at_position,
     add_to_global_primary_industries = add_to_global_primary_industries,
     spawn_initial_industry = spawn_initial_industry,
+    getFixedRecipeForIndustry = getFixedRecipeForIndustry,
 }

@@ -14,7 +14,7 @@ if global.tycoon_primary_industries ~= nil then
         end
         local count = #new_array[name]
         if count ~= 0 then
-            log("#global.tycoon_primary_industries['".. tostring(name) .."']: ".. tostring(count))
+            log("tycoon_primary_industries['".. tostring(name) .."']: ".. tostring(count))
         end
     end
     -- rewrite whole arrays at once
