@@ -1,10 +1,16 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.4.2
+Date: 27. 02. 2023
+  Bugfixes:
+    - Fix the description of the balancing change in 0.4.1. It falsely stated a double output at maximum level.
+    - Fixed a bug in the fishery spawning rate, that caused it too spawn very few fisheries.
+---------------------------------------------------------------------------------------------------
 Version: 0.4.1
 Date: 25. 02. 2023
   Bugfixes:
     - In some cases, the increased productivity of farms and fisheries was not applied. This is now fixed, and all existing primary industries are now using the correct level again. Thanks to winex for contributing this fix!
   Balancing:
-    - Productivity gain for apple and wheat farms continues to start at the same rate, but the scaling has been updated to double the output at maximum level.
+    - Productivity gain for apple and wheat farms continues to start at the same rate, but the scaling has been updated to a better fit curve for lower levels.
   Changes:
     - If you want to remove the space that primary industry names take up on the map, you can now do so with a new setting. With "Tags text length" you can set a maximum number of characters that new primary industries will use. "Apple Farm" may become "Apple F" if you set the maximum length to 7.
   Locale:

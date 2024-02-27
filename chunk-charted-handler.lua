@@ -24,7 +24,7 @@ local function on_chunk_charted(event)
             }
 
             local water_ratio = (water_tile_count / total_number_of_tiles_in_a_chunk)
-            local has_enough_water = water_ratio > 0.25 and water_ratio > 0.9
+            local has_enough_water = water_ratio > 0.25 and water_ratio < 0.9
             if not has_enough_water then
                 return
             end
