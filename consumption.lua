@@ -1,4 +1,5 @@
 local Constants = require("constants")
+local UsedBottlesStore = require("used-bottles-store")
 
 --- @class Need
 --- @field provided number
@@ -428,6 +429,12 @@ local function consumeItem(item, suppliers, city, isConstruction)
         if reward > 0 then
             randomTreasury.insert{name = "tycoon-currency", count = reward}
         end
+    end
+
+    -- remember used bottles so that the citizens can return them in a follow-up loop
+    -- todo: change this to sth like name.includes("bottle") to catch all bottle products
+    if item.name == "tycoon-milk-bottle" then
+        UsedBottlesStore.change_used_bottles(city.id, consumedAmount)
     end
 end
 

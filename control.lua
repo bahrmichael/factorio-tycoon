@@ -83,6 +83,9 @@ local function consume_resources()
 end
 
 script.on_nth_tick(ONE_MINUTE, function()
+    for _, city in pairs(global.tycoon_cities or {}) do
+        UsedBottlesStore.return_used_bottles_to_market(city.id)
+    end
     consume_resources()
     City.construct_gardens()
     display_intro_messages()
