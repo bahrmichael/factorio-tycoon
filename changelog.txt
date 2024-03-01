@@ -37,7 +37,7 @@ Date: 18. 02. 2023
     - The city GUI now shows how soon a construction will happen (e.g. in 01:20 (mm:ss)), instead of the previous chance to grow every minute.
     - Prices for items that the city buys have been rebalanced. You can see what each item yields by opening the city's GUI and looking at the different needs.
   Minor Features:
-    - The city GUI has been restructed a bit. You may need to click an additional tab here or there, but things are mostly the same.
+    - The city GUI has been restructured a bit. You may need to click an additional tab here or there, but things are mostly the same.
     - The passenger spawn rate now also takes the size of destination cities into account. The larger your average city, the more passengers will show up.
   Changes:
     - Removed urbanization requirements: Residential and highrise houses don't need a certain amount of houses or roads around them anymore.
