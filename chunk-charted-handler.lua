@@ -7,7 +7,6 @@ end
 
 
 
-local total_number_of_tiles_in_a_chunk = 32 * 32;
 
 local function on_chunk_charted(event)
     if math.abs(event.position.x) < 5 and math.abs(event.position.y) < 5 then
@@ -23,7 +22,7 @@ local function on_chunk_charted(event)
                 name = { "water", "deepwater" }
             }
 
-            local water_ratio = (water_tile_count / total_number_of_tiles_in_a_chunk)
+            local water_ratio = (water_tile_count / Constants.CHUNK_SIZE^2)
             local has_enough_water = water_ratio > 0.25 and water_ratio < 0.9
             if not has_enough_water then
                 return

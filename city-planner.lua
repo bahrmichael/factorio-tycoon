@@ -43,10 +43,7 @@ local function find_random_city_position()
     local chunk = game.surfaces[Constants.STARTING_SURFACE_ID].get_random_chunk()
     if chunk ~= nil then
         if game.forces.player.is_chunk_charted(game.surfaces[Constants.STARTING_SURFACE_ID], chunk) then
-            return {
-                x = chunk.x * 32,
-                y = chunk.y * 32,
-            }
+            return Util.chunkToPosition(chunk)
         end
     end
     return nil
