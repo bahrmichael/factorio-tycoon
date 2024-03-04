@@ -1,6 +1,10 @@
 local OneSecond = 60
+-- Factorio's chunk size, in tiles
+local CHUNK_SIZE = 32  -- Lua is insane, no access from the same table
 
 local CONSTANTS = {
+    CHUNK_SIZE = CHUNK_SIZE,
+
     -- Each cell has 6x6 tiles
     CELL_SIZE = 6,
     CITY_GROWTH_TICKS = OneSecond * 60,
