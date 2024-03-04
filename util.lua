@@ -72,7 +72,8 @@ end
 
 local function findCityByTownHallUnitNumber(townHallUnitNumber)
     for _, city in ipairs(global.tycoon_cities) do
-        if (city.special_buildings.town_hall or {}).unit_number == townHallUnitNumber then
+        if (city.special_buildings.town_hall or {}).valid
+            and (city.special_buildings.town_hall or {}).unit_number == townHallUnitNumber then
             return city
         end
     end

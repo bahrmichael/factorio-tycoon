@@ -440,7 +440,7 @@ local function tag_cities()
     for _, city in ipairs(global.tycoon_cities or {}) do
         -- We need to initialize the tag here, because tags can only be placed on charted chunks.
         -- And the game needs a moment to start and chart the initial chunks, even if it can already place entities.
-        if city.tag == nil and city.special_buildings.town_hall ~= nil then
+        if city.tag == nil and (city.special_buildings.town_hall or {}).valid then
             local tag = game.forces.player.add_chart_tag(game.surfaces[Constants.STARTING_SURFACE_ID],
                 {
                     position = { x = city.special_buildings.town_hall.position.x, y = city.special_buildings.town_hall.position.y },
