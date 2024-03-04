@@ -897,8 +897,8 @@ end
 --- @param coordinates Coordinates
 local function isCharted(city, coordinates)
     local chunkPosition = {
-        y = math.floor((GridUtil.getOffsetY(city) + coordinates.y * Constants.CELL_SIZE) / 32),
-        x = math.floor((GridUtil.getOffsetX(city) + coordinates.x * Constants.CELL_SIZE) / 32),
+        y = math.floor((GridUtil.getOffsetY(city) + coordinates.y * Constants.CELL_SIZE) / Constants.CHUNK_SIZE),
+        x = math.floor((GridUtil.getOffsetX(city) + coordinates.x * Constants.CELL_SIZE) / Constants.CHUNK_SIZE),
     }
     return game.forces.player.is_chunk_charted(game.surfaces[Constants.STARTING_SURFACE_ID], chunkPosition)
 end
