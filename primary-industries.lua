@@ -15,6 +15,24 @@ local function add_to_global_primary_industries(entity)
     table.insert(global.tycoon_primary_industries[entity.name], entity)
 end
 
+local function cleanup_global_primary_industries()
+    -- TODO: when called from on_chunk_deleted() - it doesn't clean fully, adding some delay might help (but how?)...
+    -- unless we have some array issue here, again. deleting 1K map keep-radius=2 count: 15 14 4 => 7 7 2 (?)
+    local count = 0
+    for name, _ in pairs(global.tycoon_primary_industries or {}) do
+        for k, entity in pairs(global.tycoon_primary_industries[name] or {}) do
+            if not entity.valid then
+                table.remove(global.tycoon_primary_industries[name], k)
+                count = count + 1
+            end
+        end
+    end
+    if count ~= 0 then
+        log("tycoon_primary_industries removed: ".. tostring(count))
+    end
+end
+
+
 local function getItemForPrimaryProduction(name)
     if name == "tycoon-apple-farm" then
         return "tycoon-apple"
@@ -193,6 +211,7 @@ end
 return {
     place_primary_industry_at_position = place_primary_industry_at_position,
     add_to_global_primary_industries = add_to_global_primary_industries,
+    cleanup_global_primary_industries = cleanup_global_primary_industries,
     spawn_initial_industry = spawn_initial_industry,
     getFixedRecipeForIndustry = getFixedRecipeForIndustry,
 }

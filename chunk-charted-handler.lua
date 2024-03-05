@@ -95,6 +95,8 @@ local function on_chunk_deleted(event)
     if event.surface_index ~= Constants.STARTING_SURFACE_ID then
         return
     end
+
+    PrimaryIndustries.cleanup_global_primary_industries()
 end
 
 
