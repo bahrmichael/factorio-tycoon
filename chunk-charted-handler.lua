@@ -47,6 +47,15 @@ local function on_chunk_charted(event)
         return
     end
 
+    -- place pending tags
+    if global.tycoon_tags_queue ~= nil then
+        local k = Util.chunkToHash(event.position)
+        local pos_name = global.tycoon_tags_queue[k]
+        if pos_name ~= nil then
+            PrimaryIndustries.tagIndustry(table.unpack(pos_name))
+        end
+    end
+
     if global.tycoon_global_generator() < 0.25 then
         local entity_name = randomPrimaryIndustry()
         local position
@@ -97,6 +106,20 @@ local function on_chunk_deleted(event)
     end
 
     PrimaryIndustries.cleanup_global_primary_industries()
+
+    local count = 0
+    for i, chunk in pairs(event.positions) do
+        -- remove pending tags
+        if global.tycoon_tags_queue ~= nil then
+            local k = Util.chunkToHash(chunk)
+            local t = global.tycoon_tags_queue[k]
+            if t ~= nil then
+                global.tycoon_tags_queue[k] = nil
+                count = count + 1
+            end
+        end
+    end
+    log("tycoon_tags_queue removed: ".. tostring(count))
 end
 
 
