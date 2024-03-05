@@ -72,6 +72,36 @@ local function getFixedRecipeForIndustry(industryName)
     end
 end
 
+local function tagIndustry(pos, entity_name)
+    -- TODO: move to proper place, where all the globals should be set up
+    if global.tycoon_tags_queue == nil then
+        global.tycoon_tags_queue = {}
+    end
+
+    -- WARN: this will fail when called from on_chunk_generated() instead of on_chunk_charted()
+    local tag = game.forces.player.add_chart_tag(game.surfaces[Constants.STARTING_SURFACE_ID], {
+        position = pos,
+        icon = {
+            type = "item",
+            name = getItemForPrimaryProduction(entity_name),
+        },
+        text = localizePrimaryProductionName(entity_name),
+    })
+
+    -- to accomodate that ^, we keep failed tags in a queue
+    -- using chunk coords, so that on_chunk_*() handlers can easily check by key
+    local k = Util.chunkToHash(Util.positionToChunk(pos))
+    if tag == nil then
+        -- storing pos and name is a bit too much, but avoids searching for entity, which might be more expensive
+        global.tycoon_tags_queue[k] = { pos, entity_name }
+        return
+    end
+
+    -- remove on success
+    global.tycoon_tags_queue[k] = nil
+    return tag
+end
+
 local function place_primary_industry_at_position(position, entity_name)
     if position ~= nil then
         -- This is mainly here to avoid two industries being right next to each other, 
@@ -98,17 +128,10 @@ local function place_primary_industry_at_position(position, entity_name)
                 return nil
             end
         end
-        local tag = game.forces.player.add_chart_tag(game.surfaces[Constants.STARTING_SURFACE_ID],
-            {
-                position = {x = position.x, y = position.y},
-                icon = {
-                    type = "item",
-                    name = getItemForPrimaryProduction(entity_name),
-                },
-                text = localizePrimaryProductionName(entity_name),
-            }
-        )
-        if tag ~= nil then
+
+        tagIndustry(position, entity_name)
+
+        -- indentation kept for cleaner diff
             local entity = game.surfaces[Constants.STARTING_SURFACE_ID].create_entity{
                 name = entity_name,
                 position = {x = position.x, y = position.y},
@@ -124,7 +147,6 @@ local function place_primary_industry_at_position(position, entity_name)
             else
                 game.print("Factorio Error: The mod has encountered an issue when placing primary industries. Please report this to the developer. You can continue playing.")
             end
-        end
     end
 end
 
@@ -214,4 +236,5 @@ return {
     cleanup_global_primary_industries = cleanup_global_primary_industries,
     spawn_initial_industry = spawn_initial_industry,
     getFixedRecipeForIndustry = getFixedRecipeForIndustry,
+    tagIndustry = tagIndustry,
 }
