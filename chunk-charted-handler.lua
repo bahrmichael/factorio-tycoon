@@ -1,15 +1,49 @@
 local Constants = require("constants")
 local PrimaryIndustries = require("primary-industries")
+local Util = require("util")
 
 local function randomPrimaryIndustry()
     return Constants.PRIMARY_INDUSTRIES[global.tycoon_global_generator(#Constants.PRIMARY_INDUSTRIES)]
 end
 
+local function insideStartingArea(chunk)
+    -- NOTE: slider thingy, but can be changed only when biters are enabled and docs says it's circular
+    -- a. looks like 1 means something like 256x256[8x8], so radius could be 4 chunks
+    -- b. restart shows 512x512[16x16] generated map, so it could be even 8
+
+    -- fit [100%;600%] into [1;multiplier]
+    local sa = Constants.STARTING_RADIUS_CHUNKS * Util.lerp(Util.factorioSliderInverse(
+        Util.clamp(game.surfaces[Constants.STARTING_SURFACE_ID].map_gen_settings.starting_area, 1, 6)
+    ), 1, Constants.STARTING_AREA_MULTIPLIER)
+
+    -- we want [-sa;sa), but abs() include positive ones
+    --return math.abs(chunk.x) <= sa and math.abs(chunk.y) <= sa
+    return chunk.x >= -sa and chunk.x < sa and chunk.y >= -sa and chunk.y < sa
+end
 
 
+--
+-- event handlers: on_chunk_*()
+--
 
+local function on_chunk_generated(event)
+    -- WARN: not a typo: '.surface.index', not '.surface_index'! see docs...
+    if event.surface.index ~= Constants.STARTING_SURFACE_ID then
+        return
+    end
+
+    if insideStartingArea(event.position) then
+        return
+    end
+end
+
+-- WARN: might be called very frequently, for ex: when there are biters wandering - avoid useless stuff
 local function on_chunk_charted(event)
-    if math.abs(event.position.x) < 5 and math.abs(event.position.y) < 5 then
+    if event.surface_index ~= Constants.STARTING_SURFACE_ID then
+        return
+    end
+
+    if insideStartingArea(event.position) then
         return
     end
 
@@ -57,6 +91,15 @@ local function on_chunk_charted(event)
     end
 end
 
+local function on_chunk_deleted(event)
+    if event.surface_index ~= Constants.STARTING_SURFACE_ID then
+        return
+    end
+end
+
+
 return {
-    on_chunk_charted = on_chunk_charted
+    on_chunk_generated = on_chunk_generated,
+    on_chunk_charted = on_chunk_charted,
+    on_chunk_deleted = on_chunk_deleted,
 }

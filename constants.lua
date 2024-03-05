@@ -4,6 +4,11 @@ local CHUNK_SIZE = 32  -- Lua is insane, no access from the same table
 
 local CONSTANTS = {
     CHUNK_SIZE = CHUNK_SIZE,
+    -- nothing would be generated inside this area, except for initial farms if enabled
+    STARTING_RADIUS_CHUNKS = 128 / CHUNK_SIZE,
+    -- NOTE: map_gen_settings.starting_area is mapped as [100%; 600%] => [1; multiplier]
+    -- ex: 4(see above) * 4(here) makes SA 600% as 1024x1024 tiles total, 1 disables that setting effect
+    STARTING_AREA_MULTIPLIER = 4,
 
     -- Each cell has 6x6 tiles
     CELL_SIZE = 6,
