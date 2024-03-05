@@ -1,0 +1,19 @@
+name: Check crowdin PR
+
+on:
+  push:
+    branches:
+      - l10n_main
+      - crowdin-check # temporarily also check on this WIP branch
+
+jobs:
+  auto_commit:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Check locale files
+      run: |
+        ./compare_locales.sh
