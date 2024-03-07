@@ -11,7 +11,7 @@ target_langs=()
 # Populate the array with directory names excluding the base language
 while IFS= read -r line; do
     target_langs+=("$line")
-done < <(find "$base_dir" -mindepth 1 -maxdepth 1 -type d -not -name "$base_lang" -exec basename {} \;)
+done < <(find "$base_dir" -mindepth 1 -maxdepth 1 -type d -not -name "$base_lang" -printf "%P\n" | LC_ALL=C sort)
 
 # Iterate over all files in the base language directory
 for file in "$base_dir/$base_lang"/*.cfg; do
