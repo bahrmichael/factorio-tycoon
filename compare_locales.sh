@@ -20,13 +20,12 @@ while IFS= read -r line; do
 done < <(find "$base_dir" -mindepth 1 -maxdepth 1 -type d -not -name "$base_lang" -printf "%P\n" | LC_ALL=C sort)
 
 # Iterate over all files in the base language directory
-for file in "$base_dir/$base_lang"/*.cfg; do
-    filename=$(basename "$file")
+for source_file in "$base_dir/$base_lang"/*.cfg; do
+    filename=$(basename "$source_file")
 
     # Iterate over target languages
     for lang in "${target_langs[@]}"; do
         # Define the file path for the target language
-        source_file="$base_dir/$base_lang/$filename"
         target_file="$base_dir/$lang/$filename"
 
         # Check if the target file exists
