@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# Extracts groups, keys and/or any other necessary information
+function extract_keys() {
+    grep --no-messages -E -o '^(\[[^\s]*\]$|[^=]+=)' "$1"
+}
+
+
 # Base directory containing the locales
 base_dir="locale"
 # Base language
@@ -28,13 +34,13 @@ for file in "$base_dir/$base_lang"/*.cfg; do
             echo "Comparing $source_file with $target_file"
             # Use diff to compare files, you can also use cmp or other tools
             # diff "$file" "$target_file" > /dev/null
-            diff -q <(grep -E -o '^(\[[^\s]*\]$|[^=]+=)' $source_file) <(grep -E -o '^(\[[^\s]*\]$|[^=]+=)' $target_file)
+            diff -q <(extract_keys "$source_file") <(extract_keys "$target_file")
             if [[ $? -eq 0 ]]; then
                 # echo "No differences found."
                 echo ""
             else
                 echo "Differences found!"
-                diff <(grep -E -o '^(\[[^\s]*\]$|[^=]+=)' $source_file) <(grep -E -o '^(\[[^\s]*\]$|[^=]+=)' $target_file)
+                diff <(extract_keys "$source_file") <(extract_keys "$target_file")
                 exit 1
             fi
         else
