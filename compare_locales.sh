@@ -24,9 +24,19 @@ while IFS= read -r line; do
 done < <(find "$base_dir" -mindepth 1 -maxdepth 1 -type d -not -name "$base_lang" -printf "%P\n" | LC_ALL=C sort)
 
 # Iterate over all files in the base language directory
+tmp_file=
 let ERRORS=0
 for source_file in "$base_dir/$base_lang"/*.cfg; do
     filename=$(basename "$source_file")
+
+    # Create temp file only once and reuse
+    [[ -z $tmp_file ]] && tmp_file=$(mktemp --tmpdir "compare-locales.XXXXXXXX")
+    # Overwrite temp file with extracted keys
+    extract_keys "$source_file" >"$tmp_file" || {
+        let ERRORS+=1000
+        error "Unable to extract from: $source_file"
+        continue
+    }
 
     # Iterate over target languages
     for lang in "${target_langs[@]}"; do
@@ -41,7 +51,7 @@ for source_file in "$base_dir/$base_lang"/*.cfg; do
         }
 
         echo "Comparing $source_file with $target_file"
-        diff -U0 -N --label "$source_file" <(extract_keys "$source_file") --label "$target_file" <(extract_keys "$target_file") || {
+        diff -U0 -N --label "$source_file" "$tmp_file" --label "$target_file" <(extract_keys "$target_file") || {
             let ERRORS+=1
         }
     done
@@ -52,4 +62,5 @@ done
 
 
 # Finally, cleanup and exit
+rm -f "$tmp_file"
 exit $ERRORS
