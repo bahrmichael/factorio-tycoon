@@ -50,7 +50,7 @@ for source_file in "$base_dir/$base_lang"/*.cfg; do
             continue
         }
 
-        echo "Comparing $source_file with $target_file"
+        #echo "Comparing $source_file with $target_file"
         diff -U0 -N --label "$source_file" "$tmp_file" --label "$target_file" <(extract_keys "$target_file") || {
             let ERRORS+=1
         }
