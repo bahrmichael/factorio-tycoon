@@ -21,21 +21,27 @@ data:extend({
     },
     {
         type = "item-subgroup",
-        name = "tycoon-food",
+        name = "tycoon-finished-products",
         group = "tycoon",
         order = "c"
     },
     {
         type = "item-subgroup",
-        name = "tycoon-buildings",
+        name = "tycoon-food",
         group = "tycoon",
         order = "d"
     },
     {
         type = "item-subgroup",
-        name = "tycoon-passengers",
+        name = "tycoon-buildings",
         group = "tycoon",
         order = "e"
+    },
+    {
+        type = "item-subgroup",
+        name = "tycoon-passengers",
+        group = "tycoon",
+        order = "f"
     },
     {
         type = "item-subgroup",

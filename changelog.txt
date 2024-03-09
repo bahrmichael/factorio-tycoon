@@ -1,11 +1,76 @@
 ---------------------------------------------------------------------------------------------------
-Version: unreleased
-Date: 03. 01. 2024
+Version: 0.4.5
+Date: 09. 03. 2023
+  Bugfixes:
+    - Fixed an issue where cities would not consume construction materials.
+---------------------------------------------------------------------------------------------------
+Version: 0.4.4
+Date: 01. 03. 2023
+  Locale:
+    - Various translation updates.
+---------------------------------------------------------------------------------------------------
+Version: 0.4.3
+Date: 29. 02. 2023
+  Bugfixes:
+    - Fixed an issue in the German translation.
+---------------------------------------------------------------------------------------------------
+Version: 0.4.2
+Date: 27. 02. 2023
+  Bugfixes:
+    - Fix the description of the balancing change in 0.4.1. It falsely stated a double output at maximum level.
+    - Fixed a bug in the fishery spawning rate, that caused it too spawn very few fisheries.
+---------------------------------------------------------------------------------------------------
+Version: 0.4.1
+Date: 25. 02. 2023
+  Bugfixes:
+    - In some cases, the increased productivity of farms and fisheries was not applied. This is now fixed, and all existing primary industries are now using the correct level again. Thanks to winex for contributing this fix!
+  Balancing:
+    - Productivity gain for apple and wheat farms continues to start at the same rate, but the scaling has been updated to a better fit curve for lower levels.
+  Changes:
+    - If you want to remove the space that primary industry names take up on the map, you can now do so with a new setting. With "Tags text length" you can set a maximum number of characters that new primary industries will use. "Apple Farm" may become "Apple F" if you set the maximum length to 7.
+  Locale:
+    - German and Russian translations have been updated for the new content from the 0.4.0 release. Thanks to winex for contributing updates for the Russian translation!
+---------------------------------------------------------------------------------------------------
+Version: 0.4.0
+Date: 18. 02. 2023
+  Major Features:
+    - WARNING! This is a major breaking change. You may have to update your Tycoon factories or start a new game. Read more below.
+    - Breaking change: I didn't test this for backwards compatibility due to time constraints and the amount of changes we made. Let me know if something breaks.
+    - Breaking change: Recipes for Tycoon goods have changed across the board, and ratios are now different.
+    - New additional needs: A new set of items has been introduced, with which you can further boost city growth and generate more currency.
+    - Cities grow very differently now, and the growth should feel much smoother. The cities always build roads to have space to construct houses. Each housing tier grows independently from each other. Each tier must be provided with construction to grow at all. If you don't provide basic needs, they will grow roughly 30 minutes. When you supply basic needs, you can get that down to every minute. By providing additional needs, you can lower it down to one construction every 10 seconds.
+    - The city GUI now shows how soon a construction will happen (e.g. in 01:20 (mm:ss)), instead of the previous chance to grow every minute.
+    - Prices for items that the city buys have been rebalanced. You can see what each item yields by opening the city's GUI and looking at the different needs.
+  Minor Features:
+    - The city GUI has been restructed a bit. You may need to click an additional tab here or there, but things are mostly the same.
+    - The passenger spawn rate now also takes the size of destination cities into account. The larger your average city, the more passengers will show up.
+  Changes:
+    - Removed urbanization requirements: Residential and highrise houses don't need a certain amount of houses or roads around them anymore.
+    - Updated the picture for dairy products tech.
+  Bugfixes:
+    - In multiplayer games city range overlays disappeared when another player put a supply building into their hand. This is now fixed, and only your cursor is checked.
+---------------------------------------------------------------------------------------------------
+Version: 0.3.14
+Date: 19. 01. 2024
+  Locale:
+    - Updates to translations for changes from 0.3.13.
+---------------------------------------------------------------------------------------------------
+Version: 0.3.13
+Date: 14. 01. 2024
+  Scripting:
+    - Added a remote interface to spawn cities. This is not intended for regular players, but those who already know how to work with remote interfaces. Read more in remote_interfaces.md on GitHub.
+---------------------------------------------------------------------------------------------------
+Version: 0.3.12
+Date: 07. 01. 2024
   Changes:
     - Added resource prices for food and construction materials in the town hall gui. You can now see how much you will get per unit sold.
-    - Updated the styling of the town hall gui's basic needs and construction materials section.
+    - Added item pictures to the town hall gui's basic needs and construction materials.
   Balancing:
     - Increased the currency you get for highrise food.
+  Locale:
+    - Added German localization.
+    - Small text updates.
+    - Migrated localization to Crowdin. Reach out if you like to help with localization!
 ---------------------------------------------------------------------------------------------------
 Version: 0.3.11
 Date: 24. 12. 2023
@@ -22,7 +87,7 @@ Date: 19. 12. 2023
 Version: 0.3.9
 Date: 18. 12. 2023
   Bugfixes:
-    - Fixed an issue where supply buildings an train stations would not connect to city when placed by robots.
+    - Fixed an issue where supply buildings and train stations would not connect to city when placed by robots.
 ---------------------------------------------------------------------------------------------------
 Version: 0.3.8
 Date: 18. 12. 2023
