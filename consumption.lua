@@ -389,8 +389,7 @@ end
 --- @param item Item
 --- @param suppliers any[]
 --- @param city City
---- @param isConstruction boolean
-local function consumeItem(item, suppliers, city, isConstruction)
+local function consumeItem(item, suppliers, city)
 
     assert(item.required ~= nil and item.required >= 0, "Required amount must be a number 0 or larger.")
 
@@ -447,7 +446,7 @@ local function consumeBasicNeeds(city)
                 consumeItem({
                     name = resource,
                     required = amounts.required
-                }, markets, city, false)
+                }, markets, city)
             end
         end
     end
@@ -489,7 +488,7 @@ local function consumeAdditionalNeeds(city)
             consumeItem({
                 name = resource,
                 required = amounts.required
-            }, markets, city, false)
+            }, markets, city)
         end
     end
 end
