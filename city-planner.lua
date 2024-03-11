@@ -357,6 +357,10 @@ local function addCity(position, predefinedCityName)
     initializeCity(global.tycoon_cities[cityId])
     Consumption.updateNeeds(global.tycoon_cities[cityId])
 
+    game.print({ "",
+        "[color=orange]Factorio Tycoon:[/color] ", { "tycooon-new-city", cityName }, ": ",
+        "[gps=" .. (position.x + 1.5 * Constants.CELL_SIZE) .. "," .. (position.y + 1.5 * Constants.CELL_SIZE) .. "]",
+    })
     return cityName
 end
 
@@ -406,8 +410,11 @@ local function addMoreCities(isInitialCity, skipPayment)
     local newCityPosition = findNewCityPosition(isInitialCity)
     if newCityPosition ~= nil then
         local cityName = addCity(newCityPosition)
+        -- disabled for now, moved into addCity() above
+        if false then
         game.print({ "", "[color=orange]Factorio Tycoon:[/color] ", { "tycooon-new-city", cityName }, ": ", "[gps=" ..
         (newCityPosition.x + 1.5 * Constants.CELL_SIZE) .. "," .. (newCityPosition.y + 1.5 * Constants.CELL_SIZE) .. "]" })
+        end
 
         if not skipPayment then
             local urbanPlanningCenters = game.surfaces[Constants.STARTING_SURFACE_ID].find_entities_filtered {
