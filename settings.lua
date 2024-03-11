@@ -13,4 +13,11 @@ data:extend({
         minimum_value = 0,
         maximum_value = 32,
     },
+    {
+        type = "bool-setting",
+        name = "tycoon-skip-check-resources",
+        order = "5-s-c",
+        setting_type = "runtime-global",
+        default_value = false,
+    },
 })
