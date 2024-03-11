@@ -1,6 +1,17 @@
 local Constants = require("constants")
 local Util = require("util")
 
+local all_resource_names_cached = nil
+local function get_all_resource_names()
+    if all_resource_names_cached == nil then
+        all_resource_names_cached = {}
+        for name, _cat in pairs(game.get_filtered_entity_prototypes{{filter="type", type="resource"}}) do
+            table.insert(all_resource_names_cached, name)
+        end
+    end
+    return all_resource_names_cached
+end
+
 local function add_to_global_primary_industries(entity)
     if entity == nil then
         return
@@ -103,12 +114,15 @@ local function tagIndustry(pos, entity_name)
 end
 
 local function place_primary_industry_at_position(position, entity_name)
+    -- half a chunk should be enough, unless we have new farms >14x14 (not recommended!)
+    local PRIMARY_INDUSTRY_NEARBY_RADIUS = Constants.CHUNK_SIZE/2
+    local nearby_count = 0
     if position ~= nil then
         -- This is mainly here to avoid two industries being right next to each other, 
         -- blocking each others pipes.
         local nearby_primary_industries_count = game.surfaces[Constants.STARTING_SURFACE_ID].count_entities_filtered{
             position = position,
-            radius = 20,
+            radius = PRIMARY_INDUSTRY_NEARBY_RADIUS,
             name = Constants.PRIMARY_INDUSTRIES,
             limit = 1
         }
@@ -120,13 +134,26 @@ local function place_primary_industry_at_position(position, entity_name)
         if entity_name ~= "tycoon-fishery" then
             local nearby_cliffs_or_water_count = game.surfaces[Constants.STARTING_SURFACE_ID].count_tiles_filtered{
                 position = position,
-                radius = 10,
+                radius = PRIMARY_INDUSTRY_NEARBY_RADIUS,
                 name = {"cliff", "water", "deepwater"},
                 limit = 1
             }
             if nearby_cliffs_or_water_count > 0 then
                 return nil
             end
+        end
+
+        -- check nearby resources
+        if not (settings.global["tycoon-skip-check-resources"] or {}).value then
+            nearby_count = game.surfaces[Constants.STARTING_SURFACE_ID].count_entities_filtered{
+                position = position,
+                radius = PRIMARY_INDUSTRY_NEARBY_RADIUS,
+                name = get_all_resource_names(),
+                limit = 1
+            }
+        end
+        if nearby_count > 0 then
+            return nil
         end
 
         tagIndustry(position, entity_name)
