@@ -22,12 +22,9 @@ local function listSpecialCityBuildings(city, name)
     if city.special_buildings.other[name] ~= nil and #city.special_buildings.other[name] > 0 then
         entities = city.special_buildings.other[name]
     else
-        if not city.special_buildings.town_hall.valid then
-            return {}
-        end
         entities = game.surfaces[Constants.STARTING_SURFACE_ID].find_entities_filtered{
             name=name,
-            position=city.special_buildings.town_hall.position,
+            position=city.center,
             radius=Constants.CITY_RADIUS
         }
         city.special_buildings.other[name] = entities
