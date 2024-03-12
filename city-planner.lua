@@ -249,6 +249,9 @@ local function initializeCity(city)
             end
         end
     end
+    -- BUG: town hall is always +1.5 cells to the right-bottom and graphics are off-by-one
+    -- can't set city.center to actual position of town hall, so lets just make it integer
+    city.center = { x = math.floor(city.center.x), y = math.floor(city.center.y) }
 
     local possibleRoadEnds = {
         {
@@ -342,6 +345,7 @@ local function addCity(position, predefinedCityName)
             town_hall = nil,
             other = {}
         },
+        -- WARN: don't floor it here yet - initializeCity() will make displaced grid
         center = position,
         name = cityName,
         stats = {
@@ -359,7 +363,7 @@ local function addCity(position, predefinedCityName)
 
     game.print({ "",
         "[color=orange]Factorio Tycoon:[/color] ", { "tycooon-new-city", cityName }, ": ",
-        "[gps=" .. (position.x + 1.5 * Constants.CELL_SIZE) .. "," .. (position.y + 1.5 * Constants.CELL_SIZE) .. "]",
+        "[gps=" .. (math.floor(position.x) + 1.5 * Constants.CELL_SIZE) .. "," .. (math.floor(position.y) + 1.5 * Constants.CELL_SIZE) .. "]",
     })
     return cityName
 end
