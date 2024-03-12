@@ -453,6 +453,19 @@ local function tag_cities()
             )
             city.tag = tag
         end
+        -- append population
+        if city.tag ~= nil then
+            if (settings.global["tycoon-tags-show-population"] or {}).value then
+                local count = 0
+                for _, n in pairs(city.citizens) do
+                    count = count + n
+                end
+                city.tag.text = city.name .." [color=gray][".. tostring(count) .."][/color]"
+            else
+                -- won't lag (called every ~30s), otherwise tail is left
+                city.tag.text = city.name
+            end
+        end
     end
 end
 
