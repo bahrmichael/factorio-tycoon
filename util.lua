@@ -73,10 +73,31 @@ local function positionToChunk(p)
     return { x = math.floor(p.x / Constants.CHUNK_SIZE), y = math.floor(p.y / Constants.CHUNK_SIZE) }
 end
 
+--- @param p Position
+--- @param size number Region size
+--- @return RegionPosition
+local function positionToRegion(p, size)
+    return { x = math.floor(p.x / (Constants.CHUNK_SIZE * size)), y = math.floor(p.y / (Constants.CHUNK_SIZE * size)) }
+end
+
 --- @param ch ChunkPosition
 --- @return Position
 local function chunkToPosition(ch)
     return { x = ch.x * Constants.CHUNK_SIZE, y = ch.y * Constants.CHUNK_SIZE }
+end
+
+--- @param ch ChunkPosition
+--- @param size number Region size
+--- @return Position
+local function chunkToRegion(ch, size)
+    return { x = math.floor(ch.x / size), y = math.floor(ch.y / size) }
+end
+
+--- @param ch ChunkPosition
+--- @param size number Size of array in one dimension
+--- @return number Index in array
+local function chunkToIndex2D(ch, size)
+    return math.floor(ch.y % size)*size + math.floor(ch.x % size)
 end
 
 --- we could use string.format("%d;%d", p.x, p.y), but it looks slower
@@ -202,7 +223,10 @@ return {
     lerpClamped = lerpClamped,
 
     positionToChunk = positionToChunk,
+    positionToRegion = positionToRegion,
     chunkToPosition = chunkToPosition,
+    chunkToRegion = chunkToRegion,
+    chunkToIndex2D = chunkToIndex2D,
     chunkToHash = chunkToHash,
     chunkFromHash = chunkFromHash,
 
