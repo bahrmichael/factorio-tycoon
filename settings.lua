@@ -15,6 +15,13 @@ data:extend({
     },
     {
         type = "bool-setting",
+        name = "tycoon-tags-show-population",
+        order = "4-t-s",
+        setting_type = "runtime-global",
+        default_value = true,
+    },
+    {
+        type = "bool-setting",
         name = "tycoon-skip-check-resources",
         order = "5-s-c",
         setting_type = "runtime-global",
