@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - l10n_main
-      - crowdin-check # temporarily also check on this WIP branch
 
 jobs:
   auto_commit:
