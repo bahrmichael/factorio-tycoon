@@ -24,6 +24,8 @@ jobs:
 
     - name: Get changed files
       id: changed-files
+      with:
+        files: "locale/**/*.cfg"
       uses: tj-actions/changed-files@v43
 
     - name: Push changes
