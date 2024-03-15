@@ -21,7 +21,7 @@ target_langs=()
 # Populate the array with directory names excluding the base language
 while IFS= read -r line; do
     target_langs+=("$line")
-done < <(find "$base_dir" -mindepth 1 -maxdepth 1 -type d -not -name "$base_lang" -print0 | xargs -0 stat -f "%N" | LC_ALL=C sort)
+done < <(find "$base_dir" -mindepth 1 -maxdepth 1 -type d -not -name "$base_lang" -printf "%P\n" | LC_ALL=C sort)
 
 # Iterate over all files in the base language directory
 tmp_file=
@@ -30,7 +30,7 @@ for source_file in "$base_dir/$base_lang"/*.cfg; do
     filename=$(basename "$source_file")
 
     # Create temp file only once and reuse
-    [[ -z $tmp_file ]] && tmp_file=$(mktemp -t "compare-locales.XXXXXXXX")
+    [[ -z $tmp_file ]] && tmp_file=$(mktemp --tmpdir "compare-locales.XXXXXXXX")
     # Overwrite temp file with extracted keys
     extract_keys "$source_file" >"$tmp_file" || {
         let ERRORS+=1000
@@ -41,7 +41,7 @@ for source_file in "$base_dir/$base_lang"/*.cfg; do
     # Iterate over target languages
     for lang in "${target_langs[@]}"; do
         # Define the file path for the target language
-        target_file="$lang/$filename"
+        target_file="$base_dir/$lang/$filename"
 
         # Check if the target file exists
         [[ ! -f $target_file ]] && {
