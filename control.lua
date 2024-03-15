@@ -105,8 +105,16 @@ script.on_event({
     OnConstructionHandler.on_removed(event)
 end)
 
+script.on_event(defines.events.on_chunk_generated, function (event)
+    OnChunkChartedHandler.on_chunk_generated(event)
+end)
+
 script.on_event(defines.events.on_chunk_charted, function (event)
     OnChunkChartedHandler.on_chunk_charted(event)
+end)
+
+script.on_event(defines.events.on_chunk_deleted, function (event)
+    OnChunkChartedHandler.on_chunk_deleted(event)
 end)
 
 script.on_event(defines.events.on_player_cursor_stack_changed, function(event)

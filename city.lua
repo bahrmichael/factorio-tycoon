@@ -772,6 +772,28 @@ local function isConnectedToRoad(city, coordinates)
     return false
 end
 
+local function list_special_city_buildings(city, name)
+    local entities = {}
+    if city.special_buildings.other[name] ~= nil and #city.special_buildings.other[name] > 0 then
+        entities = city.special_buildings.other[name]
+    else
+        entities = game.surfaces[Constants.STARTING_SURFACE_ID].find_entities_filtered{
+            name=name,
+            position=city.center,
+            radius=Constants.CITY_RADIUS,
+        }
+        city.special_buildings.other[name] = entities
+    end
+
+    local result = {}
+    for _, entity in ipairs(entities) do
+        if entity ~= nil and entity.valid then
+            table.insert(result, entity)
+        end
+    end
+    return result
+end
+
 --- @param city City
 --- @param buildingConstruction BuildingConstruction
 --- @param queueIndex string
@@ -834,9 +856,13 @@ local function startConstruction(city, buildingConstruction, queueIndex, allowed
         elseif buildingConstruction.buildingType == "garden" and isConnectedToRoad(city, coordinates) then
             -- Don't build gardens if there's a road right next to it
         else
-            -- We can start a construction site here
-            -- Resource consumption is done outside of this function
+            local construction_materials = Constants.CONSTRUCTION_MATERIALS[buildingConstruction.buildingType] or {}
+            for _, item in pairs(construction_materials) do
+                local hardwareStores = list_special_city_buildings(city, "tycoon-hardware-store")
+                Consumption.consumeItem(item, hardwareStores, city)
+            end
 
+            -- We can start a construction site here
             removeColldingEntities(area)
 
             -- Place an excavation site entity that will be later replaced with the actual building
@@ -871,8 +897,8 @@ end
 --- @param coordinates Coordinates
 local function isCharted(city, coordinates)
     local chunkPosition = {
-        y = math.floor((GridUtil.getOffsetY(city) + coordinates.y * Constants.CELL_SIZE) / 32),
-        x = math.floor((GridUtil.getOffsetX(city) + coordinates.x * Constants.CELL_SIZE) / 32),
+        y = math.floor((GridUtil.getOffsetY(city) + coordinates.y * Constants.CELL_SIZE) / Constants.CHUNK_SIZE),
+        x = math.floor((GridUtil.getOffsetX(city) + coordinates.x * Constants.CELL_SIZE) / Constants.CHUNK_SIZE),
     }
     return game.forces.player.is_chunk_charted(game.surfaces[Constants.STARTING_SURFACE_ID], chunkPosition)
 end
@@ -1395,28 +1421,6 @@ local lower_tiers = {
     residential = "simple"
 }
 
-local function list_special_city_buildings(city, name)
-    local entities = {}
-    if city.special_buildings.other[name] ~= nil and #city.special_buildings.other[name] > 0 then
-        entities = city.special_buildings.other[name]
-    else
-        entities = game.surfaces[Constants.STARTING_SURFACE_ID].find_entities_filtered{
-            name=name,
-            position=city.special_buildings.town_hall.position,
-            radius=Constants.CITY_RADIUS,
-        }
-        city.special_buildings.other[name] = entities
-    end
-
-    local result = {}
-    for _, entity in ipairs(entities) do
-        if entity ~= nil and entity.valid then
-            table.insert(result, entity)
-        end
-    end
-    return result
-end
-
 local house_ratios = {
     residential = Constants.RESIDENTIAL_HOUSE_RATIO,
     highrise = Constants.HIGHRISE_HOUSE_RATIO,
@@ -1437,58 +1441,9 @@ local function is_allowed_upgrade_to_tier(city, next_tier)
 end
 
 
-local function getBuildables(city, hardwareStores)
-    -- This array is ordered from most expensive to cheapest, so that
-    -- we do expensive upgrades first (instead of just letting the road always expand).
-    -- Sepcial buildings (like the treasury) are an exception that should ideally come first.
-    local constructionResources = {
-        specialBuildings = {{
-            name = "stone-brick",
-            required = 1,
-        }, {
-            name = "iron-plate",
-            required = 1,
-        }},
-        highrise = {{
-            name = "concrete",
-            required = 50,
-        }, {
-            name = "steel-plate",
-            required = 25,
-        }, {
-            name = "small-lamp",
-            required = 5,
-        }, {
-            name = "pump",
-            required = 2,
-        }, {
-            name = "pipe",
-            required = 10,
-        }},
-        residential = {{
-            name = "stone-brick",
-            required = 30,
-        }, {
-            name = "iron-plate",
-            required = 20,
-        }, {
-            name = "steel-plate",
-            required = 10,
-        }, {
-            name = "small-lamp",
-            required = 2,
-        }},
-        simple = {{
-            name = "stone-brick",
-            required = 10,
-        }, {
-            name = "iron-plate",
-            required = 5,
-        }},
-    }
-
+local function getBuildables(hardwareStores)
     local buildables = {}
-    for key, resources in pairs(constructionResources) do
+    for key, resources in pairs(Constants.CONSTRUCTION_MATERIALS) do
         local anyResourceMissing = false
         for _, resource in ipairs(resources) do
             for _, hardwareStore in ipairs(hardwareStores) do
@@ -1523,7 +1478,7 @@ local function start_house_construction()
         local hardware_stores = list_special_city_buildings(city, "tycoon-hardware-store")
         if #hardware_stores > 0 then
 
-            local buildables = getBuildables(city, hardware_stores)
+            local buildables = getBuildables(hardware_stores)
             -- If there are no hardware stores, then no construction resources are available.
             for _, tier in ipairs(housing_tiers) do
                 if has_time_elapsed_for_construction(city, tier)

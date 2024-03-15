@@ -43,10 +43,7 @@ local function find_random_city_position()
     local chunk = game.surfaces[Constants.STARTING_SURFACE_ID].get_random_chunk()
     if chunk ~= nil then
         if game.forces.player.is_chunk_charted(game.surfaces[Constants.STARTING_SURFACE_ID], chunk) then
-            return {
-                x = chunk.x * 32,
-                y = chunk.y * 32,
-            }
+            return Util.chunkToPosition(chunk)
         end
     end
     return nil
@@ -252,6 +249,9 @@ local function initializeCity(city)
             end
         end
     end
+    -- BUG: town hall is always +1.5 cells to the right-bottom and graphics are off-by-one
+    -- can't set city.center to actual position of town hall, so lets just make it integer
+    city.center = { x = math.floor(city.center.x), y = math.floor(city.center.y) }
 
     local possibleRoadEnds = {
         {
@@ -345,6 +345,7 @@ local function addCity(position, predefinedCityName)
             town_hall = nil,
             other = {}
         },
+        -- WARN: don't floor it here yet - initializeCity() will make displaced grid
         center = position,
         name = cityName,
         stats = {
@@ -360,6 +361,10 @@ local function addCity(position, predefinedCityName)
     initializeCity(global.tycoon_cities[cityId])
     Consumption.updateNeeds(global.tycoon_cities[cityId])
 
+    game.print({ "",
+        "[color=orange]Factorio Tycoon:[/color] ", { "tycooon-new-city", cityName }, ": ",
+        "[gps=" .. (math.floor(position.x) + 1.5 * Constants.CELL_SIZE) .. "," .. (math.floor(position.y) + 1.5 * Constants.CELL_SIZE) .. "]",
+    })
     return cityName
 end
 
@@ -409,8 +414,11 @@ local function addMoreCities(isInitialCity, skipPayment)
     local newCityPosition = findNewCityPosition(isInitialCity)
     if newCityPosition ~= nil then
         local cityName = addCity(newCityPosition)
+        -- disabled for now, moved into addCity() above
+        if false then
         game.print({ "", "[color=orange]Factorio Tycoon:[/color] ", { "tycooon-new-city", cityName }, ": ", "[gps=" ..
         (newCityPosition.x + 1.5 * Constants.CELL_SIZE) .. "," .. (newCityPosition.y + 1.5 * Constants.CELL_SIZE) .. "]" })
+        end
 
         if not skipPayment then
             local urbanPlanningCenters = game.surfaces[Constants.STARTING_SURFACE_ID].find_entities_filtered {
@@ -440,14 +448,27 @@ local function tag_cities()
     for _, city in ipairs(global.tycoon_cities or {}) do
         -- We need to initialize the tag here, because tags can only be placed on charted chunks.
         -- And the game needs a moment to start and chart the initial chunks, even if it can already place entities.
-        if city.tag == nil and city.special_buildings.town_hall ~= nil then
+        if city.tag == nil or not (city.tag or {}).valid then
             local tag = game.forces.player.add_chart_tag(game.surfaces[Constants.STARTING_SURFACE_ID],
                 {
-                    position = { x = city.special_buildings.town_hall.position.x, y = city.special_buildings.town_hall.position.y },
+                    position = city.center,
                     text = city.name
                 }
             )
             city.tag = tag
+        end
+        -- append population
+        if (city.tag or {}).valid then
+            if (settings.global["tycoon-tags-show-population"] or {}).value then
+                local count = 0
+                for _, n in pairs(city.citizens) do
+                    count = count + n
+                end
+                city.tag.text = city.name .." [color=gray][".. tostring(count) .."][/color]"
+            else
+                -- won't lag (called every ~30s), otherwise tail is left
+                city.tag.text = city.name
+            end
         end
     end
 end

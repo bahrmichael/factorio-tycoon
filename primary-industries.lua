@@ -1,6 +1,17 @@
 local Constants = require("constants")
 local Util = require("util")
 
+local all_resource_names_cached = nil
+local function get_all_resource_names()
+    if all_resource_names_cached == nil then
+        all_resource_names_cached = {}
+        for name, _cat in pairs(game.get_filtered_entity_prototypes{{filter="type", type="resource"}}) do
+            table.insert(all_resource_names_cached, name)
+        end
+    end
+    return all_resource_names_cached
+end
+
 local function add_to_global_primary_industries(entity)
     if entity == nil then
         return
@@ -14,6 +25,24 @@ local function add_to_global_primary_industries(entity)
     -- WARN: do not insert with unit_number as it converts array to a dict
     table.insert(global.tycoon_primary_industries[entity.name], entity)
 end
+
+local function cleanup_global_primary_industries()
+    -- TODO: when called from on_chunk_deleted() - it doesn't clean fully, adding some delay might help (but how?)...
+    -- unless we have some array issue here, again. deleting 1K map keep-radius=2 count: 15 14 4 => 7 7 2 (?)
+    local count = 0
+    for name, _ in pairs(global.tycoon_primary_industries or {}) do
+        for k, entity in pairs(global.tycoon_primary_industries[name] or {}) do
+            if not entity.valid then
+                table.remove(global.tycoon_primary_industries[name], k)
+                count = count + 1
+            end
+        end
+    end
+    if count ~= 0 then
+        log("tycoon_primary_industries removed: ".. tostring(count))
+    end
+end
+
 
 local function getItemForPrimaryProduction(name)
     if name == "tycoon-apple-farm" then
@@ -54,13 +83,46 @@ local function getFixedRecipeForIndustry(industryName)
     end
 end
 
+local function tagIndustry(pos, entity_name)
+    -- TODO: move to proper place, where all the globals should be set up
+    if global.tycoon_tags_queue == nil then
+        global.tycoon_tags_queue = {}
+    end
+
+    -- WARN: this will fail when called from on_chunk_generated() instead of on_chunk_charted()
+    local tag = game.forces.player.add_chart_tag(game.surfaces[Constants.STARTING_SURFACE_ID], {
+        position = pos,
+        icon = {
+            type = "item",
+            name = getItemForPrimaryProduction(entity_name),
+        },
+        text = localizePrimaryProductionName(entity_name),
+    })
+
+    -- to accomodate that ^, we keep failed tags in a queue
+    -- using chunk coords, so that on_chunk_*() handlers can easily check by key
+    local k = Util.chunkToHash(Util.positionToChunk(pos))
+    if tag == nil then
+        -- storing pos and name is a bit too much, but avoids searching for entity, which might be more expensive
+        global.tycoon_tags_queue[k] = { pos, entity_name }
+        return
+    end
+
+    -- remove on success
+    global.tycoon_tags_queue[k] = nil
+    return tag
+end
+
 local function place_primary_industry_at_position(position, entity_name)
+    -- half a chunk should be enough, unless we have new farms >14x14 (not recommended!)
+    local PRIMARY_INDUSTRY_NEARBY_RADIUS = Constants.CHUNK_SIZE/2
+    local nearby_count = 0
     if position ~= nil then
         -- This is mainly here to avoid two industries being right next to each other, 
         -- blocking each others pipes.
         local nearby_primary_industries_count = game.surfaces[Constants.STARTING_SURFACE_ID].count_entities_filtered{
             position = position,
-            radius = 20,
+            radius = PRIMARY_INDUSTRY_NEARBY_RADIUS,
             name = Constants.PRIMARY_INDUSTRIES,
             limit = 1
         }
@@ -72,7 +134,7 @@ local function place_primary_industry_at_position(position, entity_name)
         if entity_name ~= "tycoon-fishery" then
             local nearby_cliffs_or_water_count = game.surfaces[Constants.STARTING_SURFACE_ID].count_tiles_filtered{
                 position = position,
-                radius = 10,
+                radius = PRIMARY_INDUSTRY_NEARBY_RADIUS,
                 name = {"cliff", "water", "deepwater"},
                 limit = 1
             }
@@ -80,17 +142,23 @@ local function place_primary_industry_at_position(position, entity_name)
                 return nil
             end
         end
-        local tag = game.forces.player.add_chart_tag(game.surfaces[Constants.STARTING_SURFACE_ID],
-            {
-                position = {x = position.x, y = position.y},
-                icon = {
-                    type = "item",
-                    name = getItemForPrimaryProduction(entity_name),
-                },
-                text = localizePrimaryProductionName(entity_name),
+
+        -- check nearby resources
+        if not (settings.global["tycoon-skip-check-resources"] or {}).value then
+            nearby_count = game.surfaces[Constants.STARTING_SURFACE_ID].count_entities_filtered{
+                position = position,
+                radius = PRIMARY_INDUSTRY_NEARBY_RADIUS,
+                name = get_all_resource_names(),
+                limit = 1
             }
-        )
-        if tag ~= nil then
+        end
+        if nearby_count > 0 then
+            return nil
+        end
+
+        tagIndustry(position, entity_name)
+
+        -- indentation kept for cleaner diff
             local entity = game.surfaces[Constants.STARTING_SURFACE_ID].create_entity{
                 name = entity_name,
                 position = {x = position.x, y = position.y},
@@ -106,7 +174,6 @@ local function place_primary_industry_at_position(position, entity_name)
             else
                 game.print("Factorio Error: The mod has encountered an issue when placing primary industries. Please report this to the developer. You can continue playing.")
             end
-        end
     end
 end
 
@@ -193,6 +260,8 @@ end
 return {
     place_primary_industry_at_position = place_primary_industry_at_position,
     add_to_global_primary_industries = add_to_global_primary_industries,
+    cleanup_global_primary_industries = cleanup_global_primary_industries,
     spawn_initial_industry = spawn_initial_industry,
     getFixedRecipeForIndustry = getFixedRecipeForIndustry,
+    tagIndustry = tagIndustry,
 }
