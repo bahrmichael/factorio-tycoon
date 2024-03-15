@@ -448,7 +448,7 @@ local function tag_cities()
     for _, city in ipairs(global.tycoon_cities or {}) do
         -- We need to initialize the tag here, because tags can only be placed on charted chunks.
         -- And the game needs a moment to start and chart the initial chunks, even if it can already place entities.
-        if city.tag == nil and (city.special_buildings.town_hall or {}).valid then
+        if city.tag == nil or not (city.tag or {}).valid then
             local tag = game.forces.player.add_chart_tag(game.surfaces[Constants.STARTING_SURFACE_ID],
                 {
                     position = city.center,
@@ -458,7 +458,7 @@ local function tag_cities()
             city.tag = tag
         end
         -- append population
-        if city.tag ~= nil then
+        if (city.tag or {}).valid then
             if (settings.global["tycoon-tags-show-population"] or {}).value then
                 local count = 0
                 for _, n in pairs(city.citizens) do
