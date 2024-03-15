@@ -16,4 +16,4 @@ jobs:
 
     - name: Check locale files
       run: |
-        ./compare_locales.sh
+        ./scripts/compare_locales.sh
