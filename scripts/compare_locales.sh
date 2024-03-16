@@ -54,7 +54,7 @@ for source_file in "$base_dir/$base_lang"/*.cfg; do
     # Iterate over target languages
     for lang in "${target_langs[@]}"; do
         # Define the file path for the target language
-        target_file="$base_dir/$lang/$filename"
+        target_file="$lang/$filename"
 
         # Check if the target file exists
         [[ ! -f $target_file ]] && {
