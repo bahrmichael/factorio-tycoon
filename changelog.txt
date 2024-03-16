@@ -1,4 +1,19 @@
 ---------------------------------------------------------------------------------------------------
+Version: unreleased
+Date: 09. 03. 2023
+  Features:
+    - The mod will now avoid placing industries on resource patches. If this causes performance issues for you, there's a setting to disable this behaviour.
+    - You can now see each city's population on the map.
+    - Map tags for cities are now placed again if deleted.
+    - Starting area setting is now being supported. Sets the area around map center to keep clean of additional placements.
+  Bugfixes:
+    - Fixed misaligned water inputs of apple farms.
+    - Fixed a rare crash if town halls become invalid.
+    - Fixed a rare issue where you would not be notified about cities.
+    - Fixed an issue where house placement would be slightly off.
+  Optimisations:
+    - Various performance improvements.
+---------------------------------------------------------------------------------------------------
 Version: 0.4.5
 Date: 09. 03. 2023
   Bugfixes:
