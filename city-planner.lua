@@ -326,6 +326,8 @@ local function initializeCity(city)
     end
 
     table.insert(city.priority_buildings, { name = "tycoon-treasury", priority = 10 })
+
+    Consumption.updateNeeds(city)
 end
 
 local function addCity(position, predefinedCityName)
@@ -359,7 +361,6 @@ local function addCity(position, predefinedCityName)
         },
     })
     initializeCity(global.tycoon_cities[cityId])
-    Consumption.updateNeeds(global.tycoon_cities[cityId])
 
     game.print({ "",
         "[color=orange]Factorio Tycoon:[/color] ", { "tycooon-new-city", cityName }, ": ",
