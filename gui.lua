@@ -695,7 +695,8 @@ end
 
 local function addCityView(city, anchor)
     
-    Consumption.updateNeeds(city)
+    -- BUG: will cause mp desync!
+    --Consumption.updateNeeds(city)
 
     local tabbed_pane = anchor.add{type="tabbed-pane"}
     local tab_overview = tabbed_pane.add{type="tab", caption={"", {"tycoon-gui-city-overview"}}}
