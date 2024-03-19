@@ -62,6 +62,12 @@ script.on_nth_tick(THIRTY_SECONDS, function()
     -- rediscover_unused_fields()
     add_more_cities()
     CityPlanning.tag_cities()
+
+    -- moved from gui events because of desyncs
+    for _, city in ipairs(global.tycoon_cities or {}) do
+        Consumption.updateNeeds(city)
+        Consumption.updateProvidedAmounts(city)
+    end
 end)
 
 local function display_intro_messages()
