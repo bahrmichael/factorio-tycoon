@@ -630,57 +630,22 @@ local function getMap(direction)
     return result
 end
 
-local totalGardenSprites = 13
-local gardenSpriteIterator = 0
+-- TODO: build this table from prototypes or data-constants
+local totalBuildingSprites = {
+    ["garden"] = 13,
+    ["excavation-pit"] = 20,
+    ["house-simple"] = 14,
+    ["house-residential"] = 9,
+    ["house-highrise"] = 8,
+}
 
-local function getIteratedGardenName()
-    gardenSpriteIterator = gardenSpriteIterator + 1
-    return "tycoon-garden-" .. (gardenSpriteIterator % totalGardenSprites) + 1
-end
-
-local totalExcavationPitSprites = 20
-local excavationPitSpriteIterator = 0
-
-local function getIteratedExcavationPitName()
-    excavationPitSpriteIterator = excavationPitSpriteIterator + 1
-    return "tycoon-excavation-pit-" .. (excavationPitSpriteIterator % totalExcavationPitSprites) + 1
-end
-
-local totalSimpleHouseSprites = 14
-local simpleHouseSpriteIterator = 0
-
-local function getIteratedSimpleHouseName()
-    simpleHouseSpriteIterator = simpleHouseSpriteIterator + 1
-    return "tycoon-house-simple-" .. (simpleHouseSpriteIterator % totalSimpleHouseSprites) + 1
-end
-
-local totalResidentialHouseSprites = 9
-local residentialHouseSpriteIterator = 0
-
-local function getIteratedResidentialHouseName()
-    residentialHouseSpriteIterator = residentialHouseSpriteIterator + 1
-    return "tycoon-house-residential-" .. (residentialHouseSpriteIterator % totalResidentialHouseSprites) + 1
-end
-
-local totalHighriseHouseSprites = 8
-local highriseHouseSpriteIterator = 0
-
-local function getIteratedHighriseHouseName()
-    highriseHouseSpriteIterator = highriseHouseSpriteIterator + 1
-    return "tycoon-house-highrise-" .. (highriseHouseSpriteIterator % totalHighriseHouseSprites) + 1
-end
-
+--- @param city City
 --- @param buildingType BuildingType
-local function getIteratedHouseName(buildingType)
-    if buildingType == "simple" then
-        return getIteratedSimpleHouseName()
-    elseif buildingType == "residential" then
-        return getIteratedResidentialHouseName()
-    elseif buildingType == "highrise" then
-        return getIteratedHighriseHouseName()
-    else
-        assert(false, "Expected building type, but received: " .. tostring(buildingType))
-    end
+local function getRandomBuildingName(city, buildingType)
+    assert(city ~= nil, "City instance is nil")
+    assert(totalBuildingSprites[buildingType] ~= nil, "Unknown building type: " .. tostring(buildingType))
+    local n = totalBuildingSprites[buildingType] or 1
+    return "tycoon-" .. buildingType .."-".. city.generator(n)
 end
 
 --- @param city City
@@ -867,7 +832,7 @@ local function startConstruction(city, buildingConstruction, queueIndex, allowed
 
             -- Place an excavation site entity that will be later replaced with the actual building
             local excavationPit = game.surfaces[Constants.STARTING_SURFACE_ID].create_entity{
-                name = getIteratedExcavationPitName(),
+                name = getRandomBuildingName(city, "excavation-pit"),
                 position = {x = startCoordinates.x - 0.5 + Constants.CELL_SIZE / 2, y = startCoordinates.y - 0.5  + Constants.CELL_SIZE / 2},
                 force = "player",
                 move_stuck_players = true
@@ -1169,7 +1134,8 @@ local function completeConstruction(city, buildingTypes)
         end
         local position = {x = startCoordinates.x + Constants.CELL_SIZE / 2 + xModifier, y = startCoordinates.y + Constants.CELL_SIZE / 2 + yModifier}
         entity = game.surfaces[Constants.STARTING_SURFACE_ID].create_entity{
-            name = getIteratedHouseName(entityName),
+            -- WARN: prefixing with "house-" because of allowed shorter format
+            name = getRandomBuildingName(city, "house-".. entityName),
             position = position,
             force = "player",
             move_stuck_players = true
@@ -1216,7 +1182,7 @@ local function completeConstruction(city, buildingTypes)
         growCitizenCount(city, Constants.CITIZEN_COUNTS[entityName], entityName)
     elseif entityName == "garden" then
         entity = game.surfaces[Constants.STARTING_SURFACE_ID].create_entity{
-            name = getIteratedGardenName(),
+            name = getRandomBuildingName(city, entityName),
             position = {x = startCoordinates.x + Constants.CELL_SIZE / 2, y = startCoordinates.y  + Constants.CELL_SIZE / 2},
             force = "player",
             move_stuck_players = true
