@@ -107,8 +107,11 @@ local function on_removed(event)
 
         if global.tycoon_house_lights ~= nil then
             local light = global.tycoon_house_lights[unit_number]
-            if light ~= nil and light.valid then
-                light.destroy()
+            if light ~= nil then
+                if light.valid then
+                    light.destroy()
+                end
+                global.tycoon_house_lights[unit_number] = nil
             end
         end
     end
