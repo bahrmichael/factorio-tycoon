@@ -4,6 +4,7 @@ data:extend{
         name = "tycoon-fishery",
         icon = "__tycoon__/graphics/icons/fishery.png",
         icon_size = 256,
+        map_color = {r=0.8, g=0.8, b=1},
         max_health = 200,
         rotatable = false,
         flags = { "not-rotatable" },
