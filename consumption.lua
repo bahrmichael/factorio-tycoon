@@ -308,7 +308,8 @@ end
 --- @return number[] supplyLevels
 local function getSupplyLevels(city, needs)
     assert(needs ~= nil, "Expected needs in getSupplyLevels to not be nil.")
-    updateProvidedAmounts(city)
+    -- BUG: will cause mp desync!
+    --updateProvidedAmounts(city)
 
     local waterDemand = (needs or {}).water
 
@@ -608,6 +609,7 @@ local function update_construction_timers(city, tier)
 end
 
 return {
+    updateProvidedAmounts = updateProvidedAmounts,
     getSupplyLevels = getSupplyLevels,
     updateNeeds = updateNeeds,
     consumeBasicNeeds = consumeBasicNeeds,

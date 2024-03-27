@@ -1475,6 +1475,7 @@ end
 
 local CITY = {
     growAtRandomRoadEnd = growAtRandomRoadEnd,
+    growCitizenCount = growCitizenCount,
     updatepossibleBuildingLocations = addBuildingLocations,
     completeConstruction = completeConstruction,
     startConstruction = startConstruction,
