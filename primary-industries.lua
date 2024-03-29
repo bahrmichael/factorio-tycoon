@@ -1,5 +1,6 @@
 local Constants = require("constants")
 local Util = require("util")
+local TagsQueue = require("tags-queue")
 
 local all_resource_names_cached = nil
 local function get_all_resource_names()
@@ -83,14 +84,10 @@ local function getFixedRecipeForIndustry(industryName)
     end
 end
 
-local function tagIndustry(pos, entity_name)
-    -- TODO: move to proper place, where all the globals should be set up
-    if global.tycoon_tags_queue == nil then
-        global.tycoon_tags_queue = {}
-    end
+local function tagIndustry(pos, entity_name, surface_index)
 
     -- WARN: this will fail when called from on_chunk_generated() instead of on_chunk_charted()
-    local tag = game.forces.player.add_chart_tag(game.surfaces[Constants.STARTING_SURFACE_ID], {
+    local tag = game.forces.player.add_chart_tag(game.surfaces[surface_index], {
         position = pos,
         icon = {
             type = "item",
@@ -101,15 +98,13 @@ local function tagIndustry(pos, entity_name)
 
     -- to accomodate that ^, we keep failed tags in a queue
     -- using chunk coords, so that on_chunk_*() handlers can easily check by key
-    local k = Util.chunkToHash(Util.positionToChunk(pos))
+    local chunk_position = Util.positionToChunk(pos)
     if tag == nil then
-        -- storing pos and name is a bit too much, but avoids searching for entity, which might be more expensive
-        global.tycoon_tags_queue[k] = { pos, entity_name }
-        return
+        TagsQueue.push_data_for_position(chunk_position, surface_index, entity_name)
+    else
+        TagsQueue.clear_data_for_position(chunk_position, surface_index)
     end
 
-    -- remove on success
-    global.tycoon_tags_queue[k] = nil
     return tag
 end
 

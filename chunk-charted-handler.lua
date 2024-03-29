@@ -1,6 +1,7 @@
 local Constants = require("constants")
 local PrimaryIndustries = require("primary-industries")
 local Util = require("util")
+local TagsQueue = require("tags-queue")
 
 local function randomPrimaryIndustry()
     return Constants.PRIMARY_INDUSTRIES[global.tycoon_global_generator(#Constants.PRIMARY_INDUSTRIES)]
@@ -48,12 +49,9 @@ local function on_chunk_charted(event)
     end
 
     -- place pending tags
-    if global.tycoon_tags_queue ~= nil then
-        local k = Util.chunkToHash(event.position)
-        local pos_name = global.tycoon_tags_queue[k]
-        if pos_name ~= nil then
-            PrimaryIndustries.tagIndustry(table.unpack(pos_name))
-        end
+    local pos_name = TagsQueue.get(event.position, event.surface_index)
+    if pos_name ~= nil then
+        PrimaryIndustries.tagIndustry(table.unpack(pos_name))
     end
 
     if global.tycoon_global_generator() < 0.25 then
@@ -101,22 +99,20 @@ local function on_chunk_charted(event)
 end
 
 local function on_chunk_deleted(event)
-    if event.surface_index ~= Constants.STARTING_SURFACE_ID then
-        return
-    end
+    -- if event.surface_index ~= Constants.STARTING_SURFACE_ID then
+    --     return
+    -- end
 
     PrimaryIndustries.cleanup_global_primary_industries()
 
     local count = 0
     for i, chunk in pairs(event.positions) do
         -- remove pending tags
-        if global.tycoon_tags_queue ~= nil then
-            local k = Util.chunkToHash(chunk)
-            local t = global.tycoon_tags_queue[k]
-            if t ~= nil then
-                global.tycoon_tags_queue[k] = nil
-                count = count + 1
-            end
+
+        local t = TagsQueue.get(chunk, event.surface_index)
+        if t ~= nil then
+            TagsQueue.delete(chunk, event.surface_index)
+            count = count + 1
         end
     end
     log("tycoon_tags_queue removed: ".. tostring(count))
