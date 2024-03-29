@@ -172,7 +172,7 @@ local function place_primary_industry_at_position(position, entity_name)
 
                 return entity
             else
-                game.print("Factorio Error: The mod has encountered an issue when placing primary industries. Please report this to the developer. You can continue playing.")
+                game.print({"", "[color=orange]Factorio Tycoon:[/color] ", "The mod has encountered an issue when placing primary industries. Please report this to the developer. You can continue playing."})
             end
     end
 end

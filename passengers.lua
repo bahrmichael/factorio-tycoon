@@ -1,5 +1,6 @@
 local Constants = require("constants")
 local Util = require("util")
+local City = require("city")
 
 --- @param city City
 --- @param filter string | nil
@@ -13,30 +14,6 @@ local function countCitizens(city, filter)
         end
     end
     return total
-end
-
---- @param city City
---- @param name string
-local function listSpecialCityBuildings(city, name)
-    local entities = {}
-    if city.special_buildings.other[name] ~= nil and #city.special_buildings.other[name] > 0 then
-        entities = city.special_buildings.other[name]
-    else
-        entities = game.surfaces[Constants.STARTING_SURFACE_ID].find_entities_filtered{
-            name=name,
-            position=city.center,
-            radius=Constants.CITY_RADIUS
-        }
-        city.special_buildings.other[name] = entities
-    end
-
-    local result = {}
-    for _, entity in ipairs(entities) do
-        if entity ~= nil and entity.valid then
-            table.insert(result, entity)
-        end
-    end
-    return result
 end
 
 --- @param city City
@@ -99,7 +76,7 @@ local function spawnPassengers(city)
     -- Residential housing have 20 citizens and highrise have 100. That means we generate up to 1 per residential and up to 5 per highrise house.
     local newPassengerCount = math.floor((residentialCount * 0.05 + highriseCount * 0.05) * citizenFactor * city.generator())
     if newPassengerCount > 0 then
-        local trainStations = listSpecialCityBuildings(city, "tycoon-passenger-train-station")
+        local trainStations = City.list_special_city_buildings(city, "tycoon-passenger-train-station")
         if #trainStations > 0 then
             local selectedTrainStation = trainStations[city.generator(#trainStations)]
             if selectedTrainStation ~= nil and selectedTrainStation.valid then
@@ -179,7 +156,7 @@ local function getCredits(passenger)
     local originCity = findCityByName(passenger.origin)
     local destinationCity = findCityByName(passenger.destination)
     if originCity == nil or destinationCity == nil then
-        game.print("The tycoon mod has encountered a problem: Credits for a passenger couldn't be awarded because the origin or destination city could not be found.")
+        game.print({"", "[color=orange]Factorio Tycoon:[/color] ", "The tycoon mod has encountered a problem: Credits for a passenger couldn't be awarded because the origin or destination city could not be found."})
         return 0
     end
     
@@ -201,8 +178,8 @@ local function clearPassengers(city)
 
     local passengerName = "tycoon-passenger-" .. string.lower(city.name)
 
-    local trainStations = listSpecialCityBuildings(city, "tycoon-passenger-train-station")
-    local treasuries = listSpecialCityBuildings(city, "tycoon-treasury")
+    local trainStations = City.list_special_city_buildings(city, "tycoon-passenger-train-station")
+    local treasuries = City.list_special_city_buildings(city, "tycoon-treasury")
     if #trainStations > 0 then
         for _, trainStation in ipairs(trainStations) do
 

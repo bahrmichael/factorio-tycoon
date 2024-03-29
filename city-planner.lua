@@ -23,7 +23,6 @@ end
 
 -- With an additional space of 200 the cities still spawned relatively close to each other, so I raised it to 400
 local MIN_DISTANCE = Constants.CITY_RADIUS * 2 + 400
-local COST_PER_CITY = 1000
 
 local function isInRangeOfCity(city, position)
     local distance = Util.calculateDistance(city.center, position)
@@ -368,25 +367,8 @@ local function addCity(position, predefinedCityName)
     return cityName
 end
 
-local function getRequiredFundsForNextCity()
-    return math.pow(#(global.tycoon_cities or {}), 2) * COST_PER_CITY
-end
-
-local function getTotalAvailableFunds()
-    local urbanPlanningCenters = game.surfaces[Constants.STARTING_SURFACE_ID].find_entities_filtered {
-        name = "tycoon-urban-planning-center"
-    }
-
-    local totalAvailableFunds = 0
-    for _, c in ipairs(urbanPlanningCenters or {}) do
-        local availableFunds = c.get_item_count("tycoon-currency")
-        totalAvailableFunds = totalAvailableFunds + availableFunds
-    end
-
-    return totalAvailableFunds
-end
-
-local function addMoreCities(isInitialCity, skipPayment)
+-- todo: trigger this function only when cities grow enough
+local function addMoreCities(isInitialCity)
     if global.tycoon_cities == nil then
         global.tycoon_cities = {}
     end
@@ -399,18 +381,6 @@ local function addMoreCities(isInitialCity, skipPayment)
         return false
     end
 
-    local requiredFunds = getRequiredFundsForNextCity()
-    if not skipPayment then
-        if not (game.forces.player.technologies["tycoon-multiple-cities"] or {}).researched then
-            return false
-        end
-
-        local totalAvailableFunds = getTotalAvailableFunds()
-        if requiredFunds > totalAvailableFunds then
-            return false
-        end
-    end
-
     local newCityPosition = findNewCityPosition(isInitialCity)
     if newCityPosition ~= nil then
         local cityName = addCity(newCityPosition)
@@ -418,24 +388,6 @@ local function addMoreCities(isInitialCity, skipPayment)
         if false then
         game.print({ "", "[color=orange]Factorio Tycoon:[/color] ", { "tycooon-new-city", cityName }, ": ", "[gps=" ..
         (newCityPosition.x + 1.5 * Constants.CELL_SIZE) .. "," .. (newCityPosition.y + 1.5 * Constants.CELL_SIZE) .. "]" })
-        end
-
-        if not skipPayment then
-            local urbanPlanningCenters = game.surfaces[Constants.STARTING_SURFACE_ID].find_entities_filtered {
-                name = "tycoon-urban-planning-center"
-            } or {}
-            -- sort the centers with most currency first, so that we need to remove from fewer centers
-            table.sort(urbanPlanningCenters, function(a, b)
-                return a.get_item_count("tycoon-currency") > b.get_item_count("tycoon-currency")
-            end)
-            for _, c in ipairs(urbanPlanningCenters) do
-                local availableCount = c.get_item_count("tycoon-currency")
-                local removed = c.remove_item({ name = "tycoon-currency", count = math.min(requiredFunds, availableCount) })
-                requiredFunds = requiredFunds - removed
-                if requiredFunds <= 0 then
-                    break
-                end
-            end
         end
 
         return true
@@ -475,7 +427,7 @@ end
 
 local function build_initial_city()
     if (settings.startup["tycoon-spawn-initial-city"] or {}).value and #(global.tycoon_cities or {}) == 0 then
-        addMoreCities(true, true)
+        addMoreCities(true)
     end
 end
 

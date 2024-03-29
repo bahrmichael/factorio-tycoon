@@ -87,17 +87,4 @@ data:extend{
         result = "tycoon-passenger-train-station",
         result_count = 1,
     },
-    {
-        type = "recipe",
-        name = "tycoon-urban-planning-center",
-        category = "crafting",
-        enabled = false,
-        ingredients = {
-            { type = "item", name = "concrete", amount = 500 },
-            { type = "item", name = "steel-plate", amount = 200 },
-            { type = "item", name = "advanced-circuit", amount = 50 },
-        },
-        result = "tycoon-urban-planning-center",
-        result_count = 1,
-    },
 }
