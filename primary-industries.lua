@@ -108,14 +108,14 @@ local function tagIndustry(pos, entity_name, surface_index)
     return tag
 end
 
-local function place_primary_industry_at_position(position, entity_name)
+local function place_primary_industry_at_position(position, entity_name, surface_index)
     -- half a chunk should be enough, unless we have new farms >14x14 (not recommended!)
     local PRIMARY_INDUSTRY_NEARBY_RADIUS = Constants.CHUNK_SIZE/2
     local nearby_count = 0
     if position ~= nil then
         -- This is mainly here to avoid two industries being right next to each other, 
         -- blocking each others pipes.
-        local nearby_primary_industries_count = game.surfaces[Constants.STARTING_SURFACE_ID].count_entities_filtered{
+        local nearby_primary_industries_count = game.surfaces[surface_index].count_entities_filtered{
             position = position,
             radius = PRIMARY_INDUSTRY_NEARBY_RADIUS,
             name = Constants.PRIMARY_INDUSTRIES,
@@ -127,7 +127,7 @@ local function place_primary_industry_at_position(position, entity_name)
         -- Fisheries don't have a pipe input and therfore don't need this condition
         -- they are also placed near water, so this would lead to no fisheries being placed anywhere.
         if entity_name ~= "tycoon-fishery" then
-            local nearby_cliffs_or_water_count = game.surfaces[Constants.STARTING_SURFACE_ID].count_tiles_filtered{
+            local nearby_cliffs_or_water_count = game.surfaces[surface_index].count_tiles_filtered{
                 position = position,
                 radius = PRIMARY_INDUSTRY_NEARBY_RADIUS,
                 name = {"cliff", "water", "deepwater"},
@@ -140,7 +140,7 @@ local function place_primary_industry_at_position(position, entity_name)
 
         -- check nearby resources
         if not (settings.global["tycoon-skip-check-resources"] or {}).value then
-            nearby_count = game.surfaces[Constants.STARTING_SURFACE_ID].count_entities_filtered{
+            nearby_count = game.surfaces[surface_index].count_entities_filtered{
                 position = position,
                 radius = PRIMARY_INDUSTRY_NEARBY_RADIUS,
                 name = get_all_resource_names(),
@@ -151,43 +151,43 @@ local function place_primary_industry_at_position(position, entity_name)
             return nil
         end
 
-        tagIndustry(position, entity_name)
+        tagIndustry(position, entity_name, surface_index)
 
-        -- indentation kept for cleaner diff
-            local entity = game.surfaces[Constants.STARTING_SURFACE_ID].create_entity{
-                name = entity_name,
-                position = {x = position.x, y = position.y},
-                force = "neutral",
-                move_stuck_players = true
-            }
-            if entity ~= nil and entity.valid then
-                -- or any other primary industry that has productivity research
-                entity.set_recipe(getFixedRecipeForIndustry(entity.name))
-                entity.recipe_locked = true
+        local entity = game.surfaces[surface_index].create_entity{
+            name = entity_name,
+            position = {x = position.x, y = position.y},
+            force = "neutral",
+            move_stuck_players = true
+        }
+        if entity ~= nil and entity.valid then
+            -- or any other primary industry that has productivity research
+            entity.set_recipe(getFixedRecipeForIndustry(entity.name))
+            entity.recipe_locked = true
 
-                return entity
-            else
-                game.print("Factorio Error: The mod has encountered an issue when placing primary industries. Please report this to the developer. You can continue playing.")
-            end
+            return entity
+        else
+            game.print("Factorio Error: The mod has encountered an issue when placing primary industries. Please report this to the developer. You can continue playing.")
+        end
     end
 end
 
 local function find_position_for_initial_apple_farm()
+    local surface_index = Constants.STARTING_SURFACE_ID
     local coordinate_candidates = {}
     for _ = 1, 5, 1 do
         
         local starting_position = {math.random(-30, 30), math.random(-30, 30)}
-        local position = game.surfaces[Constants.STARTING_SURFACE_ID].find_non_colliding_position("tycoon-apple-farm", starting_position, 200, 5, true)
+        local position = game.surfaces[surface_index].find_non_colliding_position("tycoon-apple-farm", starting_position, 200, 5, true)
         if position ~= nil then
             
-            local water_tiles = game.surfaces[Constants.STARTING_SURFACE_ID].find_tiles_filtered{
+            local water_tiles = game.surfaces[surface_index].find_tiles_filtered{
                 position = position,
                 radius = 100,
                 name={"water", "deepwater"},
                 limit = 1,
             }
 
-            local town_halls = game.surfaces[Constants.STARTING_SURFACE_ID].find_entities_filtered{
+            local town_halls = game.surfaces[surface_index].find_entities_filtered{
                 position = position,
                 radius = 100,
                 name = "tycoon-town-hall",
@@ -240,7 +240,7 @@ local function spawn_initial_industry()
             -- we don't need to do anything here, it will be reattempted next loop
             return
         else
-            local entity = place_primary_industry_at_position(position, "tycoon-apple-farm")
+            local entity = place_primary_industry_at_position(position, "tycoon-apple-farm", Constants.STARTING_SURFACE_ID)
             if entity ~= nil then
                 add_to_global_primary_industries(entity)
                 global.tycoon_has_initial_apple_farm = true
