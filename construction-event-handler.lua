@@ -13,12 +13,14 @@ local function invalidateSpecialBuildingsList(city, name)
 end
 
 local function on_built(event)
-    assert(event.created_entity, "Called on_removed without a unit_number or created_entity. Wrong event?")
+    assert(event.created_entity, "Called on_built without a created_entity. Wrong event?")
 
     local entity = event.created_entity
+    -- LuaEntity inherits surface_index from LuaControl
+    local surface_index = entity.surface_index
 
     if Util.isSupplyBuilding(entity.name) or entity.name == "tycoon-passenger-train-station" then
-        local nearbyTownHall = game.surfaces[Constants.STARTING_SURFACE_ID].find_entities_filtered{
+        local nearbyTownHall = game.surfaces[surface_index].find_entities_filtered{
             position=entity.position,
             radius=Constants.CITY_RADIUS,
             name="tycoon-town-hall",
@@ -49,7 +51,7 @@ local function on_built(event)
 end
 
 local function on_removed(event)
-    local unit_number = event.unit_number
+    local unit_number = event.unit_number or (event.entity or {}).unit_number
     if unit_number == nil then
         return
     end
@@ -59,14 +61,14 @@ local function on_removed(event)
     end
     
     local building = global.tycoon_city_buildings[unit_number]
-
-    if (building or {}).entity == nil then
+    local entity = (building or {}).entity
+    if entity == nil then
         return
     end
 
     if Util.isSupplyBuilding(building.entity_name) or building.entity_name == "tycoon-passenger-train-station" then
         
-        local nearby_town_hall = game.surfaces[Constants.STARTING_SURFACE_ID].find_entities_filtered{
+        local nearby_town_hall = game.surfaces[entity.surface_index].find_entities_filtered{
             position=building.entity.position,
             radius=Constants.CITY_RADIUS,
             name="tycoon-town-hall",

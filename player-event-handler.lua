@@ -36,7 +36,7 @@ local function on_player_cursor_stack_changed(event)
                         radius = Constants.CITY_RADIUS,
                         filled = true,
                         target = city.special_buildings.town_hall,
-                        surface = game.surfaces[Constants.STARTING_SURFACE_ID],
+                        surface = game.surfaces[city.surface_index],
                         draw_on_ground = true,
                     }
 

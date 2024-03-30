@@ -116,9 +116,10 @@ local function getSurroundingCoordinates(y, x, size, allowDiagonal)
 end
 
 --- @param area any
+--- @param surface_index number
 --- @param ignorables string[] | nil
-local function removeColldingEntities(area, ignorables)
-    local printEntities = game.surfaces[Constants.STARTING_SURFACE_ID].find_entities_filtered({
+local function removeColldingEntities(area, surface_index, ignorables)
+    local printEntities = game.surfaces[surface_index].find_entities_filtered({
         area=area,
         type = {"tree", "simple-entity"}
     })
@@ -131,8 +132,8 @@ local function removeColldingEntities(area, ignorables)
     end
 end
 
-local function hasCliffsOrWater(area)
-    local water = game.surfaces[Constants.STARTING_SURFACE_ID].find_tiles_filtered{
+local function hasCliffsOrWater(area, surface_index)
+    local water = game.surfaces[surface_index].find_tiles_filtered{
         area = area,
         name = {
             "deepwater",
@@ -146,7 +147,7 @@ local function hasCliffsOrWater(area)
         },
         limit = 1
     }
-    local cliffs = game.surfaces[Constants.STARTING_SURFACE_ID].find_entities_filtered{
+    local cliffs = game.surfaces[surface_index].find_entities_filtered{
         area = area,
         name = { "cliff" },
         limit = 1
@@ -155,21 +156,16 @@ local function hasCliffsOrWater(area)
 end
 
 --- @param area any
---- @param additionalIgnorables string[] | nil
-local function isAreaFree(area, additionalIgnorables)
+--- @param surface_index number
+local function isAreaFree(area, surface_index)
     -- Water / Cliffs
-    if hasCliffsOrWater(area) then
+    if hasCliffsOrWater(area, surface_index) then
         return false
     end
 
     local ignorables = {"rock-huge", "rock-big", "sand-rock-big", "dead-grey-trunk"}
-    if additionalIgnorables ~= nil and #additionalIgnorables >0 then
-        for _, value in ipairs(additionalIgnorables) do
-            table.insert(ignorables, value)
-        end
-    end
 
-    local entities = game.surfaces[Constants.STARTING_SURFACE_ID].find_entities_filtered({
+    local entities = game.surfaces[surface_index].find_entities_filtered({
         area=area,
         type={"tree"},
         name=ignorables,
@@ -190,7 +186,7 @@ local function checkForCollidables(city, coordinates, additionalIgnorables)
         {startCoordinates.x + Constants.CELL_SIZE, startCoordinates.y + Constants.CELL_SIZE}
     }
     -- Water / Cliffs
-    if hasCliffsOrWater(area) then
+    if hasCliffsOrWater(area, city.surface_index) then
         return "blocked"
     end
 
@@ -202,7 +198,7 @@ local function checkForCollidables(city, coordinates, additionalIgnorables)
     end
 
     -- Too many trees / Other entities
-    local entities = game.surfaces[Constants.STARTING_SURFACE_ID].find_entities_filtered({
+    local entities = game.surfaces[city.surface_index].find_entities_filtered({
         area=area,
         type={"tree"},
         name=ignorables,
@@ -354,7 +350,7 @@ local function areStraightRailsOrthogonal(city, coordinates, direction)
     }
 
     -- Too many trees / Other entities
-    local entities = game.surfaces[Constants.STARTING_SURFACE_ID].find_entities_filtered({
+    local entities = game.surfaces[city.surface_index].find_entities_filtered({
         area=area,
         name={"straight-rail"},
         -- Only test 10 rail pieces, that should give us enough info
@@ -568,7 +564,7 @@ end
 --- @param start Coordinates
 --- @param map string[]
 --- @param tileName string
-local function printTiles(start, map, tileName)
+local function printTiles(start, map, tileName, surface_index)
     local x, y = start.x, start.y
     local tiles = {}
     for _, value in ipairs(map) do
@@ -582,7 +578,7 @@ local function printTiles(start, map, tileName)
         x = start.x
         y = y + 1
     end
-    game.surfaces[Constants.STARTING_SURFACE_ID].set_tiles(tiles)
+    game.surfaces[surface_index].set_tiles(tiles)
 end
 
 --- @param direction Direction
@@ -720,7 +716,7 @@ local function isCellFree(city, cellCoordinates)
         {x = startCoordinates.x, y = startCoordinates.y},
         {x = startCoordinates.x + Constants.CELL_SIZE, y = startCoordinates.y + Constants.CELL_SIZE}
     }
-    return isAreaFree(area)
+    return isAreaFree(area, city.surface_index)
 end
 
 --- @param city City
@@ -742,7 +738,7 @@ local function list_special_city_buildings(city, name)
     if city.special_buildings.other[name] ~= nil and #city.special_buildings.other[name] > 0 then
         entities = city.special_buildings.other[name]
     else
-        entities = game.surfaces[Constants.STARTING_SURFACE_ID].find_entities_filtered{
+        entities = game.surfaces[city.surface_index].find_entities_filtered{
             name=name,
             position=city.center,
             radius=Constants.CITY_RADIUS,
@@ -810,7 +806,7 @@ local function startConstruction(city, buildingConstruction, queueIndex, allowed
             -- If this location already has a road or building, then don't attempt to build
             -- here again.
             -- noop
-        elseif not isAreaFree(area) then
+        elseif not isAreaFree(area, city.surface_index) then
             -- noop, if there are collidables than retry later
             -- this should insert the coordinates at the end of the list, so that
             -- the next iteration will pick a different element from the beginning of the list
@@ -828,10 +824,10 @@ local function startConstruction(city, buildingConstruction, queueIndex, allowed
             end
 
             -- We can start a construction site here
-            removeColldingEntities(area)
+            removeColldingEntities(area, city.surface_index)
 
             -- Place an excavation site entity that will be later replaced with the actual building
-            local excavationPit = game.surfaces[Constants.STARTING_SURFACE_ID].create_entity{
+            local excavationPit = game.surfaces[city.surface_index].create_entity{
                 name = getRandomBuildingName(city, "excavation-pit"),
                 position = {x = startCoordinates.x - 0.5 + Constants.CELL_SIZE / 2, y = startCoordinates.y - 0.5  + Constants.CELL_SIZE / 2},
                 force = "player",
@@ -865,7 +861,7 @@ local function isCharted(city, coordinates)
         y = math.floor((GridUtil.getOffsetY(city) + coordinates.y * Constants.CELL_SIZE) / Constants.CHUNK_SIZE),
         x = math.floor((GridUtil.getOffsetX(city) + coordinates.x * Constants.CELL_SIZE) / Constants.CHUNK_SIZE),
     }
-    return game.forces.player.is_chunk_charted(game.surfaces[Constants.STARTING_SURFACE_ID], chunkPosition)
+    return game.forces.player.is_chunk_charted(game.surfaces[city.surface_index], chunkPosition)
 end
 
 --- @param coordinates Coordinates
@@ -880,13 +876,13 @@ local function clearAreaAndPrintTiles(city, coordinates, map)
         x = coordinates.x,
         y = coordinates.y,
     })
-    printTiles(currentCellStartCoordinates, map, "concrete")
+    printTiles(currentCellStartCoordinates, map, "concrete", city.surface_index)
 
     local currentArea = {
         {currentCellStartCoordinates.x, currentCellStartCoordinates.y},
         {currentCellStartCoordinates.x + Constants.CELL_SIZE, currentCellStartCoordinates.y + Constants.CELL_SIZE}
     }
-    removeColldingEntities(currentArea, streetIgnorables)
+    removeColldingEntities(currentArea, city.surface_index, streetIgnorables)
 
 end
 
@@ -1063,16 +1059,17 @@ end
 --- @param houseUnitNumber number
 --- @param mapPosition Coordinates
 --- @param buildingType BuildingType
-local function createLight(houseUnitNumber, mapPosition, buildingType)
+--- @param surface_index number
+local function createLight(houseUnitNumber, mapPosition, buildingType, surface_index)
     local light
     if buildingType == "residential" then
-        light = game.surfaces[Constants.STARTING_SURFACE_ID].create_entity{
+        light = game.surfaces[surface_index].create_entity{
             name = "hiddenlight-40",
             position = mapPosition,
             force = "neutral",
         }
     elseif buildingType == "highrise" then
-        light = game.surfaces[Constants.STARTING_SURFACE_ID].create_entity{
+        light = game.surfaces[surface_index].create_entity{
             name = "hiddenlight-60",
             position = mapPosition,
             force = "neutral",
@@ -1122,7 +1119,7 @@ local function completeConstruction(city, buildingTypes)
         "111111",
         "111111",
         "111111",
-    }, "concrete")
+    }, "concrete", city.surface_index)
     local entityName = excavationPit.buildingConstruction.buildingType
     local entity
     if entityName == "simple" or entityName == "residential" or entityName == "highrise" then
@@ -1133,14 +1130,14 @@ local function completeConstruction(city, buildingTypes)
             yModifier = -0.5
         end
         local position = {x = startCoordinates.x + Constants.CELL_SIZE / 2 + xModifier, y = startCoordinates.y + Constants.CELL_SIZE / 2 + yModifier}
-        entity = game.surfaces[Constants.STARTING_SURFACE_ID].create_entity{
+        entity = game.surfaces[city.surface_index].create_entity{
             -- WARN: prefixing with "house-" because of allowed shorter format
             name = getRandomBuildingName(city, "house-".. entityName),
             position = position,
             force = "player",
             move_stuck_players = true
         }
-        createLight(entity.unit_number, position, entityName)
+        createLight(entity.unit_number, position, entityName, city.surface_index)
         -- todo: test if the script destroying this entity also fires this hook
         script.register_on_entity_destroyed(entity)
 
@@ -1181,7 +1178,7 @@ local function completeConstruction(city, buildingTypes)
 
         growCitizenCount(city, Constants.CITIZEN_COUNTS[entityName], entityName)
     elseif entityName == "garden" then
-        entity = game.surfaces[Constants.STARTING_SURFACE_ID].create_entity{
+        entity = game.surfaces[city.surface_index].create_entity{
             name = getRandomBuildingName(city, entityName),
             position = {x = startCoordinates.x + Constants.CELL_SIZE / 2, y = startCoordinates.y  + Constants.CELL_SIZE / 2},
             force = "player",
@@ -1193,7 +1190,7 @@ local function completeConstruction(city, buildingTypes)
             xModifier = -0.5
             yModifier = 0
         end
-        entity = game.surfaces[Constants.STARTING_SURFACE_ID].create_entity{
+        entity = game.surfaces[city.surface_index].create_entity{
             name = entityName,
             position = {x = startCoordinates.x + Constants.CELL_SIZE / 2 + xModifier, y = startCoordinates.y  + Constants.CELL_SIZE / 2 + yModifier},
             force = "player",
@@ -1259,7 +1256,7 @@ local function hasPlayerEntities(city, coordinates)
         {x = startCoordinates.x, y = startCoordinates.y},
         {x = startCoordinates.x + Constants.CELL_SIZE, y = startCoordinates.y + Constants.CELL_SIZE}
     }
-    local playerEntities = game.surfaces[Constants.STARTING_SURFACE_ID].find_entities_filtered({
+    local playerEntities = game.surfaces[city.surface_index].find_entities_filtered({
         area=area,
         force=game.forces.player,
         limit=1
