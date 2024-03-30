@@ -1,14 +1,7 @@
 local Util = require("util")
 local Constants = require("constants")
 local Consumption = require("consumption")
-
-local function growCitizenCount(city, count, tier)
-    if city.citizens[tier] == nil then
-        city.citizens[tier] = 0
-    end
-    city.citizens[tier] = city.citizens[tier] + count
-    Consumption.updateNeeds(city)
-end
+local City = require("city")
 
 local function invalidateSpecialBuildingsList(city, name)
     assert(city.special_buildings ~= nil, "The special buildings should never be nil. There has been one error though, so I added this assertion.")
@@ -20,12 +13,14 @@ local function invalidateSpecialBuildingsList(city, name)
 end
 
 local function on_built(event)
-    assert(event.created_entity, "Called on_removed without a unit_number or created_entity. Wrong event?")
+    assert(event.created_entity, "Called on_built without a created_entity. Wrong event?")
 
     local entity = event.created_entity
+    -- LuaEntity inherits surface_index from LuaControl
+    local surface_index = entity.surface_index
 
     if Util.isSupplyBuilding(entity.name) or entity.name == "tycoon-passenger-train-station" then
-        local nearbyTownHall = game.surfaces[Constants.STARTING_SURFACE_ID].find_entities_filtered{
+        local nearbyTownHall = game.surfaces[surface_index].find_entities_filtered{
             position=entity.position,
             radius=Constants.CITY_RADIUS,
             name="tycoon-town-hall",
@@ -56,7 +51,7 @@ local function on_built(event)
 end
 
 local function on_removed(event)
-    local unit_number = event.unit_number
+    local unit_number = event.unit_number or (event.entity or {}).unit_number
     if unit_number == nil then
         return
     end
@@ -66,14 +61,14 @@ local function on_removed(event)
     end
     
     local building = global.tycoon_city_buildings[unit_number]
-
-    if (building or {}).entity == nil then
+    local entity = (building or {}).entity
+    if entity == nil then
         return
     end
 
     if Util.isSupplyBuilding(building.entity_name) or building.entity_name == "tycoon-passenger-train-station" then
         
-        local nearby_town_hall = game.surfaces[Constants.STARTING_SURFACE_ID].find_entities_filtered{
+        local nearby_town_hall = game.surfaces[entity.surface_index].find_entities_filtered{
             position=building.entity.position,
             radius=Constants.CITY_RADIUS,
             name="tycoon-town-hall",
@@ -109,13 +104,16 @@ local function on_removed(event)
         local cityId = building.cityId
         local city = Util.findCityById(cityId)
         if city ~= nil then
-            growCitizenCount(city, -1 * Constants.CITIZEN_COUNTS[housing_type], housing_type)
+            City.growCitizenCount(city, -1 * Constants.CITIZEN_COUNTS[housing_type], housing_type)
         end
 
         if global.tycoon_house_lights ~= nil then
             local light = global.tycoon_house_lights[unit_number]
-            if light ~= nil and light.valid then
-                light.destroy()
+            if light ~= nil then
+                if light.valid then
+                    light.destroy()
+                end
+                global.tycoon_house_lights[unit_number] = nil
             end
         end
     end
