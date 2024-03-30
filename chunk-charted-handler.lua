@@ -43,7 +43,7 @@ local function on_chunk_charted(event)
     -- place pending tags
     local pos_name = TagsQueue.get(event.position, event.surface_index)
     if pos_name ~= nil then
-        PrimaryIndustries.tagIndustry(table.unpack(pos_name))
+        PrimaryIndustries.tagIndustry(pos_name[1], pos_name[2], event.surface_index)
     end
 
     if global.tycoon_global_generator() < 0.25 then
