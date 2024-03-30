@@ -565,26 +565,6 @@ local function pickRoadExpansion(city, roadEnd)
     return nil
 end
 
---- @param start Coordinates
---- @param map string[]
---- @param tileName string
-local function printTiles(start, map, tileName)
-    local x, y = start.x, start.y
-    local tiles = {}
-    for _, value in ipairs(map) do
-        for i = 1, #value do
-            local char = string.sub(value, i, i)
-            if char == "1" then
-                table.insert(tiles, {name = tileName, position = {x, y}})
-            end
-            x = x + 1
-        end
-        x = start.x
-        y = y + 1
-    end
-    game.surfaces[Constants.STARTING_SURFACE_ID].set_tiles(tiles)
-end
-
 --- @param direction Direction
 --- @return string[] map
 local function getMap(direction)
@@ -875,12 +855,12 @@ local function incraseCoordinates(coordinates, city)
     coordinates.y = coordinates.y + 1
 end
 
-local function clearAreaAndPrintTiles(city, coordinates, map)
+local function clearAreaAndPrintTiles(city, coordinates, map, tileType)
     local currentCellStartCoordinates = GridUtil.translateCityGridToTileCoordinates(city, {
         x = coordinates.x,
         y = coordinates.y,
     })
-    printTiles(currentCellStartCoordinates, map, "concrete")
+    Util.printTiles(currentCellStartCoordinates, map, tileType, (city.surface_index or Constants.STARTING_SURFACE_ID))
 
     local currentArea = {
         {currentCellStartCoordinates.x, currentCellStartCoordinates.y},
@@ -966,7 +946,9 @@ local function growAtRandomRoadEnd(city)
         -- For each direction, fill the current cell with the direction and the neighbour with the inverse direction
         for _, direction in ipairs(pickedExpansionDirections) do
 
-            clearAreaAndPrintTiles(city, roadEnd.coordinates, getMap(direction))
+            -- Landfill is what we start with. It's later upgraded to higher tier roads as the citizens improve.
+            local initial_road_tile_type = "landfill"
+            clearAreaAndPrintTiles(city, roadEnd.coordinates, getMap(direction), initial_road_tile_type)
 
             local currentCell = GridUtil.safeGridAccess(city, roadEnd.coordinates, "processPickedExpansionDirectionCurrent")
             if currentCell == nil then
@@ -992,7 +974,7 @@ local function growAtRandomRoadEnd(city)
             end
 
             local neighbourSocket = invertDirection(direction)
-            clearAreaAndPrintTiles(city, neighbourPosition, getMap(neighbourSocket))
+            clearAreaAndPrintTiles(city, neighbourPosition, getMap(neighbourSocket), initial_road_tile_type, (city.surface_index or Constants.STARTING_SURFACE_ID))
 
             local neighbourCell = GridUtil.safeGridAccess(city, neighbourPosition, "processPickedExpansionDirectionNeighbour")
             if neighbourCell == nil then
@@ -1115,14 +1097,15 @@ local function completeConstruction(city, buildingTypes)
     end
 
     local startCoordinates = GridUtil.translateCityGridToTileCoordinates(city, coordinates)
-    printTiles(startCoordinates, {
+    Util.printTiles(startCoordinates, {
         "111111",
         "111111",
         "111111",
         "111111",
         "111111",
         "111111",
-    }, "concrete")
+    -- Landfill is what we start with. It's later upgraded to higher tier roads as the citizens improve.
+    }, "landfill", (city.surface_index or Constants.STARTING_SURFACE_ID))
     local entityName = excavationPit.buildingConstruction.buildingType
     local entity
     if entityName == "simple" or entityName == "residential" or entityName == "highrise" then

@@ -209,6 +209,25 @@ local function findCityByEntityUnitNumber(unitNumber)
     return cityName or "Unknown"
 end
 
+--- @param start Coordinates
+--- @param map string[]
+--- @param tileName string
+--- @param surface_index number
+local function printTiles(start, map, tileName, surface_index)
+    local x, y = start.x, start.y
+    for _, value in ipairs(map) do
+        for i = 1, #value do
+            local char = string.sub(value, i, i)
+            if char == "1" then
+                game.surfaces[surface_index or Constants.STARTING_SURFACE_ID].set_tiles({ { name = tileName, position = { x, y } } })
+            end
+            x = x + 1
+        end
+        x = start.x
+        y = y + 1
+    end
+end
+
 return {
     countPendingLowerTierHouses = countPendingLowerTierHouses,
     hasReachedLowerTierThreshold = hasReachedLowerTierThreshold,
@@ -237,4 +256,6 @@ return {
     isSupplyBuilding = isSupplyBuilding,
     isHouse = isHouse,
     findCityByEntityUnitNumber = findCityByEntityUnitNumber,
+
+    printTiles = printTiles,
 }

@@ -6,20 +6,7 @@ local DataConstants = require("data-constants")
 local Queue = require("queue")
 local Util = require("util")
 
-local function printTiles(startY, startX, map, tileName)
-    local x, y = startX, startY
-    for _, value in ipairs(map) do
-        for i = 1, #value do
-            local char = string.sub(value, i, i)
-            if char == "1" then
-                game.surfaces[Constants.STARTING_SURFACE_ID].set_tiles({ { name = tileName, position = { x, y } } })
-            end
-            x = x + 1
-        end
-        x = startX
-        y = y + 1
-    end
-end
+
 
 -- With an additional space of 200 the cities still spawned relatively close to each other, so I raised it to 400
 local MIN_DISTANCE = Constants.CITY_RADIUS * 2 + 400
@@ -220,7 +207,8 @@ local function initializeCity(city)
                 local startCoordinates = GridUtil.translateCityGridToTileCoordinates(city, { x = x, y = y })
                 clearCell(startCoordinates.y, startCoordinates.x)
                 if map ~= nil then
-                    printTiles(startCoordinates.y, startCoordinates.x, map, "concrete")
+                    -- Landfill is what we start with. It's later upgraded to higher tier roads as the citizens improve.
+                    Util.printTiles(startCoordinates, map, "landfill", (city.surface_index or Constants.STARTING_SURFACE_ID))
                 end
                 if cell.initKey == "town-hall" then
                     local thPosition = {
