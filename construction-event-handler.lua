@@ -20,6 +20,7 @@ local function on_built(event)
 
     local city = nil
     if Util.isSpecialBuilding(entity.name) then
+        log("on_built(): event: ".. event.name .." unit: ".. entity.unit_number .." name: ".. entity.name)
         city = Util.findCityAtPosition(game.surfaces[surface_index], entity.position)
         if city == nil then
             if event.player_index ~= nil then
@@ -53,47 +54,34 @@ local function on_removed(event)
         return
     end
 
+    --  67: defines.events.on_player_mined_entity
+    -- 160: defines.events.on_entity_destroyed
+    log(string.format("on_removed(): event: %d unit: %s valid: %s position: %s cityId: %s name: %s",
+        event.name, tostring(unit_number), tostring(building.entity ~= nil and building.entity.valid),
+        serpent.line(building.position), tostring(building.cityId), building.entity_name
+    ))
+
+    -- this function handles no surface_index and no entity case
     city = Util.findCityByBuilding(building)
     if city == nil then
         -- If there's no town hall in range then it probably was destroyed
         -- todo: how should we handle that situation? Is the whole city gone?
         -- probably in the "destroyed" event, because the player can't mine the town hall
+        log("on_removed(): ERROR: unable to find city! building: ".. serpent.line(building))
+
         -- remove from global
         Util.removeGlobalBuilding(unit_number)
         return
     end
 
-    if Util.isSpecialBuilding(building.entity_name) then
+    if building.isSpecial or Util.isSpecialBuilding(building.entity_name) then
         invalidateSpecialBuildingsList(city, building.entity_name)
-    elseif Util.isHouse(building.entity_name) then
-        
-        local housing_type
-        if string.find(building.entity_name, "tycoon-house-simple-", 1, true) then
-            housing_type = "simple"
-        elseif string.find(building.entity_name, "tycoon-house-residential-", 1, true) then
-            housing_type = "residential"
-        elseif string.find(building.entity_name, "tycoon-house-highrise-", 1, true) then
-            housing_type = "highrise"
-        end
-
-        assert(housing_type, "Uknown housing_type in on_removed: " .. housing_type)
-        
-        if city ~= nil then
-            City.growCitizenCount(city, -1 * Constants.CITIZEN_COUNTS[housing_type], housing_type)
-        end
-
-        if global.tycoon_house_lights ~= nil then
-            local light = global.tycoon_house_lights[unit_number]
-            if light ~= nil then
-                if light.valid then
-                    light.destroy()
-                end
-                global.tycoon_house_lights[unit_number] = nil
-            end
-        end
+    else
+        assert(building.position, "building.position is nil, DO FIX migration script!")
+        -- todo: mark cell as unused again, clear paving if necessary
+        City.freeCellAtPosition(city, building.position, unit_number)
     end
 
-    -- todo: mark cell as unused again, clear paving if necessary
     -- remove from global
     Util.removeGlobalBuilding(unit_number)
 end
