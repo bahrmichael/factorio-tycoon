@@ -1,14 +1,7 @@
 local Util = require("util")
 local Constants = require("constants")
 local Consumption = require("consumption")
-
-local function growCitizenCount(city, count, tier)
-    if city.citizens[tier] == nil then
-        city.citizens[tier] = 0
-    end
-    city.citizens[tier] = city.citizens[tier] + count
-    Consumption.updateNeeds(city)
-end
+local City = require("city")
 
 local function invalidateSpecialBuildingsList(city, name)
     assert(city.special_buildings ~= nil, "The special buildings should never be nil. There has been one error though, so I added this assertion.")
@@ -109,13 +102,16 @@ local function on_removed(event)
         local cityId = building.cityId
         local city = Util.findCityById(cityId)
         if city ~= nil then
-            growCitizenCount(city, -1 * Constants.CITIZEN_COUNTS[housing_type], housing_type)
+            City.growCitizenCount(city, -1 * Constants.CITIZEN_COUNTS[housing_type], housing_type)
         end
 
         if global.tycoon_house_lights ~= nil then
             local light = global.tycoon_house_lights[unit_number]
-            if light ~= nil and light.valid then
-                light.destroy()
+            if light ~= nil then
+                if light.valid then
+                    light.destroy()
+                end
+                global.tycoon_house_lights[unit_number] = nil
             end
         end
     end
