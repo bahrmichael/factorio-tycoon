@@ -19,7 +19,7 @@ end
 local function set(chunk_position, surface_index, entity_name, entity_position)
     local k = key(chunk_position, surface_index)
     -- storing pos and name is a bit too much, but avoids searching for entity, which might be more expensive
-    get_queue()[k] = { pos = entity_position, entity_name, surface_index }
+    get_queue()[k] = { entity_position, entity_name, surface_index }
 end
 
 local function delete(chunk_position, surface_index)
