@@ -211,7 +211,7 @@ local function initializeCity(city)
                 clearCell(startCoordinates.y, startCoordinates.x)
                 if map ~= nil then
                     -- Landfill is what we start with. It's later upgraded to higher tier roads as the citizens improve.
-                    Util.printTiles(startCoordinates, map, "landfill", city.surface_index)
+                    Util.printTiles(startCoordinates, map, Constants.GROUND_TILE_TYPES.simple, city.surface_index)
                 end
                 if cell.initKey == "town-hall" then
                     local thPosition = {
@@ -236,6 +236,8 @@ local function initializeCity(city)
                         entity_name = townHall.name,
                         entity = townHall
                     }
+                    -- The town hall should start with some nicer flooring
+                    Util.printTiles(startCoordinates, map, Constants.GROUND_TILE_TYPES.residential, city.surface_index)
                 end
             end
         end

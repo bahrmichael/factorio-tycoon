@@ -4,6 +4,7 @@ local Constants = require("constants")
 local Consumption = require("consumption")
 local GridUtil = require("grid-util")
 local Util = require("util")
+local FloorUpgradesQueue = require("floor-upgrades-queue")
 
 --- @class Coordinates
 --- @field x number
@@ -943,8 +944,7 @@ local function growAtRandomRoadEnd(city)
         for _, direction in ipairs(pickedExpansionDirections) do
 
             -- Landfill is what we start with. It's later upgraded to higher tier roads as the citizens improve.
-            local initial_road_tile_type = "landfill"
-            clearAreaAndPrintTiles(city, roadEnd.coordinates, getMap(direction), initial_road_tile_type)
+            clearAreaAndPrintTiles(city, roadEnd.coordinates, getMap(direction), Constants.GROUND_TILE_TYPES.simple)
 
             local currentCell = GridUtil.safeGridAccess(city, roadEnd.coordinates, "processPickedExpansionDirectionCurrent")
             if currentCell == nil then
@@ -970,7 +970,7 @@ local function growAtRandomRoadEnd(city)
             end
 
             local neighbourSocket = invertDirection(direction)
-            clearAreaAndPrintTiles(city, neighbourPosition, getMap(neighbourSocket), initial_road_tile_type, (city.surface_index or Constants.STARTING_SURFACE_ID))
+            clearAreaAndPrintTiles(city, neighbourPosition, getMap(neighbourSocket), Constants.GROUND_TILE_TYPES.simple)
 
             local neighbourCell = GridUtil.safeGridAccess(city, neighbourPosition, "processPickedExpansionDirectionNeighbour")
             if neighbourCell == nil then
@@ -1074,6 +1074,25 @@ local function growCitizenCount(city, count, tier)
     Consumption.updateNeeds(city)
 end
 
+--- @param buildingTypes BuildingType[] | nil
+--- @return string tileType
+local function get_ground_tile_type(buildingType) 
+    -- "simple"
+    -- "residential"
+    -- "highrise"
+    -- "tycoon-treasury"
+    -- "garden"
+    if buildingType == "simple" then
+        return Constants.GROUND_TILE_TYPES.simple
+    elseif buildingType == "residential" then
+        return Constants.GROUND_TILE_TYPES.residential
+    elseif buildingType == "highrise" then
+        return Constants.GROUND_TILE_TYPES.highrise
+    else
+        return Constants.GROUND_TILE_TYPES.simple
+    end
+end
+
 --- @param city City
 --- @param buildingTypes BuildingType[] | nil
 --- @return BuildingType | nil completedConstruction
@@ -1094,6 +1113,7 @@ local function completeConstruction(city, buildingTypes)
     end
 
     local startCoordinates = GridUtil.translateCityGridToTileCoordinates(city, coordinates)
+    local housingTier = excavationPit.buildingConstruction.buildingType
     Util.printTiles(startCoordinates, {
         "111111",
         "111111",
@@ -1101,25 +1121,24 @@ local function completeConstruction(city, buildingTypes)
         "111111",
         "111111",
         "111111",
-    }, "landfill", city.surface_index)
-    local entityName = excavationPit.buildingConstruction.buildingType
+    }, get_ground_tile_type(housingTier), city.surface_index)
     local entity
-    if entityName == "simple" or entityName == "residential" or entityName == "highrise" then
+    if housingTier == "simple" or housingTier == "residential" or housingTier == "highrise" then
         local xModifier, yModifier = 0, 0
-        if entityName == "simple" then
+        if housingTier == "simple" then
             -- no shift
-        elseif entityName == "residential" then
+        elseif housingTier == "residential" then
             yModifier = -0.5
         end
         local position = {x = startCoordinates.x + Constants.CELL_SIZE / 2 + xModifier, y = startCoordinates.y + Constants.CELL_SIZE / 2 + yModifier}
         entity = game.surfaces[city.surface_index].create_entity{
             -- WARN: prefixing with "house-" because of allowed shorter format
-            name = getRandomBuildingName(city, "house-".. entityName),
+            name = getRandomBuildingName(city, "house-".. housingTier),
             position = position,
             force = "player",
             move_stuck_players = true
         }
-        createLight(entity.unit_number, position, entityName, city.surface_index)
+        createLight(entity.unit_number, position, housingTier, city.surface_index)
         -- todo: test if the script destroying this entity also fires this hook
         script.register_on_entity_destroyed(entity)
 
@@ -1130,15 +1149,15 @@ local function completeConstruction(city, buildingTypes)
                 highrise = 0,
             }
         end
-        city.buildingCounts[entityName] = city.buildingCounts[entityName] + 1
+        city.buildingCounts[housingTier] = city.buildingCounts[housingTier] + 1
 
         if city.houseLocations == nil then
             city.houseLocations = {}
         end
         table.insert(city.houseLocations, coordinates)
 
-        local neighboursOfCompletedHouse = getSurroundingCoordinates(coordinates.y, coordinates.x, 1, false)
-        for _, n in ipairs(neighboursOfCompletedHouse) do
+        local sideNeighboursOfCompletedHouse = getSurroundingCoordinates(coordinates.y, coordinates.x, 1, false)
+        for _, n in ipairs(sideNeighboursOfCompletedHouse) do
             local neighbourCell = GridUtil.safeGridAccess(city, n)
             if neighbourCell ~= nil and neighbourCell.type == "unused" then
                 local surroundsOfUnused = getSurroundingCoordinates(n.y, n.x, 1, false)
@@ -1158,22 +1177,30 @@ local function completeConstruction(city, buildingTypes)
             end
         end
 
-        growCitizenCount(city, Constants.CITIZEN_COUNTS[entityName], entityName)
-    elseif entityName == "garden" then
+        if housingTier == "residential" or housingTier == "highrise" then
+            local range = housingTier == "residential" and 2 or 4
+            local allNeighboursOfCompletedHouse = getSurroundingCoordinates(coordinates.y, coordinates.x, range, true)
+            for _, n in pairs(allNeighboursOfCompletedHouse) do
+                FloorUpgradesQueue.push(city, n, Constants.GROUND_TILE_TYPES[housingTier])
+            end
+        end
+
+        growCitizenCount(city, Constants.CITIZEN_COUNTS[housingTier], housingTier)
+    elseif housingTier == "garden" then
         entity = game.surfaces[city.surface_index].create_entity{
-            name = getRandomBuildingName(city, entityName),
+            name = getRandomBuildingName(city, housingTier),
             position = {x = startCoordinates.x + Constants.CELL_SIZE / 2, y = startCoordinates.y  + Constants.CELL_SIZE / 2},
             force = "player",
             move_stuck_players = true
         }
     else
         local yModifier, xModifier = 0, 0
-        if entityName == "tycoon-treasury" then
+        if housingTier == "tycoon-treasury" then
             xModifier = -0.5
             yModifier = 0
         end
         entity = game.surfaces[city.surface_index].create_entity{
-            name = entityName,
+            name = housingTier,
             position = {x = startCoordinates.x + Constants.CELL_SIZE / 2 + xModifier, y = startCoordinates.y  + Constants.CELL_SIZE / 2 + yModifier},
             force = "player",
             move_stuck_players = true
@@ -1182,7 +1209,7 @@ local function completeConstruction(city, buildingTypes)
 
     city.grid[coordinates.y][coordinates.x] = {
         type = "building",
-        buildingType = entityName,
+        buildingType = housingTier,
         createdAtTick = game.tick,
         entity = entity,
     }
@@ -1192,12 +1219,12 @@ local function completeConstruction(city, buildingTypes)
         entity = entity,
     }
 
-    if entityName == "tycoon-treasury" and not global.tycoon_intro_message_treasury_displayed then
+    if housingTier == "tycoon-treasury" and not global.tycoon_intro_message_treasury_displayed then
         game.print({"", "[color=orange]Factorio Tycoon:[/color] ", {"tycooon-info-message-treasury"}})
         global.tycoon_intro_message_treasury_displayed = true
     end
 
-    return entityName
+    return housingTier
 end
 
 local upgrade_paths = {
