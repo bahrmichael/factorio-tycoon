@@ -29,22 +29,14 @@ end
 
 local function on_chunk_generated(event)
     -- WARN: not a typo: '.surface.index', not '.surface_index'! see docs...
-    if event.surface.index ~= Constants.STARTING_SURFACE_ID then
-        return
-    end
-
-    if insideStartingArea(event.position) then
+    if event.surface.index == Constants.STARTING_SURFACE_ID and insideStartingArea(event.position) then
         return
     end
 end
 
 -- WARN: might be called very frequently, for ex: when there are biters wandering - avoid useless stuff
 local function on_chunk_charted(event)
-    -- if event.surface_index ~= Constants.STARTING_SURFACE_ID then
-    --     return
-    -- end
-
-    if insideStartingArea(event.position) then
+    if event.surface_index == Constants.STARTING_SURFACE_ID and insideStartingArea(event.position) then
         return
     end
 

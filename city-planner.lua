@@ -26,7 +26,7 @@ local MIN_DISTANCE = Constants.CITY_RADIUS * 2 + 400
 local COST_PER_CITY = 1000
 
 local function isInRangeOfCity(city, position, surface_index)
-    if city.surface_index == surface_index then
+    if city.surface_index ~= surface_index then
         return false
     end
     local distance = Util.calculateDistance(city.center, position)

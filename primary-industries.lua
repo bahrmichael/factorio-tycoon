@@ -100,9 +100,9 @@ local function tagIndustry(pos, entity_name, surface_index)
     -- using chunk coords, so that on_chunk_*() handlers can easily check by key
     local chunk_position = Util.positionToChunk(pos)
     if tag == nil then
-        TagsQueue.push_data_for_position(chunk_position, surface_index, entity_name)
+        TagsQueue.set(chunk_position, surface_index, entity_name, pos)
     else
-        TagsQueue.clear_data_for_position(chunk_position, surface_index)
+        TagsQueue.delete(chunk_position, surface_index)
     end
 
     return tag

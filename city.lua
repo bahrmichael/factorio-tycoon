@@ -116,8 +116,9 @@ local function getSurroundingCoordinates(y, x, size, allowDiagonal)
 end
 
 --- @param area any
+--- @param surface_index number
 --- @param ignorables string[] | nil
-local function removeColldingEntities(area, ignorables, surface_index)
+local function removeColldingEntities(area, surface_index, ignorables)
     local printEntities = game.surfaces[surface_index].find_entities_filtered({
         area=area,
         type = {"tree", "simple-entity"}
@@ -155,20 +156,14 @@ local function hasCliffsOrWater(area, surface_index)
 end
 
 --- @param area any
---- @param additionalIgnorables string[] | nil
 --- @param surface_index number
-local function isAreaFree(area, additionalIgnorables, surface_index)
+local function isAreaFree(area, surface_index)
     -- Water / Cliffs
     if hasCliffsOrWater(area, surface_index) then
         return false
     end
 
     local ignorables = {"rock-huge", "rock-big", "sand-rock-big", "dead-grey-trunk"}
-    if additionalIgnorables ~= nil and #additionalIgnorables >0 then
-        for _, value in ipairs(additionalIgnorables) do
-            table.insert(ignorables, value)
-        end
-    end
 
     local entities = game.surfaces[surface_index].find_entities_filtered({
         area=area,
@@ -887,7 +882,7 @@ local function clearAreaAndPrintTiles(city, coordinates, map)
         {currentCellStartCoordinates.x, currentCellStartCoordinates.y},
         {currentCellStartCoordinates.x + Constants.CELL_SIZE, currentCellStartCoordinates.y + Constants.CELL_SIZE}
     }
-    removeColldingEntities(currentArea, streetIgnorables, city.surface_index)
+    removeColldingEntities(currentArea, city.surface_index, streetIgnorables)
 
 end
 
