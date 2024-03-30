@@ -721,6 +721,8 @@ local function addBuildingLocations(city, recentCoordinates, allowCenter)
     if recentCoordinates ~= nil then
         local surrounds = getSurroundingCoordinates(recentCoordinates, 1, false, allowCenter)
         for _, value in ipairs(surrounds) do
+            -- TODO: this will probably skip corners when called from on_entity_destroyed event
+            -- are edges supposed to be roads or what?
             if value.x <= 1 or value.y <= 1 or value.x >= #city.grid or value.y >= #city.grid then
                 -- Skip locations that are at the edge of the grid or beyond
             else
@@ -1100,6 +1102,18 @@ local function setHouseLight(houseUnitNumber, lightEntity)
     global.tycoon_house_lights[houseUnitNumber] = lightEntity
 end
 
+local function removeHouseLight(houseUnitNumber)
+    if global.tycoon_house_lights == nil then
+        global.tycoon_house_lights = {}
+    end
+
+    local entity = global.tycoon_house_lights[houseUnitNumber]
+    if entity ~= nil and entity.valid then
+        entity.destroy()
+    end
+    global.tycoon_house_lights[houseUnitNumber] = nil
+end
+
 --- @param excavationPits ExcavationPit[]
 --- @param buildingTypes BuildingType[] | nil
 --- @return ExcavationPit | nil excavationPit
@@ -1184,7 +1198,12 @@ local function completeConstruction(city, buildingTypes)
     local coordinates = excavationPit.coordinates
     local cell = GridUtil.safeGridAccess(city, coordinates, "completeConstruction")
     if cell ~= nil and cell.entity ~= nil then
-        cell.entity.destroy()
+        if cell.entity.valid then
+            --log("completeConstruction(): calling .destroy():"
+            --    .." entity: ".. cell.entity.unit_number .." name: ".. cell.entity.name)
+            cell.entity.destroy()
+        end
+        cell.entity = nil
     end
 
     local startCoordinates = GridUtil.translateCityGridToTileCoordinates(city, coordinates)
@@ -1214,8 +1233,6 @@ local function completeConstruction(city, buildingTypes)
             move_stuck_players = true
         }
         createLight(entity.unit_number, position, housingTier, city.surface_index)
-        -- todo: test if the script destroying this entity also fires this hook
-        script.register_on_entity_destroyed(entity)
 
         if city.buildingCounts == nil then
             city.buildingCounts = {
@@ -1386,25 +1403,110 @@ local function findUpgradableCells(city, limit, upgradeTo)
     return upgradeCells
 end
 
-local function clearCell(city, upgradeCell)
-    -- The game crashes when a house was destroyed and therefore the entity became invalid. See https://mods.factorio.com/mod/tycoon/discussion/656a05ca3f91639be4702152
-    -- We should probably listen to destruction events and clear up the city grid (so that it doesn't try upgrading that building) and also clear the lights
-    if not upgradeCell.cell.entity.valid then
+--- NOTE: this function DOES NOT clear city grid cell, must be done manually if needed
+local function removeBuilding(city, unit_number)
+    log("removeBuilding(): unit_number: ".. serpent.line(unit_number))
+
+    -- remove anything related in reverse order
+    removeHouseLight(unit_number)
+
+    -- this also checks (unit_number == nil)
+    local building = Util.getGlobalBuilding(unit_number)
+    if building == nil then
         return
     end
-    
-    if global.tycoon_house_lights ~= nil and global.tycoon_house_lights[upgradeCell.cell.entity.unit_number] then
-        global.tycoon_house_lights[upgradeCell.cell.entity.unit_number].destroy()
+    --log("removeBuilding(): building: ".. serpent.line(building))
+
+    -- buildings may have lots of deps...
+    if Util.isHouse(building.entity_name) then
+        local housingTier
+        if string.find(building.entity_name, "tycoon-house-simple-", 1, true) then
+            housingTier = "simple"
+        elseif string.find(building.entity_name, "tycoon-house-residential-", 1, true) then
+            housingTier = "residential"
+        elseif string.find(building.entity_name, "tycoon-house-highrise-", 1, true) then
+            housingTier = "highrise"
+        end
+
+        assert(housingTier, "removeBuilding(): Uknown housingTier: ".. housingTier)
+
+        local cityId = building.cityId
+        local city = Util.findCityById(cityId)
+        if city ~= nil then
+            growCitizenCount(city, -1 * Constants.CITIZEN_COUNTS[housingTier], housingTier)
+
+            -- remove from other lists as well
+            city.buildingCounts[housingTier] = (city.buildingCounts[housingTier] or 1) - 1
+            if city.houseLocations ~= nil then
+                local posGrid = GridUtil.translateToGrid(city, building.position)
+                table.remove(city.houseLocations, Util.indexOf(city.houseLocations, posGrid))
+            end
+        end
+    else
+        log("removeBuilding(): not house: ".. building.entity_name)
     end
-    upgradeCell.cell.entity.destroy()
+
+    -- remove from global and finally destroy
+    Util.removeGlobalBuilding(unit_number)
+    if building.entity ~= nil and building.entity.valid then
+        building.entity.destroy()
+    end
+end
+
+--- NOTE: this function DOES NOT re-add this cell to building queue, used for upgrades mostly
+local function clearCell(city, upgradeCell)
+    --log("clearCell(): upgradeCell: ".. serpent.line(upgradeCell))
+    if upgradeCell == nil or upgradeCell.cell == nil then
+        log("clearCell(): upgradeCell: ".. serpent.line(upgradeCell))
+        return
+    end
+
+    local unit_number = nil
+    local entity = upgradeCell.cell.entity
+    if entity ~= nil and entity.valid then
+        unit_number = entity.unit_number
+    elseif upgradeCell.unit_number ~= nil then
+        -- WARN: unit_number is added only by freeCellAtPosition()
+        unit_number = upgradeCell.unit_number
+    end
+    if unit_number ~= nil then
+        removeBuilding(city, unit_number)
+    else
+        log("clearCell(): ERROR: unable to call removeBuilding(), no unit_number!")
+    end
+
     -- We need to clear the cell as well, so that the construction has available space
-    city.grid[upgradeCell.coordinates.y][upgradeCell.coordinates.x] = {
-        type = "unused"
-    }
-    city.buildingCounts[upgradeCell.upgradePath.previousStage] = city.buildingCounts[upgradeCell.upgradePath.previousStage] - 1
-    if city.houseLocations ~= nil then
-        table.remove(city.houseLocations, Util.indexOf(city.houseLocations, upgradeCell.coordinates))
+    GridUtil.safeGridSet(city, upgradeCell.coordinates, { type = "unused" })
+end
+
+--- NOTE: this function DOES re-add cell to building queue! called from event handlers mostly
+--- @param city City
+--- @param position MapPosition
+--- @param unit_number number | nil
+local function freeCellAtPosition(city, position, unit_number)
+    log("freeCellAtPosition(): position: ".. serpent.line(position))
+    local cellCoordinates = GridUtil.translateToGrid(city, position)
+    local cell = GridUtil.safeGridAccess(city, cellCoordinates)
+    if cell == nil then
+        return
     end
+
+    -- check for incorrect cell
+    --assert(cell.type == "building")
+    if cell.type ~= "building" then
+        log(string.format("!!! cell.type: %s pos: %s city: %s", cell.type, serpent.line(cellCoordinates), city.name))
+    end
+
+    if cell.type == "building" then
+        -- WARN: this can't call removeBuilding() on_entity_destoyed event, so we provide unit_number in ugly way
+        clearCell(city, {cell = cell, coordinates = cellCoordinates, unit_number = unit_number})
+    end
+
+    -- include actual position itself (allowCenter = true)
+    addBuildingLocations(city, cellCoordinates, true)
+    -- TODO: test and add already-occupied-cell check in startConstruction()
+    -- TODO: city itself should choose locations closest to center, so just add to the end
+    --Queue.pushright(city.buildingLocationQueue, cellCoordinates)
 end
 
 --- @param city City
@@ -1556,6 +1658,8 @@ local CITY = {
     completeConstruction = completeConstruction,
     startConstruction = startConstruction,
     isCellFree = isCellFree,
+    removeBuilding = removeBuilding,
+    freeCellAtPosition = freeCellAtPosition,
     construct_priority_buildings = construct_priority_buildings,
     construct_gardens = construct_gardens,
     start_house_construction = start_house_construction,
