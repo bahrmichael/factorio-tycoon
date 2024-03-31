@@ -431,8 +431,8 @@ local function consumeItem(item, suppliers, city, isConstruction)
         end
     end
 
-    -- remember used bottles so that the citizens can return them in a follow-up loop
-    -- todo: change this to sth like name.includes("bottle") to catch all bottle products
+    -- When the city consumes bottled products, they'll return the bottles eventually.
+    -- We use this code to keep track of the number of bottles a city has consumed, and return them in used-bottles-store.lua
     if item.name == "tycoon-milk-bottle" then
         UsedBottlesStore.change_used_bottles(city.id, consumedAmount)
     end

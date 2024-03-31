@@ -1395,28 +1395,6 @@ local lower_tiers = {
     residential = "simple"
 }
 
-local function list_special_city_buildings(city, name)
-    local entities = {}
-    if city.special_buildings.other[name] ~= nil and #city.special_buildings.other[name] > 0 then
-        entities = city.special_buildings.other[name]
-    else
-        entities = game.surfaces[Constants.STARTING_SURFACE_ID].find_entities_filtered{
-            name=name,
-            position=city.special_buildings.town_hall.position,
-            radius=Constants.CITY_RADIUS,
-        }
-        city.special_buildings.other[name] = entities
-    end
-
-    local result = {}
-    for _, entity in ipairs(entities) do
-        if entity ~= nil and entity.valid then
-            table.insert(result, entity)
-        end
-    end
-    return result
-end
-
 local house_ratios = {
     residential = Constants.RESIDENTIAL_HOUSE_RATIO,
     highrise = Constants.HIGHRISE_HOUSE_RATIO,
@@ -1520,7 +1498,7 @@ end
 local function start_house_construction()
     for _, city in ipairs(global.tycoon_cities or {}) do
         -- Check if resources are available. Without resources no growth is possible.
-        local hardware_stores = list_special_city_buildings(city, "tycoon-hardware-store")
+        local hardware_stores = Util.list_special_city_buildings(city, "tycoon-hardware-store")
         if #hardware_stores > 0 then
 
             local buildables = getBuildables(city, hardware_stores)
@@ -1562,7 +1540,6 @@ local CITY = {
     construct_gardens = construct_gardens,
     start_house_construction = start_house_construction,
     complete_house_construction = complete_house_construction,
-    list_special_city_buildings = list_special_city_buildings,
 }
 
 return CITY

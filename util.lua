@@ -104,6 +104,29 @@ local function findCityByEntityUnitNumber(unitNumber)
     return cityName or "Unknown"
 end
 
+
+local function list_special_city_buildings(city, name)
+    local entities = {}
+    if city.special_buildings.other[name] ~= nil and #city.special_buildings.other[name] > 0 then
+        entities = city.special_buildings.other[name]
+    else
+        entities = game.surfaces[Constants.STARTING_SURFACE_ID].find_entities_filtered{
+            name=name,
+            position=city.special_buildings.town_hall.position,
+            radius=Constants.CITY_RADIUS,
+        }
+        city.special_buildings.other[name] = entities
+    end
+
+    local result = {}
+    for _, entity in ipairs(entities) do
+        if entity ~= nil and entity.valid then
+            table.insert(result, entity)
+        end
+    end
+    return result
+end
+
 return {
     countPendingLowerTierHouses = countPendingLowerTierHouses,
     hasReachedLowerTierThreshold = hasReachedLowerTierThreshold,
@@ -116,4 +139,6 @@ return {
     isSupplyBuilding = isSupplyBuilding,
     isHouse = isHouse,
     findCityByEntityUnitNumber = findCityByEntityUnitNumber,
+
+    list_special_city_buildings = list_special_city_buildings,
 }
