@@ -102,19 +102,51 @@ end
 local function getSurroundingCoordinates(y, x, size, allowDiagonal)
    local c = {}
    for i = -1 * size, size, 1 do
-    for j = -1 * size, size, 1 do
-        if (allowDiagonal or (math.abs(i) ~= math.abs(j))) then
-            if not(i == 0 and j == 0) then
-                table.insert(c, {
-                    y = i + y,
-                    x = j + x
-                })
+        for j = -1 * size, size, 1 do
+            if (allowDiagonal or (math.abs(i) ~= math.abs(j))) then
+                if not(i == 0 and j == 0) then
+                    table.insert(c, {
+                        y = i + y,
+                        x = j + x
+                    })
+                end
             end
         end
-    end
    end
    return c
 end
+
+--- @param y number
+--- @param x number
+--- @param size number
+--- @param city City
+--- @return (Coordinates | nil)[] coordinates
+local function getCircularSurroundingCoordinates(origin, size, city)
+    local c = {}
+    -- for i = 1, math.pow(size + 1, 2), 1 do
+    --     c[i] = {}
+    -- end
+    for i = -1 * size, size, 1 do
+        for j = -1 * size, size, 1 do
+            -- The first condition excludes the center piece
+            -- The second condition excludes the four corners. Open for better solutions to make a circle.
+            if not(i == 0 and j == 0) and not(math.abs(i) == size and math.abs(j) == size) then
+                local coords = {
+                    y = i + origin.y,
+                    x = j + origin.x
+                }
+                local distance_to_origin = Util.calculateDistance(origin, coords)
+                local distance_to_center = Util.calculateDistance(city.center, coords)
+                local pos = math.ceil(distance_to_origin * distance_to_center)
+                while c[pos] ~= nil do
+                    pos = pos + 1
+                end
+                table.insert(c, pos, coords)
+            end
+        end
+    end
+    return c
+ end
 
 --- @param area any
 --- @param surface_index number
@@ -563,45 +595,90 @@ local function pickRoadExpansion(city, roadEnd)
 end
 
 --- @param direction Direction
+--- @param wide boolean
 --- @return string[] map
-local function getMap(direction)
+local function getMap(direction, wide)
     local result = nil
     if direction == "north" then
-        result = {
-            "001100",
-            "001100",
-            "001100",
-            "001100",
-            "000000",
-            "000000",
-        }
+        if wide then
+            result = {
+                "011110",
+                "011110",
+                "011110",
+                "011110",
+                "000000",
+                "000000",
+            }
+        else
+            result = {
+                "001100",
+                "001100",
+                "001100",
+                "001100",
+                "000000",
+                "000000",
+            }
+        end
     elseif direction == "south" then
-        result = {
-            "000000",
-            "000000",
-            "001100",
-            "001100",
-            "001100",
-            "001100",
-        }
+        if wide then
+            result = {
+                "000000",
+                "000000",
+                "011110",
+                "011110",
+                "011110",
+                "011110",
+            }
+        else
+            result = {
+                "000000",
+                "000000",
+                "001100",
+                "001100",
+                "001100",
+                "001100",
+            }
+        end
     elseif direction == "west" then
-        result = {
-            "000000",
-            "000000",
-            "111100",
-            "111100",
-            "000000",
-            "000000",
-        }
+        if wide then
+            result = {
+                "000000",
+                "111100",
+                "111100",
+                "111100",
+                "111100",
+                "000000",
+            }
+        else
+            result = {
+                "000000",
+                "000000",
+                "111100",
+                "111100",
+                "000000",
+                "000000",
+            }
+        end
     elseif direction == "east" then
-        result = {
-            "000000",
-            "000000",
-            "001111",
-            "001111",
-            "000000",
-            "000000",
-        }
+        if wide then
+            result = {
+                "000000",
+                "001111",
+                "001111",
+                "001111",
+                "001111",
+                "000000",
+            }
+        else
+            result = {
+                "000000",
+                "000000",
+                "001111",
+                "001111",
+                "000000",
+                "000000",
+            }
+        end
     end
     assert(result ~= nil, "Invalid direction for getMap")
     return result
@@ -944,7 +1021,7 @@ local function growAtRandomRoadEnd(city)
         for _, direction in ipairs(pickedExpansionDirections) do
 
             -- Landfill is what we start with. It's later upgraded to higher tier roads as the citizens improve.
-            clearAreaAndPrintTiles(city, roadEnd.coordinates, getMap(direction), Constants.GROUND_TILE_TYPES.simple)
+            clearAreaAndPrintTiles(city, roadEnd.coordinates, getMap(direction, true), Constants.GROUND_TILE_TYPES.road)
 
             local currentCell = GridUtil.safeGridAccess(city, roadEnd.coordinates, "processPickedExpansionDirectionCurrent")
             if currentCell == nil then
@@ -970,7 +1047,7 @@ local function growAtRandomRoadEnd(city)
             end
 
             local neighbourSocket = invertDirection(direction)
-            clearAreaAndPrintTiles(city, neighbourPosition, getMap(neighbourSocket), Constants.GROUND_TILE_TYPES.simple)
+            clearAreaAndPrintTiles(city, neighbourPosition, getMap(neighbourSocket, true), Constants.GROUND_TILE_TYPES.road)
 
             local neighbourCell = GridUtil.safeGridAccess(city, neighbourPosition, "processPickedExpansionDirectionNeighbour")
             if neighbourCell == nil then
@@ -1082,15 +1159,7 @@ local function get_ground_tile_type(buildingType)
     -- "highrise"
     -- "tycoon-treasury"
     -- "garden"
-    if buildingType == "simple" then
-        return Constants.GROUND_TILE_TYPES.simple
-    elseif buildingType == "residential" then
-        return Constants.GROUND_TILE_TYPES.residential
-    elseif buildingType == "highrise" then
-        return Constants.GROUND_TILE_TYPES.highrise
-    else
-        return Constants.GROUND_TILE_TYPES.simple
-    end
+    return Constants.GROUND_TILE_TYPES[buildingType] or Constants.GROUND_TILE_TYPES.simple
 end
 
 --- @param city City
@@ -1179,9 +1248,11 @@ local function completeConstruction(city, buildingTypes)
 
         if housingTier == "residential" or housingTier == "highrise" then
             local range = housingTier == "residential" and 2 or 4
-            local allNeighboursOfCompletedHouse = getSurroundingCoordinates(coordinates.y, coordinates.x, range, true)
-            for _, n in pairs(allNeighboursOfCompletedHouse) do
-                FloorUpgradesQueue.push(city, n, Constants.GROUND_TILE_TYPES[housingTier])
+            local allNeighboursOfCompletedHouse = getCircularSurroundingCoordinates(coordinates, range, city)
+            for _, coordinates in pairs(allNeighboursOfCompletedHouse) do
+                if coordinates ~= nil then
+                    FloorUpgradesQueue.push(city, coordinates, Constants.GROUND_TILE_TYPES[housingTier])
+                end
             end
         end
 

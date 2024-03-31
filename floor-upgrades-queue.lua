@@ -73,7 +73,7 @@ local function process()
     local city, coordinates, newTileType = current.city, current.coordinates, current.newTileType
     assert(current.city ~= nil and current.coordinates ~= nil and current.newTileType ~= nil, "Record in tycoon_floor_upgrade_queue doesn't have all required fields.")
 
-    local cell = city.grid[coordinates.y][coordinates.x]
+    local cell = GridUtil.safeGridAccess(city, coordinates)
     local cell_type = cell.type
     local startCoordinates = GridUtil.translateCityGridToTileCoordinates(city, coordinates)
     if cell_type == "building" then
