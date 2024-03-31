@@ -1,4 +1,5 @@
 local Constants = require("constants")
+local Util = require("util")
 
 --- @class Need
 --- @field provided number
@@ -253,41 +254,18 @@ end
 --- @param city City
 local function updateProvidedAmounts(city)
     local markets = listSpecialCityBuildings(city, "tycoon-market")
+    local supply = Util.aggregateSupplyBuildingResources(markets)
 
     -- BASIC NEEDS
-    if #markets >= 1 then
-        for resource, _ in pairs(city.stats.basic_needs) do
-            if resource ~= "water" then
-                local totalAvailable = 0
-                for _, market in ipairs(markets) do
-                    local availableCount = market.get_item_count(resource)
-                    totalAvailable = totalAvailable + availableCount
-                end
-                setBasicNeedsProvided(city, resource, totalAvailable)
-            end
-        end
-    else
-        for resource, _ in pairs(city.stats.basic_needs) do
-            if resource ~= "water" then
-                setBasicNeedsProvided(city, resource, 0)
-            end
+    for resource, _ in pairs(city.stats.basic_needs) do
+        if resource ~= "water" then
+            setBasicNeedsProvided(city, resource, supply[resource] or 0)
         end
     end
 
     -- ADDITIONAL NEEDS
-    if #markets >= 1 then
-        for resource, _ in pairs(city.stats.additional_needs or {}) do
-            local totalAvailable = 0
-            for _, market in ipairs(markets) do
-                local availableCount = market.get_item_count(resource)
-                totalAvailable = totalAvailable + availableCount
-            end
-            setAdditionalNeedsProvided(city, resource, totalAvailable)
-        end
-    else
-        for resource, _ in pairs(city.stats.additional_needs) do
-            setAdditionalNeedsProvided(city, resource, 0)
-        end
+    for resource, _ in pairs(city.stats.additional_needs or {}) do
+        setAdditionalNeedsProvided(city, resource, supply[resource] or 0)
     end
     
     local waterTowers = listSpecialCityBuildings(city, "tycoon-water-tower")

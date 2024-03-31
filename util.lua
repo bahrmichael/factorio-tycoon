@@ -209,6 +209,19 @@ local function findCityByEntityUnitNumber(unitNumber)
     return cityName or "Unknown"
 end
 
+local function aggregateSupplyBuildingResources(supplyBuildings)
+    local resources = {}
+
+    for _, entity in ipairs(supplyBuildings) do
+        local contents = entity.get_inventory(defines.inventory.chest).get_contents()
+        for item, count in pairs(contents) do
+            resources[item] = (resources[item] or 0) + count
+        end
+    end
+
+    return resources
+end
+
 return {
     countPendingLowerTierHouses = countPendingLowerTierHouses,
     hasReachedLowerTierThreshold = hasReachedLowerTierThreshold,
@@ -237,4 +250,6 @@ return {
     isSupplyBuilding = isSupplyBuilding,
     isHouse = isHouse,
     findCityByEntityUnitNumber = findCityByEntityUnitNumber,
+
+    aggregateSupplyBuildingResources = aggregateSupplyBuildingResources,
 }

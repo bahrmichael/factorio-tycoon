@@ -1405,17 +1405,15 @@ end
 
 
 local function getBuildables(hardwareStores)
+    local supply = Util.aggregateSupplyBuildingResources(hardwareStores)
+    
     local buildables = {}
     for key, resources in pairs(Constants.CONSTRUCTION_MATERIALS) do
         local anyResourceMissing = false
         for _, resource in ipairs(resources) do
-            for _, hardwareStore in ipairs(hardwareStores) do
-                local availableCount = hardwareStore.get_item_count(resource.name)
-                resource.available = (resource.available or 0) + availableCount
-            end
-
-            if resource.available < resource.required then
+            if (supply[resource.name] or 0) < resource.required then
                 anyResourceMissing = true
+                break
             end
         end
 
