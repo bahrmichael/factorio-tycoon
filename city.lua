@@ -1247,7 +1247,7 @@ local function completeConstruction(city, buildingTypes)
         end
 
         if housingTier == "residential" or housingTier == "highrise" then
-            local range = housingTier == "residential" and 2 or 4
+            local range = housingTier == "residential" and 2 or 3
             local allNeighboursOfCompletedHouse = getCircularSurroundingCoordinates(coordinates, range, city)
             for _, coordinates in pairs(allNeighboursOfCompletedHouse) do
                 if coordinates ~= nil then
