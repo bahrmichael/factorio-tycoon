@@ -209,6 +209,7 @@ local function findCityByEntityUnitNumber(unitNumber)
     return cityName or "Unknown"
 end
 
+
 --- @param start Coordinates
 --- @param map string[]
 --- @param tileName string
@@ -226,6 +227,19 @@ local function printTiles(start, map, tileName, surface_index)
         x = start.x
         y = y + 1
     end
+
+local function aggregateSupplyBuildingResources(supplyBuildings)
+    local resources = {}
+
+    for _, entity in ipairs(supplyBuildings) do
+        local contents = entity.get_inventory(defines.inventory.chest).get_contents()
+        for item, count in pairs(contents) do
+            resources[item] = (resources[item] or 0) + count
+        end
+    end
+
+    return resources
+
 end
 
 return {
@@ -257,5 +271,7 @@ return {
     isHouse = isHouse,
     findCityByEntityUnitNumber = findCityByEntityUnitNumber,
 
+
     printTiles = printTiles,
+    aggregateSupplyBuildingResources = aggregateSupplyBuildingResources,
 }

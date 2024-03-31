@@ -101,14 +101,10 @@ local function addConstructionMaterialsGui(rootGui, constructionNeeds, city, har
     if #hardwareStores == 0 then
         tbl.add{type = "label", caption = {"", "[color=red]", {"tycoon-gui-missing", {"entity-name.tycoon-hardware-store"}}, "[/color]"}}
     else
+        local supply = Util.aggregateSupplyBuildingResources(hardwareStores)
         for _, resource in ipairs(constructionNeeds) do
 
-            local totalResourceCount = 0
-            for _, hardwareStore in ipairs(hardwareStores or {}) do
-                local availableCount = hardwareStore.get_item_count(resource)
-                totalResourceCount = totalResourceCount + availableCount
-            end
-            setConstructionMaterialsProvided(city, resource, totalResourceCount)
+            setConstructionMaterialsProvided(city, resource, supply[resource] or 0)
 
             local amounts = city.stats.construction_materials[resource] or {provided =  0}
 
@@ -410,21 +406,14 @@ end
 
 local function areConstructionNeedsMet(city, housingTier, stores) 
     local hardwareStores = stores or listSpecialCityBuildings(city, "tycoon-hardware-store")
+    local supply = Util.aggregateSupplyBuildingResources(hardwareStores)
     local needs = Constants.CONSTRUCTION_MATERIALS[housingTier]
 
     for _, need in ipairs(needs) do
-        -- name/required
-        local totalAvailable = 0
-        for _, store in ipairs(hardwareStores) do
-            local availableCount = store.get_item_count(need.name)
-            totalAvailable = totalAvailable + availableCount
-        end
-
-        if need.required > totalAvailable then
+        if need.required > (supply[need.name] or 0) then
             return false
         end
     end
-
     return true
 end
 
