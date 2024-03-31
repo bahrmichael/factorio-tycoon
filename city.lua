@@ -120,28 +120,31 @@ end
 --- @param x number
 --- @param size number
 --- @param city City
---- @return (Coordinates | nil)[] coordinates
+--- @return any
 local function getCircularSurroundingCoordinates(origin, size, city)
     local c = {}
-    -- for i = 1, math.pow(size + 1, 2), 1 do
-    --     c[i] = {}
-    -- end
     for i = -1 * size, size, 1 do
         for j = -1 * size, size, 1 do
             -- The first condition excludes the center piece
             -- The second condition excludes the four corners. Open for better solutions to make a circle.
             if not(i == 0 and j == 0) and not(math.abs(i) == size and math.abs(j) == size) then
-                local coords = {
+                local coordinates = {
                     y = i + origin.y,
                     x = j + origin.x
                 }
-                local distance_to_origin = Util.calculateDistance(origin, coords)
-                local distance_to_center = Util.calculateDistance(city.center, coords)
-                local pos = math.ceil(distance_to_origin * distance_to_center)
-                while c[pos] ~= nil do
-                    pos = pos + 1
+                -- The idea here is to sort the cells in a way that they are built first where it's closer
+                -- to the origin and the town center, since this function is currently only used for floor upgrades.
+                -- That should give the reconstruction work a more organic look and feel.
+                local distance_to_origin = Util.calculateDistance(origin, coordinates)
+                local distance_to_center = Util.calculateDistance(city.center, coordinates)
+                local key = math.ceil(distance_to_origin * distance_to_center)
+                -- We're incrementing the key on conflict, as that's relatively cheap given that "size" won't grow far.
+                while c[key] ~= nil do
+                    key = key + 1
                 end
-                table.insert(c, pos, coords)
+                -- table.insert won't shift elements as we'd expect it for an array, if the table is not a perfect array-like struture
+                -- That may happen because of the distance based insert.
+                c[key] = coordinates
             end
         end
     end
