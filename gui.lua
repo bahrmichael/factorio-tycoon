@@ -3,80 +3,6 @@ local Constants = require("constants")
 local CityPlanner = require("city-planner")
 local Util = require("util")
 
--- This array is ordered from most expensive to cheapest, so that
--- we do expensive upgrades first (instead of just letting the road always expand).
--- Sepcial buildings (like the treasury) are an exception that should ideally come first.
-local constructionResources = {
-    specialBuildings = {{
-        name = "stone-brick",
-        required = 1,
-    }, {
-        name = "iron-plate",
-        required = 1,
-    }},
-    highrise = {{
-        name = "concrete",
-        required = 50,
-    }, {
-        name = "steel-plate",
-        required = 25,
-    }, {
-        name = "small-lamp",
-        required = 5,
-    }, {
-        name = "pump",
-        required = 2,
-    }, {
-        name = "pipe",
-        required = 10,
-    }},
-    residential = {{
-        name = "stone-brick",
-        required = 30,
-    }, {
-        name = "iron-plate",
-        required = 20,
-    }, {
-        name = "steel-plate",
-        required = 10,
-    }, {
-        name = "small-lamp",
-        required = 2,
-    }},
-    simple = {{
-        name = "stone-brick",
-        required = 10,
-    }, {
-        name = "iron-plate",
-        required = 5,
-    }},
-}
-
-local function getBuildables(city, hardwareStores)
-
-    local buildables = {}
-    for key, resources in pairs(constructionResources) do
-        local anyResourceMissing = false
-        for _, resource in ipairs(resources) do
-            for _, hardwareStore in ipairs(hardwareStores) do
-                local availableCount = hardwareStore.get_item_count(resource.name)
-                resource.available = (resource.available or 0) + availableCount
-            end
-
-            if resource.available < resource.required then
-                anyResourceMissing = true
-            end
-        end
-
-        if not anyResourceMissing then
-            buildables[key] = resources
-        end
-    end
-
-    return buildables
-end
-
-
 local function setConstructionMaterialsProvided(city, resource, amount)
     -- dev support, delete me
     if city.stats.construction_materials == nil then
@@ -175,14 +101,10 @@ local function addConstructionMaterialsGui(rootGui, constructionNeeds, city, har
     if #hardwareStores == 0 then
         tbl.add{type = "label", caption = {"", "[color=red]", {"tycoon-gui-missing", {"entity-name.tycoon-hardware-store"}}, "[/color]"}}
     else
+        local supply = Util.aggregateSupplyBuildingResources(hardwareStores)
         for _, resource in ipairs(constructionNeeds) do
 
-            local totalResourceCount = 0
-            for _, hardwareStore in ipairs(hardwareStores or {}) do
-                local availableCount = hardwareStore.get_item_count(resource)
-                totalResourceCount = totalResourceCount + availableCount
-            end
-            setConstructionMaterialsProvided(city, resource, totalResourceCount)
+            setConstructionMaterialsProvided(city, resource, supply[resource] or 0)
 
             local amounts = city.stats.construction_materials[resource] or {provided =  0}
 
@@ -422,9 +344,9 @@ local function listSpecialCityBuildings(city, name)
     if city.special_buildings.other[name] ~= nil and #city.special_buildings.other[name] > 0 then
         entities = city.special_buildings.other[name]
     else
-        entities = game.surfaces[Constants.STARTING_SURFACE_ID].find_entities_filtered{
+        entities = game.surfaces[city.surface_index].find_entities_filtered{
             name=name,
-            position=city.special_buildings.town_hall.position,
+            position=city.center,
             radius=Constants.CITY_RADIUS
         }
         city.special_buildings.other[name] = entities
@@ -484,21 +406,14 @@ end
 
 local function areConstructionNeedsMet(city, housingTier, stores) 
     local hardwareStores = stores or listSpecialCityBuildings(city, "tycoon-hardware-store")
-    local needs = constructionResources[housingTier]
+    local supply = Util.aggregateSupplyBuildingResources(hardwareStores)
+    local needs = Constants.CONSTRUCTION_MATERIALS[housingTier]
 
     for _, need in ipairs(needs) do
-        -- name/required
-        local totalAvailable = 0
-        for _, store in ipairs(hardwareStores) do
-            local availableCount = store.get_item_count(need.name)
-            totalAvailable = totalAvailable + availableCount
-        end
-
-        if need.required > totalAvailable then
+        if need.required > (supply[need.name] or 0) then
             return false
         end
     end
-
     return true
 end
 

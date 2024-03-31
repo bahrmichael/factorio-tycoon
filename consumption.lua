@@ -1,5 +1,6 @@
 local Constants = require("constants")
 local UsedBottlesStore = require("used-bottles-store")
+local Util = require("util")
 
 --- @class Need
 --- @field provided number
@@ -234,9 +235,9 @@ local function listSpecialCityBuildings(city, name)
     if city.special_buildings.other[name] ~= nil and #city.special_buildings.other[name] > 0 then
         entities = city.special_buildings.other[name]
     else
-        entities = game.surfaces[Constants.STARTING_SURFACE_ID].find_entities_filtered{
+        entities = game.surfaces[city.surface_index].find_entities_filtered{
             name=name,
-            position=city.special_buildings.town_hall.position,
+            position=city.center,
             radius=Constants.CITY_RADIUS
         }
         city.special_buildings.other[name] = entities
@@ -254,41 +255,18 @@ end
 --- @param city City
 local function updateProvidedAmounts(city)
     local markets = listSpecialCityBuildings(city, "tycoon-market")
+    local supply = Util.aggregateSupplyBuildingResources(markets)
 
     -- BASIC NEEDS
-    if #markets >= 1 then
-        for resource, _ in pairs(city.stats.basic_needs) do
-            if resource ~= "water" then
-                local totalAvailable = 0
-                for _, market in ipairs(markets) do
-                    local availableCount = market.get_item_count(resource)
-                    totalAvailable = totalAvailable + availableCount
-                end
-                setBasicNeedsProvided(city, resource, totalAvailable)
-            end
-        end
-    else
-        for resource, _ in pairs(city.stats.basic_needs) do
-            if resource ~= "water" then
-                setBasicNeedsProvided(city, resource, 0)
-            end
+    for resource, _ in pairs(city.stats.basic_needs) do
+        if resource ~= "water" then
+            setBasicNeedsProvided(city, resource, supply[resource] or 0)
         end
     end
 
     -- ADDITIONAL NEEDS
-    if #markets >= 1 then
-        for resource, _ in pairs(city.stats.additional_needs or {}) do
-            local totalAvailable = 0
-            for _, market in ipairs(markets) do
-                local availableCount = market.get_item_count(resource)
-                totalAvailable = totalAvailable + availableCount
-            end
-            setAdditionalNeedsProvided(city, resource, totalAvailable)
-        end
-    else
-        for resource, _ in pairs(city.stats.additional_needs) do
-            setAdditionalNeedsProvided(city, resource, 0)
-        end
+    for resource, _ in pairs(city.stats.additional_needs or {}) do
+        setAdditionalNeedsProvided(city, resource, supply[resource] or 0)
     end
     
     local waterTowers = listSpecialCityBuildings(city, "tycoon-water-tower")
@@ -390,8 +368,7 @@ end
 --- @param item Item
 --- @param suppliers any[]
 --- @param city City
---- @param isConstruction boolean
-local function consumeItem(item, suppliers, city, isConstruction)
+local function consumeItem(item, suppliers, city)
 
     assert(item.required ~= nil and item.required >= 0, "Required amount must be a number 0 or larger.")
 
@@ -454,7 +431,7 @@ local function consumeBasicNeeds(city)
                 consumeItem({
                     name = resource,
                     required = amounts.required
-                }, markets, city, false)
+                }, markets, city)
             end
         end
     end
@@ -496,7 +473,7 @@ local function consumeAdditionalNeeds(city)
             consumeItem({
                 name = resource,
                 required = amounts.required
-            }, markets, city, false)
+            }, markets, city)
         end
     end
 end

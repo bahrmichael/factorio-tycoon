@@ -11,15 +11,17 @@ You can [call this interface](https://lua-api.factorio.com/latest/classes/LuaRem
 ```
 interface = "tycoon"
 function = "spawn_city"
-... = position, optional city name
+... = position, surface_index, optional city name
 ```
 
 Position is a coordinate on Factorio's tile grid, which contains an x and a y field. This function does not support Factorio's shorthand version.
+
+Surface_index is the ID of the surface you want to place the city on. Use 1 if you want to place a city on the default surface (Nauvis).
 
 You can specify or omit the optional city name. If you omit it, Tycoon will take one of its built-in city names which support public transporation.
 
 Example call in game:
 
 ```
-/c remote.call("tycoon", "spawn_city", {x = 10, y = 10}, "My City Name")
+/c remote.call("tycoon", "spawn_city", {x = 10, y = 10}, 1, "My City Name")
 ```

@@ -4,6 +4,7 @@ data:extend{
         name = "tycoon-town-hall",
         icon = "__tycoon__/graphics/icons/town-hall.png",
         icon_size = 64,
+        map_color = {r=0.5, g=1, b=0.5},
         max_health = 10000,
         -- This has to be set in the runtime code
         -- destructible = false,
