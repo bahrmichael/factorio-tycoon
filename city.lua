@@ -1460,8 +1460,6 @@ local function construct_gardens()
     end
 end
 
-local housing_tiers = {"simple", "residential", "highrise"}
-
 local lower_tiers = {
     highrise = "residential",
     residential = "simple"
@@ -1524,7 +1522,8 @@ local function start_house_construction()
 
             local buildables = getBuildables(hardware_stores)
             -- If there are no hardware stores, then no construction resources are available.
-            for _, tier in ipairs(housing_tiers) do
+            -- use CITIZEN_COUNTS as housing tiers list
+            for tier, _ in pairs(Constants.CITIZEN_COUNTS) do
                 if has_time_elapsed_for_construction(city, tier)
                     and buildables[tier] ~= nil then
                         
