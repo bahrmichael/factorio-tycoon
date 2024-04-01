@@ -94,20 +94,19 @@ local function getCachedDistance(coordinates, offsetY, offsetX, cityCenter)
     end
 end
 
---- @param y number
---- @param x number
+--- @param origin Coordinates
 --- @param size number
 --- @param allowDiagonal boolean
 --- @return Coordinates[] coordinates
-local function getSurroundingCoordinates(y, x, size, allowDiagonal)
+local function getSurroundingCoordinates(origin, size, allowDiagonal)
    local c = {}
    for i = -1 * size, size, 1 do
         for j = -1 * size, size, 1 do
             if (allowDiagonal or (math.abs(i) ~= math.abs(j))) then
                 if not(i == 0 and j == 0) then
                     table.insert(c, {
-                        y = i + y,
-                        x = j + x
+                        x = j + origin.x,
+                        y = i + origin.y
                     })
                 end
             end
@@ -116,8 +115,7 @@ local function getSurroundingCoordinates(y, x, size, allowDiagonal)
    return c
 end
 
---- @param y number
---- @param x number
+--- @param origin Coordinates
 --- @param size number
 --- @param city City
 --- @return any
@@ -288,7 +286,7 @@ end
 --- @param city City
 --- @param coordinates Coordinates
 local function hasSurroundingRoad(city, coordinates)
-    local surroundsOfUnused = getSurroundingCoordinates(coordinates.y, coordinates.x, 1, false)
+    local surroundsOfUnused = getSurroundingCoordinates(coordinates, 1, false)
     for _, s in ipairs(surroundsOfUnused) do
         local surroundingCell = GridUtil.safeGridAccess(city, s)
         if surroundingCell ~= nil and surroundingCell.type == "road" then
@@ -716,7 +714,7 @@ local function addBuildingLocations(city, recentCoordinates)
     end
 
     if recentCoordinates ~= nil then
-        local surrounds = getSurroundingCoordinates(recentCoordinates.y, recentCoordinates.x, 1, false)
+        local surrounds = getSurroundingCoordinates(recentCoordinates, 1, false)
         for _, value in ipairs(surrounds) do
             if value.x <= 1 or value.y <= 1 or value.x >= #city.grid or value.y >= #city.grid then
                 -- Skip locations that are at the edge of the grid or beyond
@@ -727,7 +725,7 @@ local function addBuildingLocations(city, recentCoordinates)
                 if isUnused then
 
                     -- Then check if there are any open roadEnds surrounding this unused field
-                    local surroundsOfUnused = getSurroundingCoordinates(value.y, value.x, 1, false)
+                    local surroundsOfUnused = getSurroundingCoordinates(value, 1, false)
                     local hasSurroundingRoadEnd = false
                     for _, s in ipairs(surroundsOfUnused) do
                         if Util.indexOf(recentCoordinates, s) ~= nil then
@@ -784,7 +782,7 @@ end
 --- @param coordinates Coordinates
 --- @return boolean
 local function isConnectedToRoad(city, coordinates)
-    local surrounds = getSurroundingCoordinates(coordinates.y, coordinates.x, 1, false)
+    local surrounds = getSurroundingCoordinates(coordinates, 1, false)
     for _, s in ipairs(surrounds) do
         local c = GridUtil.safeGridAccess(city, s)
         if c ~= nil and c.type == "road" then
@@ -1228,11 +1226,11 @@ local function completeConstruction(city, buildingTypes)
         end
         table.insert(city.houseLocations, coordinates)
 
-        local sideNeighboursOfCompletedHouse = getSurroundingCoordinates(coordinates.y, coordinates.x, 1, false)
+        local sideNeighboursOfCompletedHouse = getSurroundingCoordinates(coordinates, 1, false)
         for _, n in ipairs(sideNeighboursOfCompletedHouse) do
             local neighbourCell = GridUtil.safeGridAccess(city, n)
             if neighbourCell ~= nil and neighbourCell.type == "unused" then
-                local surroundsOfUnused = getSurroundingCoordinates(n.y, n.x, 1, false)
+                local surroundsOfUnused = getSurroundingCoordinates(n, 1, false)
                 -- Test if this cell is surrounded by houses, if yes then place a garden
                 -- Because we use getSurroundingCoordinates with allowDiagonal=false above, we only need to count 4 houses or roads
                 local surroundCount = 0
