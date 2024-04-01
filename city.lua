@@ -709,7 +709,8 @@ end
 
 --- @param city City
 --- @param recentCoordinates Coordinates | nil
-local function addBuildingLocations(city, recentCoordinates)
+--- @param allowCenter boolean | nil
+local function addBuildingLocations(city, recentCoordinates, allowCenter)
     if city.buildingLocationQueue == nil then
         city.buildingLocationQueue = Queue.new()
     end
@@ -718,7 +719,7 @@ local function addBuildingLocations(city, recentCoordinates)
     end
 
     if recentCoordinates ~= nil then
-        local surrounds = getSurroundingCoordinates(recentCoordinates, 1, false)
+        local surrounds = getSurroundingCoordinates(recentCoordinates, 1, false, allowCenter)
         for _, value in ipairs(surrounds) do
             if value.x <= 1 or value.y <= 1 or value.x >= #city.grid or value.y >= #city.grid then
                 -- Skip locations that are at the edge of the grid or beyond
