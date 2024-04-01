@@ -227,6 +227,7 @@ local function printTiles(start, map, tileName, surface_index)
         x = start.x
         y = y + 1
     end
+end
 
 local function aggregateSupplyBuildingResources(supplyBuildings)
     local resources = {}
