@@ -4,6 +4,7 @@ local Constants = require("constants")
 local Consumption = require("consumption")
 local GridUtil = require("grid-util")
 local Util = require("util")
+local FloorUpgradesQueue = require("floor-upgrades-queue")
 
 --- @class Coordinates
 --- @field x number
@@ -101,19 +102,54 @@ end
 local function getSurroundingCoordinates(y, x, size, allowDiagonal)
    local c = {}
    for i = -1 * size, size, 1 do
-    for j = -1 * size, size, 1 do
-        if (allowDiagonal or (math.abs(i) ~= math.abs(j))) then
-            if not(i == 0 and j == 0) then
-                table.insert(c, {
-                    y = i + y,
-                    x = j + x
-                })
+        for j = -1 * size, size, 1 do
+            if (allowDiagonal or (math.abs(i) ~= math.abs(j))) then
+                if not(i == 0 and j == 0) then
+                    table.insert(c, {
+                        y = i + y,
+                        x = j + x
+                    })
+                end
             end
         end
-    end
    end
    return c
 end
+
+--- @param y number
+--- @param x number
+--- @param size number
+--- @param city City
+--- @return any
+local function getCircularSurroundingCoordinates(origin, size, city)
+    local c = {}
+    for i = -1 * size, size, 1 do
+        for j = -1 * size, size, 1 do
+            -- The first condition excludes the center piece
+            -- The second condition excludes the four corners. Open for better solutions to make a circle.
+            if not(i == 0 and j == 0) and not(math.abs(i) == size and math.abs(j) == size) then
+                local coordinates = {
+                    y = i + origin.y,
+                    x = j + origin.x
+                }
+                -- The idea here is to sort the cells in a way that they are built first where it's closer
+                -- to the origin and the town center, since this function is currently only used for floor upgrades.
+                -- That should give the reconstruction work a more organic look and feel.
+                local distance_to_origin = Util.calculateDistance(origin, coordinates)
+                local distance_to_center = Util.calculateDistance(city.center, coordinates)
+                local key = math.ceil(distance_to_origin * distance_to_center)
+                -- We're incrementing the key on conflict, as that's relatively cheap given that "size" won't grow far.
+                while c[key] ~= nil do
+                    key = key + 1
+                end
+                -- table.insert won't shift elements as we'd expect it for an array, if the table is not a perfect array-like struture
+                -- That may happen because of the distance based insert.
+                c[key] = coordinates
+            end
+        end
+    end
+    return c
+ end
 
 --- @param area any
 --- @param surface_index number
@@ -561,66 +597,91 @@ local function pickRoadExpansion(city, roadEnd)
     return nil
 end
 
---- @param start Coordinates
---- @param map string[]
---- @param tileName string
-local function printTiles(start, map, tileName, surface_index)
-    local x, y = start.x, start.y
-    local tiles = {}
-    for _, value in ipairs(map) do
-        for i = 1, #value do
-            local char = string.sub(value, i, i)
-            if char == "1" then
-                table.insert(tiles, {name = tileName, position = {x, y}})
-            end
-            x = x + 1
-        end
-        x = start.x
-        y = y + 1
-    end
-    game.surfaces[surface_index].set_tiles(tiles)
-end
-
 --- @param direction Direction
+--- @param wide boolean
 --- @return string[] map
-local function getMap(direction)
+local function getMap(direction, wide)
     local result = nil
     if direction == "north" then
-        result = {
-            "001100",
-            "001100",
-            "001100",
-            "001100",
-            "000000",
-            "000000",
-        }
+        if wide then
+            result = {
+                "011110",
+                "011110",
+                "011110",
+                "011110",
+                "000000",
+                "000000",
+            }
+        else
+            result = {
+                "001100",
+                "001100",
+                "001100",
+                "001100",
+                "000000",
+                "000000",
+            }
+        end
     elseif direction == "south" then
-        result = {
-            "000000",
-            "000000",
-            "001100",
-            "001100",
-            "001100",
-            "001100",
-        }
+        if wide then
+            result = {
+                "000000",
+                "000000",
+                "011110",
+                "011110",
+                "011110",
+                "011110",
+            }
+        else
+            result = {
+                "000000",
+                "000000",
+                "001100",
+                "001100",
+                "001100",
+                "001100",
+            }
+        end
     elseif direction == "west" then
-        result = {
-            "000000",
-            "000000",
-            "111100",
-            "111100",
-            "000000",
-            "000000",
-        }
+        if wide then
+            result = {
+                "000000",
+                "111100",
+                "111100",
+                "111100",
+                "111100",
+                "000000",
+            }
+        else
+            result = {
+                "000000",
+                "000000",
+                "111100",
+                "111100",
+                "000000",
+                "000000",
+            }
+        end
     elseif direction == "east" then
-        result = {
-            "000000",
-            "000000",
-            "001111",
-            "001111",
-            "000000",
-            "000000",
-        }
+        if wide then
+            result = {
+                "000000",
+                "001111",
+                "001111",
+                "001111",
+                "001111",
+                "000000",
+            }
+        else
+            result = {
+                "000000",
+                "000000",
+                "001111",
+                "001111",
+                "000000",
+                "000000",
+            }
+        end
     end
     assert(result ~= nil, "Invalid direction for getMap")
     return result
@@ -871,12 +932,12 @@ local function incraseCoordinates(coordinates, city)
     coordinates.y = coordinates.y + 1
 end
 
-local function clearAreaAndPrintTiles(city, coordinates, map)
+local function clearAreaAndPrintTiles(city, coordinates, map, tileType)
     local currentCellStartCoordinates = GridUtil.translateCityGridToTileCoordinates(city, {
         x = coordinates.x,
         y = coordinates.y,
     })
-    printTiles(currentCellStartCoordinates, map, "concrete", city.surface_index)
+    Util.printTiles(currentCellStartCoordinates, map, tileType, city.surface_index)
 
     local currentArea = {
         {currentCellStartCoordinates.x, currentCellStartCoordinates.y},
@@ -962,7 +1023,8 @@ local function growAtRandomRoadEnd(city)
         -- For each direction, fill the current cell with the direction and the neighbour with the inverse direction
         for _, direction in ipairs(pickedExpansionDirections) do
 
-            clearAreaAndPrintTiles(city, roadEnd.coordinates, getMap(direction))
+            -- Landfill is what we start with. It's later upgraded to higher tier roads as the citizens improve.
+            clearAreaAndPrintTiles(city, roadEnd.coordinates, getMap(direction, true), Constants.GROUND_TILE_TYPES.road)
 
             local currentCell = GridUtil.safeGridAccess(city, roadEnd.coordinates, "processPickedExpansionDirectionCurrent")
             if currentCell == nil then
@@ -988,7 +1050,7 @@ local function growAtRandomRoadEnd(city)
             end
 
             local neighbourSocket = invertDirection(direction)
-            clearAreaAndPrintTiles(city, neighbourPosition, getMap(neighbourSocket))
+            clearAreaAndPrintTiles(city, neighbourPosition, getMap(neighbourSocket, true), Constants.GROUND_TILE_TYPES.road)
 
             local neighbourCell = GridUtil.safeGridAccess(city, neighbourPosition, "processPickedExpansionDirectionNeighbour")
             if neighbourCell == nil then
@@ -1092,6 +1154,17 @@ local function growCitizenCount(city, count, tier)
     Consumption.updateNeeds(city)
 end
 
+--- @param buildingTypes BuildingType[] | nil
+--- @return string tileType
+local function get_ground_tile_type(buildingType) 
+    -- "simple"
+    -- "residential"
+    -- "highrise"
+    -- "tycoon-treasury"
+    -- "garden"
+    return Constants.GROUND_TILE_TYPES[buildingType] or Constants.GROUND_TILE_TYPES.simple
+end
+
 --- @param city City
 --- @param buildingTypes BuildingType[] | nil
 --- @return BuildingType | nil completedConstruction
@@ -1112,32 +1185,32 @@ local function completeConstruction(city, buildingTypes)
     end
 
     local startCoordinates = GridUtil.translateCityGridToTileCoordinates(city, coordinates)
-    printTiles(startCoordinates, {
+    local housingTier = excavationPit.buildingConstruction.buildingType
+    Util.printTiles(startCoordinates, {
         "111111",
         "111111",
         "111111",
         "111111",
         "111111",
         "111111",
-    }, "concrete", city.surface_index)
-    local entityName = excavationPit.buildingConstruction.buildingType
+    }, get_ground_tile_type(housingTier), city.surface_index)
     local entity
-    if entityName == "simple" or entityName == "residential" or entityName == "highrise" then
+    if housingTier == "simple" or housingTier == "residential" or housingTier == "highrise" then
         local xModifier, yModifier = 0, 0
-        if entityName == "simple" then
+        if housingTier == "simple" then
             -- no shift
-        elseif entityName == "residential" then
+        elseif housingTier == "residential" then
             yModifier = -0.5
         end
         local position = {x = startCoordinates.x + Constants.CELL_SIZE / 2 + xModifier, y = startCoordinates.y + Constants.CELL_SIZE / 2 + yModifier}
         entity = game.surfaces[city.surface_index].create_entity{
             -- WARN: prefixing with "house-" because of allowed shorter format
-            name = getRandomBuildingName(city, "house-".. entityName),
+            name = getRandomBuildingName(city, "house-".. housingTier),
             position = position,
             force = "player",
             move_stuck_players = true
         }
-        createLight(entity.unit_number, position, entityName, city.surface_index)
+        createLight(entity.unit_number, position, housingTier, city.surface_index)
         -- todo: test if the script destroying this entity also fires this hook
         script.register_on_entity_destroyed(entity)
 
@@ -1148,15 +1221,15 @@ local function completeConstruction(city, buildingTypes)
                 highrise = 0,
             }
         end
-        city.buildingCounts[entityName] = city.buildingCounts[entityName] + 1
+        city.buildingCounts[housingTier] = city.buildingCounts[housingTier] + 1
 
         if city.houseLocations == nil then
             city.houseLocations = {}
         end
         table.insert(city.houseLocations, coordinates)
 
-        local neighboursOfCompletedHouse = getSurroundingCoordinates(coordinates.y, coordinates.x, 1, false)
-        for _, n in ipairs(neighboursOfCompletedHouse) do
+        local sideNeighboursOfCompletedHouse = getSurroundingCoordinates(coordinates.y, coordinates.x, 1, false)
+        for _, n in ipairs(sideNeighboursOfCompletedHouse) do
             local neighbourCell = GridUtil.safeGridAccess(city, n)
             if neighbourCell ~= nil and neighbourCell.type == "unused" then
                 local surroundsOfUnused = getSurroundingCoordinates(n.y, n.x, 1, false)
@@ -1176,22 +1249,32 @@ local function completeConstruction(city, buildingTypes)
             end
         end
 
-        growCitizenCount(city, Constants.CITIZEN_COUNTS[entityName], entityName)
-    elseif entityName == "garden" then
+        if housingTier == "residential" or housingTier == "highrise" then
+            local range = housingTier == "residential" and 2 or 3
+            local allNeighboursOfCompletedHouse = getCircularSurroundingCoordinates(coordinates, range, city)
+            for _, neioghbourCoords in pairs(allNeighboursOfCompletedHouse) do
+                if neioghbourCoords ~= nil then
+                    FloorUpgradesQueue.push(city, neioghbourCoords, Constants.GROUND_TILE_TYPES[housingTier])
+                end
+            end
+        end
+
+        growCitizenCount(city, Constants.CITIZEN_COUNTS[housingTier], housingTier)
+    elseif housingTier == "garden" then
         entity = game.surfaces[city.surface_index].create_entity{
-            name = getRandomBuildingName(city, entityName),
+            name = getRandomBuildingName(city, housingTier),
             position = {x = startCoordinates.x + Constants.CELL_SIZE / 2, y = startCoordinates.y  + Constants.CELL_SIZE / 2},
             force = "player",
             move_stuck_players = true
         }
     else
         local yModifier, xModifier = 0, 0
-        if entityName == "tycoon-treasury" then
+        if housingTier == "tycoon-treasury" then
             xModifier = -0.5
             yModifier = 0
         end
         entity = game.surfaces[city.surface_index].create_entity{
-            name = entityName,
+            name = housingTier,
             position = {x = startCoordinates.x + Constants.CELL_SIZE / 2 + xModifier, y = startCoordinates.y  + Constants.CELL_SIZE / 2 + yModifier},
             force = "player",
             move_stuck_players = true
@@ -1200,7 +1283,7 @@ local function completeConstruction(city, buildingTypes)
 
     city.grid[coordinates.y][coordinates.x] = {
         type = "building",
-        buildingType = entityName,
+        buildingType = housingTier,
         createdAtTick = game.tick,
         entity = entity,
     }
@@ -1210,12 +1293,12 @@ local function completeConstruction(city, buildingTypes)
         entity = entity,
     }
 
-    if entityName == "tycoon-treasury" and not global.tycoon_intro_message_treasury_displayed then
+    if housingTier == "tycoon-treasury" and not global.tycoon_intro_message_treasury_displayed then
         game.print({"", "[color=orange]Factorio Tycoon:[/color] ", {"tycooon-info-message-treasury"}})
         global.tycoon_intro_message_treasury_displayed = true
     end
 
-    return entityName
+    return housingTier
 end
 
 local upgrade_paths = {

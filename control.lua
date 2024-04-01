@@ -14,6 +14,7 @@ local City = require("city")
 local Queue = require("queue")
 local PrimaryIndustries = require("primary-industries")
 local UsedBottlesStore = require("used-bottles-store")
+local FloorUpgradesQueue = require("floor-upgrades-queue")
 
 --- TICK HANDLERS
 local ONE_SECOND = 60;
@@ -49,6 +50,7 @@ script.on_nth_tick(FIVE_SECONDS, function()
     expand_roads()
     City.complete_house_construction()
     handle_passengers()
+    FloorUpgradesQueue.process()
 end)
 
 local function add_more_cities()

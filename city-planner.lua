@@ -6,20 +6,7 @@ local DataConstants = require("data-constants")
 local Queue = require("queue")
 local Util = require("util")
 
-local function printTiles(startY, startX, map, tileName, surface_index)
-    local x, y = startX, startY
-    for _, value in ipairs(map) do
-        for i = 1, #value do
-            local char = string.sub(value, i, i)
-            if char == "1" then
-                game.surfaces[surface_index].set_tiles({ { name = tileName, position = { x, y } } })
-            end
-            x = x + 1
-        end
-        x = startX
-        y = y + 1
-    end
-end
+
 
 -- With an additional space of 200 the cities still spawned relatively close to each other, so I raised it to 400
 local MIN_DISTANCE = Constants.CITY_RADIUS * 2 + 400
@@ -223,7 +210,8 @@ local function initializeCity(city)
                 local startCoordinates = GridUtil.translateCityGridToTileCoordinates(city, { x = x, y = y })
                 clearCell(startCoordinates.y, startCoordinates.x)
                 if map ~= nil then
-                    printTiles(startCoordinates.y, startCoordinates.x, map, "concrete", city.surface_index)
+                    -- Landfill is what we start with. It's later upgraded to higher tier roads as the citizens improve.
+                    Util.printTiles(startCoordinates, map, Constants.GROUND_TILE_TYPES.simple, city.surface_index)
                 end
                 if cell.initKey == "town-hall" then
                     local thPosition = {
@@ -248,6 +236,8 @@ local function initializeCity(city)
                         entity_name = townHall.name,
                         entity = townHall
                     }
+                    -- The town hall should start with some nicer flooring
+                    Util.printTiles(startCoordinates, map, Constants.GROUND_TILE_TYPES.residential, city.surface_index)
                 end
             end
         end
@@ -421,12 +411,6 @@ local function addMoreCities(isInitialCity, skipPayment)
     local newCityPosition = findNewCityPosition(isInitialCity, surface_index)
     if newCityPosition ~= nil then
         local cityName = addCity(newCityPosition, surface_index)
-        -- disabled for now, moved into addCity() above
-        if false then
-        game.print({ "", "[color=orange]Factorio Tycoon:[/color] ", { "tycooon-new-city", cityName }, ": ", "[gps=" ..
-        (newCityPosition.x + 1.5 * Constants.CELL_SIZE) .. "," .. (newCityPosition.y + 1.5 * Constants.CELL_SIZE) .. "]" })
-        end
-
         if not skipPayment then
             local urbanPlanningCenters = game.surfaces[surface_index].find_entities_filtered {
                 name = "tycoon-urban-planning-center"

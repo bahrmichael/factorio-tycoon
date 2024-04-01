@@ -79,7 +79,14 @@ local CONSTANTS = {
             name = "iron-plate",
             required = 5,
         }},
-    }
+    },
+
+    GROUND_TILE_TYPES = {
+        road = "dry-dirt",
+        simple = "landfill",
+        residential = "stone-path",
+        highrise = "concrete",
+    },
 }
 
 return CONSTANTS
