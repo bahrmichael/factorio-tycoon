@@ -411,12 +411,6 @@ local function addMoreCities(isInitialCity, skipPayment)
     local newCityPosition = findNewCityPosition(isInitialCity, surface_index)
     if newCityPosition ~= nil then
         local cityName = addCity(newCityPosition, surface_index)
-        -- disabled for now, moved into addCity() above
-        if false then
-        game.print({ "", "[color=orange]Factorio Tycoon:[/color] ", { "tycooon-new-city", cityName }, ": ", "[gps=" ..
-        (newCityPosition.x + 1.5 * Constants.CELL_SIZE) .. "," .. (newCityPosition.y + 1.5 * Constants.CELL_SIZE) .. "]" })
-        end
-
         if not skipPayment then
             local urbanPlanningCenters = game.surfaces[surface_index].find_entities_filtered {
                 name = "tycoon-urban-planning-center"
