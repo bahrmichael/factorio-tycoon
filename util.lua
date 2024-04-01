@@ -216,7 +216,7 @@ local function list_special_city_buildings(city, name)
     else
         entities = game.surfaces[city.surface_index].find_entities_filtered{
             name=name,
-            position=city.special_buildings.town_hall.position,
+            position=city.center,
             radius=Constants.CITY_RADIUS,
         }
         city.special_buildings.other[name] = entities
