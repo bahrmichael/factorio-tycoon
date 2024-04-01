@@ -97,9 +97,13 @@ end
 --- @param origin Coordinates
 --- @param size number
 --- @param allowDiagonal boolean
+--- @param allowCenter boolean
 --- @return Coordinates[] coordinates
-local function getSurroundingCoordinates(origin, size, allowDiagonal)
+local function getSurroundingCoordinates(origin, size, allowDiagonal, allowCenter)
    local c = {}
+   if allowCenter then
+       table.insert(c, origin)
+   end
    for i = -1 * size, size, 1 do
         for j = -1 * size, size, 1 do
             if (allowDiagonal or (math.abs(i) ~= math.abs(j))) then
