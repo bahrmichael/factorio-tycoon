@@ -1404,6 +1404,8 @@ local function findUpgradableCells(city, limit, upgradeTo)
 end
 
 --- NOTE: this function DOES NOT clear city grid cell, must be done manually if needed
+--- @param city City | nil
+--- @param unit_number number
 local function removeBuilding(city, unit_number)
     log("removeBuilding(): unit_number: ".. serpent.line(unit_number))
 
@@ -1416,6 +1418,25 @@ local function removeBuilding(city, unit_number)
         return
     end
     --log("removeBuilding(): building: ".. serpent.line(building))
+
+    --- NOTE: switch city reference block, common to all the checks below
+    city = city or Util.findCityById(building.cityId)
+    if city == nil then
+        log("removeBuilding(): ERROR: unable to get city reference!")
+    end
+    -- WARN: this weird case should never happen, but we must always check
+    if city ~= nil and city.id ~= building.cityId then
+        local msg = string.format("removeBuilding(): ERROR: city.id: %s doesn't match building.cityId: %s, unit_number: %d",
+            tostring(city.id), tostring(building.cityId), unit_number)
+        log(msg)
+        -- shout to players as well!
+        game.print(msg)
+
+        -- switch city reference in this case
+        city = Util.findCityById(building.cityId)
+        --assert(city ~= nil, "omg, i'm out...")
+    end
+    --- end block
 
     -- buildings may have lots of deps...
     if Util.isHouse(building.entity_name) then
@@ -1430,8 +1451,7 @@ local function removeBuilding(city, unit_number)
 
         assert(housingTier, "removeBuilding(): Uknown housingTier: ".. housingTier)
 
-        local cityId = building.cityId
-        local city = Util.findCityById(cityId)
+        -- must still check city...
         if city ~= nil then
             growCitizenCount(city, -1 * Constants.CITIZEN_COUNTS[housingTier], housingTier)
 
