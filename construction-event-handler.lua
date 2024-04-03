@@ -39,6 +39,8 @@ local function on_built(event)
         }
 
         Util.addGlobalBuilding(entity.unit_number, city.id, entity)
+        -- WARN: we must always register
+        script.register_on_entity_destroyed(entity)
     end
 end
 
