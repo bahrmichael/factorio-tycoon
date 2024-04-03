@@ -184,6 +184,71 @@ local function findCityByTownHallUnitNumber(townHallUnitNumber)
     return nil
 end
 
+--- @param surface LuaSurface
+--- @param position MapPosition
+--- @param radius number | nil
+--- @param limit number | nil
+--- @return Entity[] | {}
+local function findTownHallsAtPosition(surface, position, radius, limit)
+    if surface == nil or position == nil then
+        return {}
+    end
+
+    return surface.find_entities_filtered{
+        position=position,
+        radius=radius or Constants.CITY_RADIUS,
+        name="tycoon-town-hall",
+        limit=limit or 1,
+    }
+end
+
+--- @param surface LuaSurface
+--- @param position MapPosition
+--- @param radius number | nil
+--- @param limit number | nil
+--- @return City
+local function findCityAtPosition(surface, position, radius, limit)
+    local town_halls = findTownHallsAtPosition(surface, position, radius, limit)
+    if #town_halls < 1 then
+        return
+    end
+
+    local building = global.tycoon_city_buildings[town_halls[1].unit_number]
+    if building == nil then
+        log("ERROR: Found a town hall, but it has no city mapping.")
+        return
+    end
+
+    local city = findCityById(building.cityId)
+    if city == nil then
+        log("ERROR: Found a cityId, but there is no city for it.")
+        return
+    end
+    return city
+end
+
+--- tries harder to find city when surface_index is unknown and entity is invalid
+local function findCityByBuilding(building)
+    if building == nil then return end
+
+    local city = nil
+    city = findCityById(building.cityId)
+    if city ~= nil then return city end
+
+    if building.entity ~= nil and building.entity.valid and building.entity.surface_index ~= nil then
+        city = findCityAtPosition(game.surfaces[building.entity.surface_index], building.position)
+    end
+    if city ~= nil then return city end
+
+    -- when there is no surface_index and no entity, try every surface
+    for _, surface in pairs(game.surfaces) do
+        city = findCityAtPosition(surface, building.position)
+        if city ~= nil then return city end
+    end
+    log("findCityByBuilding(): ERROR: unable to find city on any surface! building: ".. serpent.line(building))
+end
+
+
 local function isSupplyBuilding(entityName)
     return Constants.CITY_SPECIAL_BUILDINGS[entityName] == true
 end
@@ -267,6 +332,10 @@ return {
 
     findCityByTownHallUnitNumber = findCityByTownHallUnitNumber,
     findCityById = findCityById,
+    findTownHallsAtPosition = findTownHallsAtPosition,
+    findCityAtPosition = findCityAtPosition,
+    findCityByBuilding = findCityByBuilding,
+
     isSupplyBuilding = isSupplyBuilding,
     isSpecialBuilding = isSpecialBuilding,
     isHouse = isHouse,
