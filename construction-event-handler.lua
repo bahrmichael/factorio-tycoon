@@ -19,7 +19,7 @@ local function on_built(event)
     -- LuaEntity inherits surface_index from LuaControl
     local surface_index = entity.surface_index
 
-    if Util.isSupplyBuilding(entity.name) or entity.name == "tycoon-passenger-train-station" then
+    if Util.isSpecialBuilding(entity.name) then
         local nearbyTownHall = game.surfaces[surface_index].find_entities_filtered{
             position=entity.position,
             radius=Constants.CITY_RADIUS,
@@ -66,7 +66,7 @@ local function on_removed(event)
         return
     end
 
-    if Util.isSupplyBuilding(building.entity_name) or building.entity_name == "tycoon-passenger-train-station" then
+    if Util.isSpecialBuilding(building.entity_name) then
         
         local nearby_town_hall = game.surfaces[entity.surface_index].find_entities_filtered{
             position=building.entity.position,
