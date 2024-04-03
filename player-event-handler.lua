@@ -18,10 +18,7 @@ local function on_player_cursor_stack_changed(event)
         end
 
         if player.cursor_stack.valid_for_read
-            and (
-                player.cursor_stack.name == "tycoon-passenger-train-station"
-                or Util.isSupplyBuilding(player.cursor_stack.name)
-            )
+            and Util.isSpecialBuilding(player.cursor_stack.name)
          then
             for _, city in ipairs(global.tycoon_cities or {}) do
 
