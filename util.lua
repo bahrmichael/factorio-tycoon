@@ -185,12 +185,11 @@ local function findCityByTownHallUnitNumber(townHallUnitNumber)
 end
 
 local function isSupplyBuilding(entityName)
-    for _, supplyBuildingName in ipairs(Constants.CITY_SUPPLY_BUILDINGS) do
-        if entityName == supplyBuildingName then
-            return true
-        end
-    end
-    return false
+    return Constants.CITY_SPECIAL_BUILDINGS[entityName] == true
+end
+
+local function isSpecialBuilding(entityName)
+    return Constants.CITY_SPECIAL_BUILDINGS[entityName] ~= nil
 end
 
 --- @param entityName string
@@ -269,6 +268,7 @@ return {
     findCityByTownHallUnitNumber = findCityByTownHallUnitNumber,
     findCityById = findCityById,
     isSupplyBuilding = isSupplyBuilding,
+    isSpecialBuilding = isSpecialBuilding,
     isHouse = isHouse,
     findCityByEntityUnitNumber = findCityByEntityUnitNumber,
 

@@ -19,7 +19,13 @@ local CONSTANTS = {
     INITIAL_CITY_TICK = 30,
     PASSENGER_SPAWNING_TICKS = OneSecond * 2,
 
-    CITY_SUPPLY_BUILDINGS = {"tycoon-market", "tycoon-hardware-store", "tycoon-water-tower"},
+    -- all special buildings, true if required for supply
+    CITY_SPECIAL_BUILDINGS = {
+        ["tycoon-market"] = true,
+        ["tycoon-hardware-store"] = true,
+        ["tycoon-water-tower"] = true,
+        ["tycoon-passenger-train-station"] = false,
+    },
     PRIMARY_INDUSTRIES = {"tycoon-apple-farm", "tycoon-wheat-farm", "tycoon-fishery"},
     CITIZEN_COUNTS = {
         simple = 4,
