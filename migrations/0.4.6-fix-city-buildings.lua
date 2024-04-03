@@ -48,6 +48,8 @@ for _, surface in pairs(game.surfaces) do
 
         -- force-add with proper function
         Util.addGlobalBuilding(entity.unit_number, city.id, entity)
+        -- WARN: we must always register
+        script.register_on_entity_destroyed(entity)
 
         ::continue::
     end
@@ -71,6 +73,8 @@ for k, building in pairs(global.tycoon_city_buildings) do
             x = math.floor(building.entity.position.x),
             y = math.floor(building.entity.position.y),
         }
+        -- WARN: we must always register
+        script.register_on_entity_destroyed(building.entity)
     end
 
     new_dict[k] = building
@@ -118,6 +122,8 @@ for _, city in pairs(global.tycoon_cities) do
 
             -- force-add with proper function
             Util.addGlobalBuilding(entity.unit_number, city.id, entity)
+            -- WARN: we must always register
+            script.register_on_entity_destroyed(entity)
 
             ::continue::
         end
