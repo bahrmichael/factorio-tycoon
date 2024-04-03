@@ -187,12 +187,7 @@ local function find_position_for_initial_apple_farm()
                 limit = 1,
             }
 
-            local town_halls = game.surfaces[surface_index].find_entities_filtered{
-                position = position,
-                radius = 100,
-                name = "tycoon-town-hall",
-                limit = 1
-            }
+            local town_halls = Util.findTownHallsAtPosition(game.surfaces[surface_index], position, 100)
 
             local score = 0
 
