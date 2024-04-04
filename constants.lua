@@ -24,6 +24,7 @@ local CONSTANTS = {
         ["tycoon-market"] = true,
         ["tycoon-hardware-store"] = true,
         ["tycoon-water-tower"] = true,
+        ["tycoon-treasury"] = false,
         ["tycoon-passenger-train-station"] = false,
     },
     PRIMARY_INDUSTRIES = {"tycoon-apple-farm", "tycoon-wheat-farm", "tycoon-fishery"},
