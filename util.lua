@@ -213,6 +213,7 @@ local function findCityAtPosition(surface, position, radius, limit)
         return
     end
 
+    -- can't use getGlobalBuilding(), it is declared below
     local building = global.tycoon_city_buildings[town_halls[1].unit_number]
     if building == nil then
         log("ERROR: Found a town hall, but it has no city mapping.")

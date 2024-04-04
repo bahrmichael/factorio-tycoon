@@ -36,6 +36,8 @@ local function on_built(event)
         global.tycoon_entity_meta_info[entity.unit_number] = {
             cityId = city.id
         }
+
+        Util.addGlobalBuilding(entity.unit_number, city.id, entity)
     end
 end
 
@@ -45,12 +47,8 @@ local function on_removed(event)
         return
     end
 
-    if global.tycoon_city_buildings == nil then
-        return
-    end
-    
     local city = nil
-    local building = global.tycoon_city_buildings[unit_number]
+    local building = Util.getGlobalBuilding(unit_number)
     if building == nil then
         return
     end
@@ -61,7 +59,7 @@ local function on_removed(event)
         -- todo: how should we handle that situation? Is the whole city gone?
         -- probably in the "destroyed" event, because the player can't mine the town hall
         -- remove from global
-        global.tycoon_city_buildings[unit_number] = nil
+        Util.removeGlobalBuilding(unit_number)
         return
     end
 
@@ -97,7 +95,7 @@ local function on_removed(event)
 
     -- todo: mark cell as unused again, clear paving if necessary
     -- remove from global
-    global.tycoon_city_buildings[unit_number] = nil
+    Util.removeGlobalBuilding(unit_number)
 end
 
 return {
