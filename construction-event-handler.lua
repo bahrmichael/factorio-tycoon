@@ -31,6 +31,7 @@ local function on_built(event)
 
         invalidateSpecialBuildingsList(city, entity.name)
 
+        -- TODO: this could be dropped in favor of Util.getGlobalBuilding()
         if global.tycoon_entity_meta_info == nil then
             global.tycoon_entity_meta_info = {}
         end
@@ -78,6 +79,12 @@ local function on_removed(event)
 
     if building.isSpecial or Util.isSpecialBuilding(building.entity_name) then
         invalidateSpecialBuildingsList(city, building.entity_name)
+
+        -- TODO: this could be dropped in favor of Util.removeGlobalBuilding()
+        if global.tycoon_entity_meta_info == nil then
+            global.tycoon_entity_meta_info = {}
+        end
+        global.tycoon_entity_meta_info[unit_number] = nil
     else
         assert(building.position, "building.position is nil, DO FIX migration script!")
         -- todo: mark cell as unused again, clear paving if necessary
