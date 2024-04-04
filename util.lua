@@ -274,6 +274,66 @@ local function findCityByEntityUnitNumber(unitNumber)
 end
 
 
+--- @class Building
+--- @field cityId number
+--- @field entity LuaEntity
+--- @field entity_name string
+--- @field position MapPosition | Coordinates
+--- @field isSpecial boolean | nil
+
+--- @param unit_number number
+--- @param cityId number
+--- @param entity LuaEntity | nil
+--- @return Building
+local function addGlobalBuilding(unit_number, cityId, entity)
+    if global.tycoon_city_buildings == nil then
+        global.tycoon_city_buildings = {}
+    end
+
+    if unit_number == nil then
+        return
+    end
+
+    local building = nil
+    if entity ~= nil and entity.valid then
+        building = {
+            cityId = cityId,
+            entity_name = entity.name,
+            entity = entity,
+            position = {
+                x = math.floor(entity.position.x),
+                y = math.floor(entity.position.y),
+            },
+        }
+        if isSpecialBuilding(entity.name) then
+            building.isSpecial = true
+        end
+    end
+
+    global.tycoon_city_buildings[unit_number] = building
+    return building
+end
+
+--- @param unit_number number
+local function removeGlobalBuilding(unit_number)
+    if global.tycoon_city_buildings == nil or unit_number == nil then
+        return
+    end
+
+    global.tycoon_city_buildings[unit_number] = nil
+end
+
+--- @param unit_number number
+--- @return Building
+local function getGlobalBuilding(unit_number)
+    if global.tycoon_city_buildings == nil or unit_number == nil then
+        return
+    end
+
+    return global.tycoon_city_buildings[unit_number]
+end
+
+
 --- @param start Coordinates
 --- @param map string[]
 --- @param tileName string
@@ -341,6 +401,9 @@ return {
     isHouse = isHouse,
     findCityByEntityUnitNumber = findCityByEntityUnitNumber,
 
+    addGlobalBuilding = addGlobalBuilding,
+    removeGlobalBuilding = removeGlobalBuilding,
+    getGlobalBuilding = getGlobalBuilding,
 
     printTiles = printTiles,
     aggregateSupplyBuildingResources = aggregateSupplyBuildingResources,
