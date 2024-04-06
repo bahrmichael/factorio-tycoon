@@ -354,9 +354,12 @@ local function addCity(position, surface_index, predefinedCityName)
     })
     initializeCity(global.tycoon_cities[cityId])
 
+    local gps = (math.floor(position.x) + 1.5 * Constants.CELL_SIZE) ..",".. (math.floor(position.y) + 1.5 * Constants.CELL_SIZE)
+    if surface_index ~= Constants.STARTING_SURFACE_ID then
+        gps = gps ..",".. game.surfaces[surface_index].name
+    end
     game.print({ "",
-        "[color=orange]Factorio Tycoon:[/color] ", { "tycooon-new-city", cityName }, ": ",
-        "[gps=" .. (math.floor(position.x) + 1.5 * Constants.CELL_SIZE) .. "," .. (math.floor(position.y) + 1.5 * Constants.CELL_SIZE) .. "]",
+        "[color=orange]Factorio Tycoon:[/color] ", { "tycooon-new-city", cityName }, ": [gps=".. gps .."]",
     })
     return cityName
 end
