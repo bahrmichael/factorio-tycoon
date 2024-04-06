@@ -22,6 +22,15 @@ local function insideStartingArea(chunk)
     return chunk.x >= -sa and chunk.x < sa and chunk.y >= -sa and chunk.y < sa
 end
 
+-- TODO: we can use similar (another option?) when city builds, to refresh map
+--- forces to chart chunk if enabled in settings
+local function chartChunk(surface, chunk)
+    if (settings.global["tycoon-reveal-spawned"] or {}).value then
+        local p = Util.chunkToPosition(chunk)
+        game.forces.player.chart(surface, {p, p})
+    end
+end
+
 
 --
 -- event handlers: on_chunk_*()
