@@ -1,4 +1,4 @@
-globals = {"data", "game", "global", "defines", "log", "settings", "rendering", "script", "remote", "DEBUG"}
+globals = {"data", "game", "global", "defines", "log", "settings", "rendering", "script", "remote", "DEBUG", "serpent"}
 -- https://luacheck.readthedocs.io/en/stable/warnings.html#list-of-warnings
 ignore = {
     "612", "614", 
