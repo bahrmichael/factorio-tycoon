@@ -1,6 +1,5 @@
 local Util = require("util")
 local Gui = require("gui")
-local Consumption = require("consumption")
 
 local function on_gui_opened(event)
     if (event.entity or {}).name == "tycoon-town-hall" then
@@ -8,8 +7,6 @@ local function on_gui_opened(event)
         local unit_number = event.entity.unit_number
         local city = Util.findCityByTownHallUnitNumber(unit_number)
         assert(city ~= nil, "Could not find the city for town hall unit number ".. unit_number)
-
-        Consumption.updateNeeds(city)
 
         local guiKey = "city_overview"
         local cityGui = player.gui.relative[guiKey]
