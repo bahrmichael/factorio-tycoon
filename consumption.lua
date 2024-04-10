@@ -595,6 +595,14 @@ local function update_construction_timers(city, tier)
     end
 end
 
+local function update_construction_timers_all(city)
+    -- use CITIZEN_COUNTS as housing tiers list
+    for tier, _ in pairs(Constants.CITIZEN_COUNTS) do
+        update_construction_timers(city, tier)
+    end
+end
+
+
 return {
     updateProvidedAmounts = updateProvidedAmounts,
     getSupplyLevels = getSupplyLevels,
@@ -604,4 +612,5 @@ return {
     consumeItem = consumeItem,
     resourcePrices = resourcePrices,
     update_construction_timers = update_construction_timers,
+    update_construction_timers_all = update_construction_timers_all,
 }
