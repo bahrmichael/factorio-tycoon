@@ -586,6 +586,7 @@ local function update_construction_timers(city, tier)
 end
 
 return {
+    updateProvidedAmounts = updateProvidedAmounts,
     getSupplyLevels = getSupplyLevels,
     updateNeeds = updateNeeds,
     consumeBasicNeeds = consumeBasicNeeds,
