@@ -822,10 +822,13 @@ local function startConstruction(city, buildingConstruction, queueIndex, allowed
         elseif buildingConstruction.buildingType == "garden" and isConnectedToRoad(city, coordinates) then
             -- Don't build gardens if there's a road right next to it
         else
-            local construction_materials = Constants.CONSTRUCTION_MATERIALS[buildingConstruction.buildingType] or {}
-            for _, item in pairs(construction_materials) do
-                local hardwareStores = Util.list_special_city_buildings(city, "tycoon-hardware-store")
-                Consumption.consumeItem(item, hardwareStores, city)
+            local construction_materials = Constants.CONSTRUCTION_MATERIALS[buildingConstruction.buildingType]
+            local hardwareStores = Util.list_special_city_buildings(city, "tycoon-hardware-store")
+            local cost = Consumption.consumeRequired(construction_materials, hardwareStores, city)
+            if cost == nil then
+                log_reason = "materials"
+                log_failure(log_reason)
+                return false
             end
 
             -- We can start a construction site here
