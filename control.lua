@@ -52,6 +52,9 @@ script.on_nth_tick(FIVE_SECONDS, function()
     City.complete_house_construction()
     handle_passengers()
     FloorUpgradesQueue.process()
+
+    -- best before return ;)
+    Consumption.pay_to_treasury_all()
 end)
 
 local function add_more_cities()

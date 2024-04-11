@@ -1,4 +1,5 @@
 local Constants = require("constants")
+local Consumption = require("consumption")
 local Util = require("util")
 
 --- @param city City
@@ -202,7 +203,6 @@ local function clearPassengers(city)
     local passengerName = "tycoon-passenger-" .. string.lower(city.name)
 
     local trainStations = listSpecialCityBuildings(city, "tycoon-passenger-train-station")
-    local treasuries = listSpecialCityBuildings(city, "tycoon-treasury")
     if #trainStations > 0 then
         for _, trainStation in ipairs(trainStations) do
 
@@ -227,12 +227,7 @@ local function clearPassengers(city)
                 for _, v in ipairs(cleared) do
                     reward = reward + getCredits(v)
                 end
-
-                if #treasuries > 0 and reward > 0 then
-                    local randomTreasury = treasuries[city.generator(#treasuries)]
-                    local applicableReward = math.ceil(reward)
-                    randomTreasury.insert{name = "tycoon-currency", count = applicableReward}
-                end
+                Consumption.payCurrency(city, reward)
             end
         end
     end

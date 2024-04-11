@@ -447,16 +447,10 @@ local function consumeItem(item, suppliers, city)
         end
     end
 
-    local treasuries = listSpecialCityBuildings(city, "tycoon-treasury")
-    if #treasuries > 0 then
-        local randomTreasury = treasuries[city.generator(#treasuries)]
-        local currencyPerUnit = resourcePrices[item.name]
-        assert(currencyPerUnit ~= nil, "Missing price for " .. item.name)
-        local reward = math.ceil(currencyPerUnit * consumedAmount)
-        if reward > 0 then
-            randomTreasury.insert{name = "tycoon-currency", count = reward}
-        end
-    end
+    local currencyPerUnit = resourcePrices[item.name]
+    assert(currencyPerUnit ~= nil, "Missing price for " .. item.name)
+    local reward = currencyPerUnit * consumedAmount
+    payCurrency(city, reward)
 
     -- When the city consumes bottled products, they'll return the bottles eventually.
     -- We use this code to keep track of the number of bottles a city has consumed, and return them in used-bottles-store.lua
