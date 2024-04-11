@@ -326,4 +326,35 @@ function SEGMENTS.getWeightForKey(key)
     end
 end
 
+local socketDirections = {
+    top = "north",
+    bottom = "south",
+    left = "west",
+    right = "east",
+}
+function SEGMENTS.getSocketDirection(name)
+    return socketDirections[name]
+end
+
+function SEGMENTS.getEmptySocketDirections(sockets)
+    local t = {}
+    for name, socket in pairs(sockets) do
+        if socket == socketTypes.empty then
+            table.insert(t, SEGMENTS.getSocketDirection(name))
+        end
+    end
+    return t
+end
+
+-- tests
+local _t_none = SEGMENTS.getEmptySocketDirections(SEGMENTS.street.intersection.sockets)
+local _t_every = SEGMENTS.getEmptySocketDirections(SEGMENTS.empty.sockets)
+assert(table_size(_t_none) == 0)
+assert(_t_every[1] == "north")
+assert(_t_every[2] == "south")
+assert(_t_every[3] == "west")
+assert(_t_every[4] == "east")
+assert(table_size(_t_every) == 4)
+
+
 return SEGMENTS
