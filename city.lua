@@ -1557,9 +1557,11 @@ local function getBuildables(hardwareStores)
     
     local buildables = {}
     for key, resources in pairs(Constants.CONSTRUCTION_MATERIALS) do
+        --log("key: ".. serpent.line(key) .." needs: ".. serpent.line(resources))
         local anyResourceMissing = false
-        for _, resource in ipairs(resources) do
-            if (supply[resource.name] or 0) < resource.required then
+        for name, required in pairs(resources) do
+            --log("key: ".. serpent.line(key) .." name: ".. serpent.line(name) .." required: ".. serpent.line(required) .." available: ".. serpent.line(supply[name]))
+            if (supply[name] or 0) < required then
                 anyResourceMissing = true
                 break
             end
