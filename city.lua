@@ -768,8 +768,13 @@ local function startConstruction(city, buildingConstruction, queueIndex, allowed
         return v.x .. "-" .. v.y
     end)
 
+    local function log_failure(reason)
+        log("startConstruction(): unable to construct: ".. tostring(buildingConstruction.buildingType) ..", reason: ".. reason)
+    end
+
     -- Make up to 10 attempts to find a location where we can start a construction site
     local attempts = 10
+    local log_reason = "attempts"
     if allowedCoordinates ~= nil then
         attempts = #allowedCoordinates
     end
@@ -781,6 +786,7 @@ local function startConstruction(city, buildingConstruction, queueIndex, allowed
             coordinates = Queue.popleft(city[queueIndex])
             if coordinates == nil then
                 -- If there are no more entries left in the queue, then abort
+                log_failure(log_reason)
                 return false
             end
         end
@@ -850,6 +856,8 @@ local function startConstruction(city, buildingConstruction, queueIndex, allowed
             return true
         end
     end
+
+    log_failure(log_reason)
     return false
 end
 
