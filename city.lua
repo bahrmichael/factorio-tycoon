@@ -1017,6 +1017,8 @@ local function growAtRandomRoadEnd(city)
 
     if not isCharted(city, roadEnd.coordinates) then
         DEBUG.log("RoadEnd is not charted: x=" .. roadEnd.coordinates.x .. " y=" .. roadEnd.coordinates.y)
+        -- don't forget to put it back or city can stuck without any roadEnds at all
+        Queue.pushleft(city.roadEnds, roadEnd)
         return
     end
 
