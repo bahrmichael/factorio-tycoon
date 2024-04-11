@@ -8,6 +8,7 @@ local Util = require("util")
 --- @class CityStats
 --- @field basic_needs { string: Need }
 --- @field additional_needs { string: Need }
+--- @field providedUpdateTick number
 
 --- @class SpecialBuildings
 --- @field town_hall any
@@ -279,6 +280,9 @@ local function updateProvidedAmounts(city)
     else
         setBasicNeedsProvided(city, "water", 0)
     end
+
+    -- remember update tick
+    city.stats.providedUpdateTick = game.tick
 end
 
 --- @param city City
@@ -287,6 +291,12 @@ end
 local function getSupplyLevels(city, needs)
     assert(needs ~= nil, "Expected needs in getSupplyLevels to not be nil.")
     updateProvidedAmounts(city)
+
+    --- NOTE: we're called from update_construction_timers() every minute, but also on gui events
+    -- only update if enough time has passed
+    if ((city.stats.providedUpdateTick or 0) + Constants.CITY_STATS_LIFETIME_TICKS) < game.tick then
+        updateProvidedAmounts(city)
+    end
 
     local waterDemand = (needs or {}).water
 
