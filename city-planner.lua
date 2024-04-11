@@ -231,6 +231,8 @@ local function initializeCity(city)
                     }
                     townHall.destructible = false
                     city.special_buildings.town_hall = townHall
+                    --- NOTE: townHall is also a building in our grid, assign proper entity
+                    cell.entity = townHall
                     Util.addGlobalBuilding(townHall.unit_number, city.id, townHall)
                     -- The town hall should start with some nicer flooring
                     Util.printTiles(startCoordinates, map, Constants.GROUND_TILE_TYPES.residential, city.surface_index)

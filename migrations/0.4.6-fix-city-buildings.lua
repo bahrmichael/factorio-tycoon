@@ -104,6 +104,15 @@ for _, city in pairs(global.tycoon_cities) do
             -- if building is absent
             local entity = cell.entity
             if entity == nil or (not entity.valid) then
+                if cell.initKey == "town-hall" then
+                    -- town hall never had cell.entity assigned previously
+                    cell.entity = city.special_buildings.town_hall
+                    log("assigned town hall to cell.entity!")
+                    goto continue
+                elseif cell.initKey ~= nil then
+                    log(string.format("unknown initKey, cell: ", serpent.line(cell)))
+                end
+
                 -- clear manually
                 city.grid[y][x] = { type = "unused" }
                 City.updatepossibleBuildingLocations(city, {x=x, y=y}, true)
