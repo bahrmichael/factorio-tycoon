@@ -349,7 +349,8 @@ local function addCity(position, surface_index, predefinedCityName)
         name = cityName,
         stats = {
             basic_needs = {},
-            construction_materials = {}
+            construction_materials = {},
+            debt = 0.0,
         },
         citizens = {
             simple = 0,

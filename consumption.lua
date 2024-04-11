@@ -9,6 +9,7 @@ local Util = require("util")
 --- @class CityStats
 --- @field basic_needs { string: Need }
 --- @field additional_needs { string: Need }
+--- @field debt number
 --- @field providedUpdateTick number
 
 --- @class SpecialBuildings
@@ -371,6 +372,45 @@ local function countCitizens(city)
     return total
 end
 
+local function payCurrency(city, cost)
+    assert(city ~= nil)
+    -- ban super-low values
+    if math.abs(cost) < 0.001 then
+        return
+    end
+
+    --log(string.format("payCurrency(): debt: %.2f cost: %d city: %s", city.stats.debt, cost, city.name))
+    city.stats.debt = city.stats.debt + cost
+end
+
+local function payToTreasury(city)
+    assert(city ~= nil)
+    assert(city.stats.debt >= 0, "debt is wrong")
+    -- we can pay only integer values
+    if city.stats.debt < 1.0 then
+        return 0
+    end
+
+    -- pay as much as possible. treasuries could be full or absent
+    local treasuries = listSpecialCityBuildings(city, "tycoon-treasury")
+    local leftover = city.stats.debt
+    for _, entity in ipairs(treasuries) do
+        local paid = entity.insert({name = "tycoon-currency", count = math.floor(city.stats.debt)})
+        leftover = city.stats.debt - paid
+        if leftover <= 1.0 then
+            break
+        end
+    end
+    local paid = city.stats.debt - leftover
+    city.stats.debt = leftover
+
+    if paid >= 1.0 then
+        log(string.format("payToTreasury(): debt: %.2f paid: %d city: %s", leftover, paid, city.name))
+    end
+
+    return city.stats.debt
+end
+
 --- @class Item
 --- @field name string
 --- @field required number
@@ -609,6 +649,12 @@ local function update_construction_timers_all(city)
     end
 end
 
+local function pay_to_treasury_all()
+    for _, city in ipairs(global.tycoon_cities or {}) do
+        payToTreasury(city)
+    end
+end
+
 
 return {
     updateProvidedAmounts = updateProvidedAmounts,
@@ -616,8 +662,12 @@ return {
     updateNeeds = updateNeeds,
     consumeBasicNeeds = consumeBasicNeeds,
     consumeAdditionalNeeds = consumeAdditionalNeeds,
+    payCurrency = payCurrency,
     consumeItem = consumeItem,
+    consumeRequired = consumeRequired,
     resourcePrices = resourcePrices,
     update_construction_timers = update_construction_timers,
     update_construction_timers_all = update_construction_timers_all,
+
+    pay_to_treasury_all = pay_to_treasury_all,
 }
