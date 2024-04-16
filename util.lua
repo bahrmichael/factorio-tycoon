@@ -100,6 +100,15 @@ local function chunkToIndex2D(ch, size)
     return math.floor(ch.y % size)*size + math.floor(ch.x % size)
 end
 
+--- @param index number Index in 2D-array
+--- @param size number Size of array in one dimension
+--- @return ChunkPosition Index in array
+local function chunkFromIndex2D(index, size)
+    local y, x = math.modf(index / size)
+    x = math.floor(x * size)
+    return { x = x, y = y }
+end
+
 --- we could use string.format("%d;%d", p.x, p.y), but it looks slower
 --- @param p ChunkPosition, only integers please! For floats use math.floor()
 --- @return number Hash to be used for dictionary keys
@@ -386,6 +395,7 @@ return {
     chunkToPosition = chunkToPosition,
     chunkToRegion = chunkToRegion,
     chunkToIndex2D = chunkToIndex2D,
+    chunkFromIndex2D = chunkFromIndex2D,
     chunkToHash = chunkToHash,
     chunkFromHash = chunkFromHash,
 
