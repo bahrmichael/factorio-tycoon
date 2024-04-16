@@ -52,7 +52,7 @@ local function on_removed(event)
     local city = nil
     local building = global.tycoon_city_buildings[unit_number]
     if building == nil then
-        goto finally
+        return
     end
 
     city = Util.findCityByBuilding(building)
@@ -60,7 +60,9 @@ local function on_removed(event)
         -- If there's no town hall in range then it probably was destroyed
         -- todo: how should we handle that situation? Is the whole city gone?
         -- probably in the "destroyed" event, because the player can't mine the town hall
-        goto finally
+        -- remove from global
+        global.tycoon_city_buildings[unit_number] = nil
+        return
     end
 
     if Util.isSpecialBuilding(building.entity_name) then
@@ -94,8 +96,7 @@ local function on_removed(event)
     end
 
     -- todo: mark cell as unused again, clear paving if necessary
-    ::finally::
-    -- remove from global finally
+    -- remove from global
     global.tycoon_city_buildings[unit_number] = nil
 end
 
