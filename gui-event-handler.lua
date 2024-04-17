@@ -77,8 +77,12 @@ local function on_gui_opened(event)
             supplyBuildingView.destroy()
         end
 
+        local gui_type = defines.relative_gui_type.container_gui
+        if event.entity.name == "tycoon-water-tower" then
+            gui_type = defines.relative_gui_type.storage_tank_gui
+        end
         local anchor = {
-            gui = defines.relative_gui_type.container_gui, 
+            gui = gui_type,
             name = event.entity.name, 
             position = defines.relative_gui_position.right
         }
