@@ -1,8 +1,10 @@
 DEBUG = require("debug")
 local Queue = require("queue")
 local Constants = require("constants")
+local Consumption = require("consumption")
 local GridUtil = require("grid-util")
 local Util = require("util")
+local FloorUpgradesQueue = require("floor-upgrades-queue")
 
 --- @class Coordinates
 --- @field x number
@@ -92,32 +94,70 @@ local function getCachedDistance(coordinates, offsetY, offsetX, cityCenter)
     end
 end
 
---- @param y number
---- @param x number
+--- @param origin Coordinates
 --- @param size number
 --- @param allowDiagonal boolean
+--- @param allowCenter boolean
 --- @return Coordinates[] coordinates
-local function getSurroundingCoordinates(y, x, size, allowDiagonal)
+local function getSurroundingCoordinates(origin, size, allowDiagonal, allowCenter)
    local c = {}
+   if allowCenter then
+       table.insert(c, origin)
+   end
    for i = -1 * size, size, 1 do
-    for j = -1 * size, size, 1 do
-        if (allowDiagonal or (math.abs(i) ~= math.abs(j))) then
-            if not(i == 0 and j == 0) then
-                table.insert(c, {
-                    y = i + y,
-                    x = j + x
-                })
+        for j = -1 * size, size, 1 do
+            if (allowDiagonal or (math.abs(i) ~= math.abs(j))) then
+                if not(i == 0 and j == 0) then
+                    table.insert(c, {
+                        x = j + origin.x,
+                        y = i + origin.y
+                    })
+                end
             end
         end
-    end
    end
    return c
 end
 
+--- @param origin Coordinates
+--- @param size number
+--- @param city City
+--- @return any
+local function getCircularSurroundingCoordinates(origin, size, city)
+    local c = {}
+    for i = -1 * size, size, 1 do
+        for j = -1 * size, size, 1 do
+            -- The first condition excludes the center piece
+            -- The second condition excludes the four corners. Open for better solutions to make a circle.
+            if not(i == 0 and j == 0) and not(math.abs(i) == size and math.abs(j) == size) then
+                local coordinates = {
+                    y = i + origin.y,
+                    x = j + origin.x
+                }
+                -- The idea here is to sort the cells in a way that they are built first where it's closer
+                -- to the origin and the town center, since this function is currently only used for floor upgrades.
+                -- That should give the reconstruction work a more organic look and feel.
+                local distance_to_origin = Util.calculateDistance(origin, coordinates)
+                local distance_to_center = Util.calculateDistance(city.center, coordinates)
+                local key = math.ceil(distance_to_origin * distance_to_center)
+                -- We're incrementing the key on conflict, as that's relatively cheap given that "size" won't grow far.
+                while c[key] ~= nil do
+                    key = key + 1
+                end
+                -- table.insert won't shift elements as we'd expect it for an array, if the table is not a perfect array-like struture
+                -- That may happen because of the distance based insert.
+                c[key] = coordinates
+            end
+        end
+    end
+    return c
+ end
+
 --- @param area any
+--- @param surface_index number
 --- @param ignorables string[] | nil
-local function removeColldingEntities(area, ignorables)
-    local printEntities = game.surfaces[1].find_entities_filtered({
+local function removeColldingEntities(area, surface_index, ignorables)
+    local printEntities = game.surfaces[surface_index].find_entities_filtered({
         area=area,
         type = {"tree", "simple-entity"}
     })
@@ -130,8 +170,8 @@ local function removeColldingEntities(area, ignorables)
     end
 end
 
-local function hasCliffsOrWater(area)
-    local water = game.surfaces[1].find_tiles_filtered{
+local function hasCliffsOrWater(area, surface_index)
+    local water = game.surfaces[surface_index].find_tiles_filtered{
         area = area,
         name = {
             "deepwater",
@@ -145,7 +185,7 @@ local function hasCliffsOrWater(area)
         },
         limit = 1
     }
-    local cliffs = game.surfaces[1].find_entities_filtered{
+    local cliffs = game.surfaces[surface_index].find_entities_filtered{
         area = area,
         name = { "cliff" },
         limit = 1
@@ -154,21 +194,16 @@ local function hasCliffsOrWater(area)
 end
 
 --- @param area any
---- @param additionalIgnorables string[] | nil
-local function isAreaFree(area, additionalIgnorables)
+--- @param surface_index number
+local function isAreaFree(area, surface_index)
     -- Water / Cliffs
-    if hasCliffsOrWater(area) then
+    if hasCliffsOrWater(area, surface_index) then
         return false
     end
 
     local ignorables = {"rock-huge", "rock-big", "sand-rock-big", "dead-grey-trunk"}
-    if additionalIgnorables ~= nil and #additionalIgnorables >0 then
-        for _, value in ipairs(additionalIgnorables) do
-            table.insert(ignorables, value)
-        end
-    end
 
-    local entities = game.surfaces[1].find_entities_filtered({
+    local entities = game.surfaces[surface_index].find_entities_filtered({
         area=area,
         type={"tree"},
         name=ignorables,
@@ -189,7 +224,7 @@ local function checkForCollidables(city, coordinates, additionalIgnorables)
         {startCoordinates.x + Constants.CELL_SIZE, startCoordinates.y + Constants.CELL_SIZE}
     }
     -- Water / Cliffs
-    if hasCliffsOrWater(area) then
+    if hasCliffsOrWater(area, city.surface_index) then
         return "blocked"
     end
 
@@ -201,7 +236,7 @@ local function checkForCollidables(city, coordinates, additionalIgnorables)
     end
 
     -- Too many trees / Other entities
-    local entities = game.surfaces[1].find_entities_filtered({
+    local entities = game.surfaces[city.surface_index].find_entities_filtered({
         area=area,
         type={"tree"},
         name=ignorables,
@@ -255,7 +290,7 @@ end
 --- @param city City
 --- @param coordinates Coordinates
 local function hasSurroundingRoad(city, coordinates)
-    local surroundsOfUnused = getSurroundingCoordinates(coordinates.y, coordinates.x, 1, false)
+    local surroundsOfUnused = getSurroundingCoordinates(coordinates, 1, false)
     for _, s in ipairs(surroundsOfUnused) do
         local surroundingCell = GridUtil.safeGridAccess(city, s)
         if surroundingCell ~= nil and surroundingCell.type == "road" then
@@ -353,7 +388,7 @@ local function areStraightRailsOrthogonal(city, coordinates, direction)
     }
 
     -- Too many trees / Other entities
-    local entities = game.surfaces[1].find_entities_filtered({
+    local entities = game.surfaces[city.surface_index].find_entities_filtered({
         area=area,
         name={"straight-rail"},
         -- Only test 10 rail pieces, that should give us enough info
@@ -564,127 +599,118 @@ local function pickRoadExpansion(city, roadEnd)
     return nil
 end
 
---- @param start Coordinates
---- @param map string[]
---- @param tileName string
-local function printTiles(start, map, tileName)
-    local x, y = start.x, start.y
-    local tiles = {}
-    for _, value in ipairs(map) do
-        for i = 1, #value do
-            local char = string.sub(value, i, i)
-            if char == "1" then
-                table.insert(tiles, {name = tileName, position = {x, y}})
-            end
-            x = x + 1
-        end
-        x = start.x
-        y = y + 1
-    end
-    game.surfaces[1].set_tiles(tiles)
-end
-
 --- @param direction Direction
+--- @param wide boolean
 --- @return string[] map
-local function getMap(direction)
+local function getMap(direction, wide)
     local result = nil
     if direction == "north" then
-        result = {
-            "001100",
-            "001100",
-            "001100",
-            "001100",
-            "000000",
-            "000000",
-        }
+        if wide then
+            result = {
+                "011110",
+                "011110",
+                "011110",
+                "011110",
+                "000000",
+                "000000",
+            }
+        else
+            result = {
+                "001100",
+                "001100",
+                "001100",
+                "001100",
+                "000000",
+                "000000",
+            }
+        end
     elseif direction == "south" then
-        result = {
-            "000000",
-            "000000",
-            "001100",
-            "001100",
-            "001100",
-            "001100",
-        }
+        if wide then
+            result = {
+                "000000",
+                "000000",
+                "011110",
+                "011110",
+                "011110",
+                "011110",
+            }
+        else
+            result = {
+                "000000",
+                "000000",
+                "001100",
+                "001100",
+                "001100",
+                "001100",
+            }
+        end
     elseif direction == "west" then
-        result = {
-            "000000",
-            "000000",
-            "111100",
-            "111100",
-            "000000",
-            "000000",
-        }
+        if wide then
+            result = {
+                "000000",
+                "111100",
+                "111100",
+                "111100",
+                "111100",
+                "000000",
+            }
+        else
+            result = {
+                "000000",
+                "000000",
+                "111100",
+                "111100",
+                "000000",
+                "000000",
+            }
+        end
     elseif direction == "east" then
-        result = {
-            "000000",
-            "000000",
-            "001111",
-            "001111",
-            "000000",
-            "000000",
-        }
+        if wide then
+            result = {
+                "000000",
+                "001111",
+                "001111",
+                "001111",
+                "001111",
+                "000000",
+            }
+        else
+            result = {
+                "000000",
+                "000000",
+                "001111",
+                "001111",
+                "000000",
+                "000000",
+            }
+        end
     end
     assert(result ~= nil, "Invalid direction for getMap")
     return result
 end
 
-local totalGardenSprites = 13
-local gardenSpriteIterator = 0
+-- TODO: build this table from prototypes or data-constants
+local totalBuildingSprites = {
+    ["garden"] = 13,
+    ["excavation-pit"] = 20,
+    ["house-simple"] = 14,
+    ["house-residential"] = 9,
+    ["house-highrise"] = 8,
+}
 
-local function getIteratedGardenName()
-    gardenSpriteIterator = gardenSpriteIterator + 1
-    return "tycoon-garden-" .. (gardenSpriteIterator % totalGardenSprites) + 1
-end
-
-local totalExcavationPitSprites = 20
-local excavationPitSpriteIterator = 0
-
-local function getIteratedExcavationPitName()
-    excavationPitSpriteIterator = excavationPitSpriteIterator + 1
-    return "tycoon-excavation-pit-" .. (excavationPitSpriteIterator % totalExcavationPitSprites) + 1
-end
-
-local totalSimpleHouseSprites = 14
-local simpleHouseSpriteIterator = 0
-
-local function getIteratedSimpleHouseName()
-    simpleHouseSpriteIterator = simpleHouseSpriteIterator + 1
-    return "tycoon-house-simple-" .. (simpleHouseSpriteIterator % totalSimpleHouseSprites) + 1
-end
-
-local totalResidentialHouseSprites = 9
-local residentialHouseSpriteIterator = 0
-
-local function getIteratedResidentialHouseName()
-    residentialHouseSpriteIterator = residentialHouseSpriteIterator + 1
-    return "tycoon-house-residential-" .. (residentialHouseSpriteIterator % totalResidentialHouseSprites) + 1
-end
-
-local totalHighriseHouseSprites = 8
-local highriseHouseSpriteIterator = 0
-
-local function getIteratedHighriseHouseName()
-    highriseHouseSpriteIterator = highriseHouseSpriteIterator + 1
-    return "tycoon-house-highrise-" .. (highriseHouseSpriteIterator % totalHighriseHouseSprites) + 1
-end
-
+--- @param city City
 --- @param buildingType BuildingType
-local function getIteratedHouseName(buildingType)
-    if buildingType == "simple" then
-        return getIteratedSimpleHouseName()
-    elseif buildingType == "residential" then
-        return getIteratedResidentialHouseName()
-    elseif buildingType == "highrise" then
-        return getIteratedHighriseHouseName()
-    else
-        assert(false, "Expected building type, but received: " .. tostring(buildingType))
-    end
+local function getRandomBuildingName(city, buildingType)
+    assert(city ~= nil, "City instance is nil")
+    assert(totalBuildingSprites[buildingType] ~= nil, "Unknown building type: " .. tostring(buildingType))
+    local n = totalBuildingSprites[buildingType] or 1
+    return "tycoon-" .. buildingType .."-".. city.generator(n)
 end
 
 --- @param city City
 --- @param recentCoordinates Coordinates | nil
-local function addBuildingLocations(city, recentCoordinates)
+--- @param allowCenter boolean | nil
+local function addBuildingLocations(city, recentCoordinates, allowCenter)
     if city.buildingLocationQueue == nil then
         city.buildingLocationQueue = Queue.new()
     end
@@ -693,8 +719,10 @@ local function addBuildingLocations(city, recentCoordinates)
     end
 
     if recentCoordinates ~= nil then
-        local surrounds = getSurroundingCoordinates(recentCoordinates.y, recentCoordinates.x, 1, false)
+        local surrounds = getSurroundingCoordinates(recentCoordinates, 1, false, allowCenter)
         for _, value in ipairs(surrounds) do
+            -- TODO: this will probably skip corners when called from on_entity_destroyed event
+            -- are edges supposed to be roads or what?
             if value.x <= 1 or value.y <= 1 or value.x >= #city.grid or value.y >= #city.grid then
                 -- Skip locations that are at the edge of the grid or beyond
             else
@@ -704,7 +732,7 @@ local function addBuildingLocations(city, recentCoordinates)
                 if isUnused then
 
                     -- Then check if there are any open roadEnds surrounding this unused field
-                    local surroundsOfUnused = getSurroundingCoordinates(value.y, value.x, 1, false)
+                    local surroundsOfUnused = getSurroundingCoordinates(value, 1, false)
                     local hasSurroundingRoadEnd = false
                     for _, s in ipairs(surroundsOfUnused) do
                         if Util.indexOf(recentCoordinates, s) ~= nil then
@@ -754,14 +782,14 @@ local function isCellFree(city, cellCoordinates)
         {x = startCoordinates.x, y = startCoordinates.y},
         {x = startCoordinates.x + Constants.CELL_SIZE, y = startCoordinates.y + Constants.CELL_SIZE}
     }
-    return isAreaFree(area)
+    return isAreaFree(area, city.surface_index)
 end
 
 --- @param city City
 --- @param coordinates Coordinates
 --- @return boolean
 local function isConnectedToRoad(city, coordinates)
-    local surrounds = getSurroundingCoordinates(coordinates.y, coordinates.x, 1, false)
+    local surrounds = getSurroundingCoordinates(coordinates, 1, false)
     for _, s in ipairs(surrounds) do
         local c = GridUtil.safeGridAccess(city, s)
         if c ~= nil and c.type == "road" then
@@ -769,6 +797,28 @@ local function isConnectedToRoad(city, coordinates)
         end
     end
     return false
+end
+
+local function list_special_city_buildings(city, name)
+    local entities = {}
+    if city.special_buildings.other[name] ~= nil and #city.special_buildings.other[name] > 0 then
+        entities = city.special_buildings.other[name]
+    else
+        entities = game.surfaces[city.surface_index].find_entities_filtered{
+            name=name,
+            position=city.center,
+            radius=Constants.CITY_RADIUS,
+        }
+        city.special_buildings.other[name] = entities
+    end
+
+    local result = {}
+    for _, entity in ipairs(entities) do
+        if entity ~= nil and entity.valid then
+            table.insert(result, entity)
+        end
+    end
+    return result
 end
 
 --- @param city City
@@ -822,7 +872,7 @@ local function startConstruction(city, buildingConstruction, queueIndex, allowed
             -- If this location already has a road or building, then don't attempt to build
             -- here again.
             -- noop
-        elseif not isAreaFree(area) then
+        elseif not isAreaFree(area, city.surface_index) then
             -- noop, if there are collidables than retry later
             -- this should insert the coordinates at the end of the list, so that
             -- the next iteration will pick a different element from the beginning of the list
@@ -833,14 +883,18 @@ local function startConstruction(city, buildingConstruction, queueIndex, allowed
         elseif buildingConstruction.buildingType == "garden" and isConnectedToRoad(city, coordinates) then
             -- Don't build gardens if there's a road right next to it
         else
-            -- We can start a construction site here
-            -- Resource consumption is done outside of this function
+            local construction_materials = Constants.CONSTRUCTION_MATERIALS[buildingConstruction.buildingType] or {}
+            for _, item in pairs(construction_materials) do
+                local hardwareStores = list_special_city_buildings(city, "tycoon-hardware-store")
+                Consumption.consumeItem(item, hardwareStores, city)
+            end
 
-            removeColldingEntities(area)
+            -- We can start a construction site here
+            removeColldingEntities(area, city.surface_index)
 
             -- Place an excavation site entity that will be later replaced with the actual building
-            local excavationPit = game.surfaces[1].create_entity{
-                name = getIteratedExcavationPitName(),
+            local excavationPit = game.surfaces[city.surface_index].create_entity{
+                name = getRandomBuildingName(city, "excavation-pit"),
                 position = {x = startCoordinates.x - 0.5 + Constants.CELL_SIZE / 2, y = startCoordinates.y - 0.5  + Constants.CELL_SIZE / 2},
                 force = "player",
                 move_stuck_players = true
@@ -870,10 +924,10 @@ end
 --- @param coordinates Coordinates
 local function isCharted(city, coordinates)
     local chunkPosition = {
-        y = math.floor((GridUtil.getOffsetY(city) + coordinates.y * Constants.CELL_SIZE) / 32),
-        x = math.floor((GridUtil.getOffsetX(city) + coordinates.x * Constants.CELL_SIZE) / 32),
+        y = math.floor((GridUtil.getOffsetY(city) + coordinates.y * Constants.CELL_SIZE) / Constants.CHUNK_SIZE),
+        x = math.floor((GridUtil.getOffsetX(city) + coordinates.x * Constants.CELL_SIZE) / Constants.CHUNK_SIZE),
     }
-    return game.forces.player.is_chunk_charted(game.surfaces[1], chunkPosition)
+    return game.forces.player.is_chunk_charted(game.surfaces[city.surface_index], chunkPosition)
 end
 
 --- @param coordinates Coordinates
@@ -883,18 +937,18 @@ local function incraseCoordinates(coordinates, city)
     coordinates.y = coordinates.y + 1
 end
 
-local function clearAreaAndPrintTiles(city, coordinates, map)
+local function clearAreaAndPrintTiles(city, coordinates, map, tileType)
     local currentCellStartCoordinates = GridUtil.translateCityGridToTileCoordinates(city, {
         x = coordinates.x,
         y = coordinates.y,
     })
-    printTiles(currentCellStartCoordinates, map, "concrete")
+    Util.printTiles(currentCellStartCoordinates, map, tileType, city.surface_index)
 
     local currentArea = {
         {currentCellStartCoordinates.x, currentCellStartCoordinates.y},
         {currentCellStartCoordinates.x + Constants.CELL_SIZE, currentCellStartCoordinates.y + Constants.CELL_SIZE}
     }
-    removeColldingEntities(currentArea, streetIgnorables)
+    removeColldingEntities(currentArea, city.surface_index, streetIgnorables)
 
 end
 
@@ -974,7 +1028,8 @@ local function growAtRandomRoadEnd(city)
         -- For each direction, fill the current cell with the direction and the neighbour with the inverse direction
         for _, direction in ipairs(pickedExpansionDirections) do
 
-            clearAreaAndPrintTiles(city, roadEnd.coordinates, getMap(direction))
+            -- Landfill is what we start with. It's later upgraded to higher tier roads as the citizens improve.
+            clearAreaAndPrintTiles(city, roadEnd.coordinates, getMap(direction, true), Constants.GROUND_TILE_TYPES.road)
 
             local currentCell = GridUtil.safeGridAccess(city, roadEnd.coordinates, "processPickedExpansionDirectionCurrent")
             if currentCell == nil then
@@ -1000,7 +1055,7 @@ local function growAtRandomRoadEnd(city)
             end
 
             local neighbourSocket = invertDirection(direction)
-            clearAreaAndPrintTiles(city, neighbourPosition, getMap(neighbourSocket))
+            clearAreaAndPrintTiles(city, neighbourPosition, getMap(neighbourSocket, true), Constants.GROUND_TILE_TYPES.road)
 
             local neighbourCell = GridUtil.safeGridAccess(city, neighbourPosition, "processPickedExpansionDirectionNeighbour")
             if neighbourCell == nil then
@@ -1047,6 +1102,18 @@ local function setHouseLight(houseUnitNumber, lightEntity)
     global.tycoon_house_lights[houseUnitNumber] = lightEntity
 end
 
+local function removeHouseLight(houseUnitNumber)
+    if global.tycoon_house_lights == nil then
+        global.tycoon_house_lights = {}
+    end
+
+    local entity = global.tycoon_house_lights[houseUnitNumber]
+    if entity ~= nil and entity.valid then
+        entity.destroy()
+    end
+    global.tycoon_house_lights[houseUnitNumber] = nil
+end
+
 --- @param excavationPits ExcavationPit[]
 --- @param buildingTypes BuildingType[] | nil
 --- @return ExcavationPit | nil excavationPit
@@ -1071,16 +1138,17 @@ end
 --- @param houseUnitNumber number
 --- @param mapPosition Coordinates
 --- @param buildingType BuildingType
-local function createLight(houseUnitNumber, mapPosition, buildingType)
+--- @param surface_index number
+local function createLight(houseUnitNumber, mapPosition, buildingType, surface_index)
     local light
     if buildingType == "residential" then
-        light = game.surfaces[1].create_entity{
+        light = game.surfaces[surface_index].create_entity{
             name = "hiddenlight-40",
             position = mapPosition,
             force = "neutral",
         }
     elseif buildingType == "highrise" then
-        light = game.surfaces[1].create_entity{
+        light = game.surfaces[surface_index].create_entity{
             name = "hiddenlight-60",
             position = mapPosition,
             force = "neutral",
@@ -1089,6 +1157,29 @@ local function createLight(houseUnitNumber, mapPosition, buildingType)
     if light ~= nil then
         setHouseLight(houseUnitNumber, light)
     end
+end
+
+local function growCitizenCount(city, count, tier)
+    if city.citizens[tier] == nil then
+        city.citizens[tier] = 0
+    end
+    city.citizens[tier] = city.citizens[tier] + count
+    if city.citizens[tier] < 0 then
+        -- This is just a coding safeguard in case there's buggy code that tries to lower it below 0.
+        city.citizens[tier] = 0
+    end
+    Consumption.updateNeeds(city)
+end
+
+--- @param buildingTypes BuildingType[] | nil
+--- @return string tileType
+local function get_ground_tile_type(buildingType) 
+    -- "simple"
+    -- "residential"
+    -- "highrise"
+    -- "tycoon-treasury"
+    -- "garden"
+    return Constants.GROUND_TILE_TYPES[buildingType] or Constants.GROUND_TILE_TYPES.simple
 end
 
 --- @param city City
@@ -1107,37 +1198,41 @@ local function completeConstruction(city, buildingTypes)
     local coordinates = excavationPit.coordinates
     local cell = GridUtil.safeGridAccess(city, coordinates, "completeConstruction")
     if cell ~= nil and cell.entity ~= nil then
-        cell.entity.destroy()
+        if cell.entity.valid then
+            --log("completeConstruction(): calling .destroy():"
+            --    .." entity: ".. cell.entity.unit_number .." name: ".. cell.entity.name)
+            cell.entity.destroy()
+        end
+        cell.entity = nil
     end
 
     local startCoordinates = GridUtil.translateCityGridToTileCoordinates(city, coordinates)
-    printTiles(startCoordinates, {
+    local housingTier = excavationPit.buildingConstruction.buildingType
+    Util.printTiles(startCoordinates, {
         "111111",
         "111111",
         "111111",
         "111111",
         "111111",
         "111111",
-    }, "concrete")
-    local entityName = excavationPit.buildingConstruction.buildingType
+    }, get_ground_tile_type(housingTier), city.surface_index)
     local entity
-    if entityName == "simple" or entityName == "residential" or entityName == "highrise" then
+    if housingTier == "simple" or housingTier == "residential" or housingTier == "highrise" then
         local xModifier, yModifier = 0, 0
-        if entityName == "simple" then
+        if housingTier == "simple" then
             -- no shift
-        elseif entityName == "residential" then
+        elseif housingTier == "residential" then
             yModifier = -0.5
         end
         local position = {x = startCoordinates.x + Constants.CELL_SIZE / 2 + xModifier, y = startCoordinates.y + Constants.CELL_SIZE / 2 + yModifier}
-        entity = game.surfaces[1].create_entity{
-            name = getIteratedHouseName(entityName),
+        entity = game.surfaces[city.surface_index].create_entity{
+            -- WARN: prefixing with "house-" because of allowed shorter format
+            name = getRandomBuildingName(city, "house-".. housingTier),
             position = position,
             force = "player",
             move_stuck_players = true
         }
-        createLight(entity.unit_number, position, entityName)
-        -- todo: test if the script destroying this entity also fires this hook
-        script.register_on_entity_destroyed(entity)
+        createLight(entity.unit_number, position, housingTier, city.surface_index)
 
         if city.buildingCounts == nil then
             city.buildingCounts = {
@@ -1146,18 +1241,18 @@ local function completeConstruction(city, buildingTypes)
                 highrise = 0,
             }
         end
-        city.buildingCounts[entityName] = city.buildingCounts[entityName] + 1
+        city.buildingCounts[housingTier] = city.buildingCounts[housingTier] + 1
 
         if city.houseLocations == nil then
             city.houseLocations = {}
         end
         table.insert(city.houseLocations, coordinates)
 
-        local neighboursOfCompletedHouse = getSurroundingCoordinates(coordinates.y, coordinates.x, 1, false)
-        for _, n in ipairs(neighboursOfCompletedHouse) do
+        local sideNeighboursOfCompletedHouse = getSurroundingCoordinates(coordinates, 1, false)
+        for _, n in ipairs(sideNeighboursOfCompletedHouse) do
             local neighbourCell = GridUtil.safeGridAccess(city, n)
             if neighbourCell ~= nil and neighbourCell.type == "unused" then
-                local surroundsOfUnused = getSurroundingCoordinates(n.y, n.x, 1, false)
+                local surroundsOfUnused = getSurroundingCoordinates(n, 1, false)
                 -- Test if this cell is surrounded by houses, if yes then place a garden
                 -- Because we use getSurroundingCoordinates with allowDiagonal=false above, we only need to count 4 houses or roads
                 local surroundCount = 0
@@ -1173,21 +1268,33 @@ local function completeConstruction(city, buildingTypes)
                 end
             end
         end
-    elseif entityName == "garden" then
-        entity = game.surfaces[1].create_entity{
-            name = getIteratedGardenName(),
+
+        if housingTier == "residential" or housingTier == "highrise" then
+            local range = housingTier == "residential" and 2 or 3
+            local allNeighboursOfCompletedHouse = getCircularSurroundingCoordinates(coordinates, range, city)
+            for _, neioghbourCoords in pairs(allNeighboursOfCompletedHouse) do
+                if neioghbourCoords ~= nil then
+                    FloorUpgradesQueue.push(city, neioghbourCoords, Constants.GROUND_TILE_TYPES[housingTier])
+                end
+            end
+        end
+
+        growCitizenCount(city, Constants.CITIZEN_COUNTS[housingTier], housingTier)
+    elseif housingTier == "garden" then
+        entity = game.surfaces[city.surface_index].create_entity{
+            name = getRandomBuildingName(city, housingTier),
             position = {x = startCoordinates.x + Constants.CELL_SIZE / 2, y = startCoordinates.y  + Constants.CELL_SIZE / 2},
             force = "player",
             move_stuck_players = true
         }
     else
         local yModifier, xModifier = 0, 0
-        if entityName == "tycoon-treasury" then
+        if housingTier == "tycoon-treasury" then
             xModifier = -0.5
             yModifier = 0
         end
-        entity = game.surfaces[1].create_entity{
-            name = entityName,
+        entity = game.surfaces[city.surface_index].create_entity{
+            name = housingTier,
             position = {x = startCoordinates.x + Constants.CELL_SIZE / 2 + xModifier, y = startCoordinates.y  + Constants.CELL_SIZE / 2 + yModifier},
             force = "player",
             move_stuck_players = true
@@ -1196,38 +1303,34 @@ local function completeConstruction(city, buildingTypes)
 
     city.grid[coordinates.y][coordinates.x] = {
         type = "building",
-        buildingType = entityName,
+        buildingType = housingTier,
         createdAtTick = game.tick,
         entity = entity,
     }
-    global.tycoon_city_buildings[entity.unit_number] = {
-        cityId = city.id,
-        entity_name = entity.name,
-        entity = entity,
-    }
+    Util.addGlobalBuilding(entity.unit_number, city.id, entity)
+    -- WARN: we must always register
+    script.register_on_entity_destroyed(entity)
 
-    if entityName == "tycoon-treasury" and not global.tycoon_intro_message_treasury_displayed then
+    if housingTier == "tycoon-treasury" and not global.tycoon_intro_message_treasury_displayed then
         game.print({"", "[color=orange]Factorio Tycoon:[/color] ", {"tycooon-info-message-treasury"}})
         global.tycoon_intro_message_treasury_displayed = true
     end
 
-    return entityName
+    return housingTier
 end
 
-local upgradePaths = {
+local upgrade_paths = {
     simple = {
         waitTime = 300,
         previousStage = "simple",
         nextStage = "residential",
-        upgradeDurationInSeconds = {30, 60},
-        requiresUsedAreaSize = 2
+        upgradeDurationInSeconds = {30, 60}
     },
     residential = {
         waitTime = 600,
         previousStage = "residential",
         nextStage = "highrise",
-        upgradeDurationInSeconds = {120, 240},
-        requiresUsedAreaSize = 3
+        upgradeDurationInSeconds = {120, 240}
     }
 }
 
@@ -1248,22 +1351,43 @@ local function hasEmptySurroundingSpace(city, coordinates, size)
     return false
 end
 
+local function hasPlayerEntities(city, coordinates)
+    local startCoordinates = GridUtil.translateCityGridToTileCoordinates(city, coordinates)
+    local area = {
+        {x = startCoordinates.x, y = startCoordinates.y},
+        {x = startCoordinates.x + Constants.CELL_SIZE, y = startCoordinates.y + Constants.CELL_SIZE}
+    }
+    local playerEntities = game.surfaces[city.surface_index].find_entities_filtered({
+        area=area,
+        force=game.forces.player,
+        limit=1
+    })
+    local countNonHouses = 0
+    for _, v in ipairs(playerEntities) do
+        if not string.find(v.name, "tycoon-house-", 1, true) then
+            countNonHouses = countNonHouses + 1
+        end
+    end
+    return countNonHouses > 0
+end
+
 --- @param city City
 --- @param limit number
 --- @param upgradeTo BuildingType
 local function findUpgradableCells(city, limit, upgradeTo)
     local upgradeCells = {}
-    for _, coordinates in ipairs(city.houseLocations) do
+    for _, coordinates in ipairs(city.houseLocations or {}) do
         local cell = GridUtil.safeGridAccess(city, coordinates, "findUpgradableCells")
         if cell ~= nil and cell.type == "building" and cell.buildingType ~= nil then
-            local upgradePath = upgradePaths[cell.buildingType]
+            local upgradePath = upgrade_paths[cell.buildingType]
             if upgradePath ~= nil and upgradePath.nextStage == upgradeTo then
                 if (cell.createdAtTick + upgradePath.waitTime) < game.tick then
 
                     -- Check that all surrounding cells are in use. It would be odd to build a skyscraper in open space.
-                    local emptySurroundingSpace = hasEmptySurroundingSpace(city, coordinates, upgradePath.requiresUsedAreaSize)
+                    local emptySurroundingSpace = hasEmptySurroundingSpace(city, coordinates, 1)
 
-                    if not emptySurroundingSpace then
+                    -- If the player has built entities in this cell in the meantime, we can either not upgrade or destroy their entities. Staying safe and not upgrading is probably better.
+                    if not emptySurroundingSpace and not hasPlayerEntities(city, coordinates) then
                         table.insert(upgradeCells, {
                             cell = cell,
                             upgradePath = upgradePath,
@@ -1281,49 +1405,134 @@ local function findUpgradableCells(city, limit, upgradeTo)
     return upgradeCells
 end
 
-local function clearCell(city, upgradeCell)
-    -- The game crashes when a house was destroyed and therefore the entity became invalid. See https://mods.factorio.com/mod/tycoon/discussion/656a05ca3f91639be4702152
-    -- We should probably listen to destruction events and clear up the city grid (so that it doesn't try upgrading that building) and also clear the lights
-    if not upgradeCell.cell.entity.valid then
+--- NOTE: this function DOES NOT clear city grid cell, must be done manually if needed
+--- @param city City | nil
+--- @param unit_number number
+local function removeBuilding(city, unit_number)
+    log("removeBuilding(): unit_number: ".. serpent.line(unit_number))
+
+    -- remove anything related in reverse order
+    removeHouseLight(unit_number)
+
+    -- this also checks (unit_number == nil)
+    local building = Util.getGlobalBuilding(unit_number)
+    if building == nil then
         return
     end
-    
-    if global.tycoon_house_lights ~= nil and global.tycoon_house_lights[upgradeCell.cell.entity.unit_number] then
-        global.tycoon_house_lights[upgradeCell.cell.entity.unit_number].destroy()
+    --log("removeBuilding(): building: ".. serpent.line(building))
+
+    --- NOTE: switch city reference block, common to all the checks below
+    city = city or Util.findCityById(building.cityId)
+    if city == nil then
+        log("removeBuilding(): ERROR: unable to get city reference!")
     end
-    upgradeCell.cell.entity.destroy()
-    -- We need to clear the cell as well, so that the construction has available space
-    city.grid[upgradeCell.coordinates.y][upgradeCell.coordinates.x] = {
-        type = "unused"
-    }
-    city.buildingCounts[upgradeCell.upgradePath.previousStage] = city.buildingCounts[upgradeCell.upgradePath.previousStage] - 1
-    if city.houseLocations ~= nil then
-        table.remove(city.houseLocations, Util.indexOf(city.houseLocations, upgradeCell.coordinates))
+    -- WARN: this weird case should never happen, but we must always check
+    if city ~= nil and city.id ~= building.cityId then
+        local msg = string.format("removeBuilding(): ERROR: city.id: %s doesn't match building.cityId: %s, unit_number: %d",
+            tostring(city.id), tostring(building.cityId), unit_number)
+        log(msg)
+        -- shout to players as well!
+        game.print(msg)
+
+        -- switch city reference in this case
+        city = Util.findCityById(building.cityId)
+        --assert(city ~= nil, "omg, i'm out...")
+    end
+    --- end block
+
+    -- buildings may have lots of deps...
+    if Util.isHouse(building.entity_name) then
+        local housingTier
+        if string.find(building.entity_name, "tycoon-house-simple-", 1, true) then
+            housingTier = "simple"
+        elseif string.find(building.entity_name, "tycoon-house-residential-", 1, true) then
+            housingTier = "residential"
+        elseif string.find(building.entity_name, "tycoon-house-highrise-", 1, true) then
+            housingTier = "highrise"
+        end
+
+        assert(housingTier, "removeBuilding(): Uknown housingTier: ".. housingTier)
+
+        -- must still check city...
+        if city ~= nil then
+            growCitizenCount(city, -1 * Constants.CITIZEN_COUNTS[housingTier], housingTier)
+
+            -- remove from other lists as well
+            city.buildingCounts[housingTier] = (city.buildingCounts[housingTier] or 1) - 1
+            if city.houseLocations ~= nil then
+                local posGrid = GridUtil.translateToGrid(city, building.position)
+                table.remove(city.houseLocations, Util.indexOf(city.houseLocations, posGrid))
+            end
+        end
+    else
+        log("removeBuilding(): not house: ".. building.entity_name)
+    end
+
+    -- remove from global and finally destroy
+    Util.removeGlobalBuilding(unit_number)
+    if building.entity ~= nil and building.entity.valid then
+        building.entity.destroy()
     end
 end
 
-local function hasPlayerEntities(city, cell)
-    local startCoordinates = GridUtil.translateCityGridToTileCoordinates(city, cell.coordinates)
-    local area = {
-        {x = startCoordinates.x, y = startCoordinates.y},
-        {x = startCoordinates.x + Constants.CELL_SIZE, y = startCoordinates.y + Constants.CELL_SIZE}
-    }
-    local playerEntities = game.surfaces[1].find_entities_filtered({
-        area=area,
-        force=game.forces.player,
-        limit=1
-    })
-    local countNonHouses = 0
-    for _, v in ipairs(playerEntities) do
-        if not string.find(v.name, "tycoon-house-", 1, true) then
-            countNonHouses = countNonHouses + 1
-        end
+--- NOTE: this function DOES NOT re-add this cell to building queue, used for upgrades mostly
+local function clearCell(city, upgradeCell)
+    --log("clearCell(): upgradeCell: ".. serpent.line(upgradeCell))
+    if upgradeCell == nil or upgradeCell.cell == nil then
+        log("clearCell(): upgradeCell: ".. serpent.line(upgradeCell))
+        return
     end
-    return countNonHouses > 0
+
+    local unit_number = nil
+    local entity = upgradeCell.cell.entity
+    if entity ~= nil and entity.valid then
+        unit_number = entity.unit_number
+    elseif upgradeCell.unit_number ~= nil then
+        -- WARN: unit_number is added only by freeCellAtPosition()
+        unit_number = upgradeCell.unit_number
+    end
+    if unit_number ~= nil then
+        removeBuilding(city, unit_number)
+    else
+        log("clearCell(): ERROR: unable to call removeBuilding(), no unit_number!")
+    end
+
+    -- We need to clear the cell as well, so that the construction has available space
+    GridUtil.safeGridSet(city, upgradeCell.coordinates, { type = "unused" })
+end
+
+--- NOTE: this function DOES re-add cell to building queue! called from event handlers mostly
+--- @param city City
+--- @param position MapPosition
+--- @param unit_number number | nil
+local function freeCellAtPosition(city, position, unit_number)
+    log("freeCellAtPosition(): position: ".. serpent.line(position))
+    local cellCoordinates = GridUtil.translateToGrid(city, position)
+    local cell = GridUtil.safeGridAccess(city, cellCoordinates)
+    if cell == nil then
+        return
+    end
+
+    -- check for incorrect cell
+    --assert(cell.type == "building")
+    if cell.type ~= "building" then
+        log(string.format("!!! cell.type: %s pos: %s city: %s", cell.type, serpent.line(cellCoordinates), city.name))
+    end
+
+    if cell.type == "building" then
+        -- WARN: this can't call removeBuilding() on_entity_destoyed event, so we provide unit_number in ugly way
+        clearCell(city, {cell = cell, coordinates = cellCoordinates, unit_number = unit_number})
+    end
+
+    -- include actual position itself (allowCenter = true)
+    addBuildingLocations(city, cellCoordinates, true)
+    -- TODO: test and add already-occupied-cell check in startConstruction()
+    -- TODO: city itself should choose locations closest to center, so just add to the end
+    --Queue.pushright(city.buildingLocationQueue, cellCoordinates)
 end
 
 --- @param city City
---- @return boolean upgradeStarted
+--- @param newStage string
 local function upgradeHouse(city, newStage)
     -- todo: test if the game destroying an entity also triggers the destroy hook (and change the citizen counter reduction accordingly)
     local upgradeCells = findUpgradableCells(city, 10, newStage)
@@ -1333,30 +1542,150 @@ local function upgradeHouse(city, newStage)
     end
 
     local upgradeCell = upgradeCells[city.generator(#upgradeCells)]
-    -- If the player has built entities in this cell in the meantime, we can either not upgrade or destroy their entities. Staying safe and not upgrading is probably better.
-    if hasPlayerEntities(city, upgradeCell) then
-        return false
-    end
 
     clearCell(city, upgradeCell)
 
     local upgradePath = upgradeCell.upgradePath
 
+    local constructionTimeInTicks = city.generator(upgradePath.upgradeDurationInSeconds[1] * 60, upgradePath.upgradeDurationInSeconds[2] * 60)
+
     startConstruction(city, {
         buildingType = upgradePath.nextStage,
-        constructionTimeInTicks = city.generator(upgradePath.upgradeDurationInSeconds[1] * 60, upgradePath.upgradeDurationInSeconds[2] * 60),
+        constructionTimeInTicks = constructionTimeInTicks,
     }, "buildingLocationQueue", {upgradeCell.coordinates})
+end
 
+local function construct_priority_buildings()
+    for _, city in ipairs(global.tycoon_cities or {}) do
+        local prio_building = table.remove(city.priority_buildings, 1)
+        if prio_building ~= nil then
+            local is_built = startConstruction(city, {
+                buildingType = prio_building.name,
+                -- Special buildings should be completed very quickly.
+                -- Here we just wait 2 seconds by default.
+                constructionTimeInTicks = 120,
+            }, "buildingLocationQueue")
+            if not is_built then
+                table.insert(city.priority_buildings, 1, prio_building)
+            end
+        end
+    end
+end
+
+local function construct_gardens()
+    for _, city in ipairs(global.tycoon_cities or {}) do
+        if city.gardenLocationQueue ~= nil and city.generator() < 0.25 and Queue.count(city.gardenLocationQueue, true) > 0 then
+            startConstruction(city, {
+                buildingType = "garden",
+                constructionTimeInTicks = city.generator(300, 600)
+            }, "gardenLocationQueue")
+        end
+    end
+end
+
+local lower_tiers = {
+    highrise = "residential",
+    residential = "simple"
+}
+
+local house_ratios = {
+    residential = Constants.RESIDENTIAL_HOUSE_RATIO,
+    highrise = Constants.HIGHRISE_HOUSE_RATIO,
+}
+
+local function is_allowed_upgrade_to_tier(city, next_tier)
+    if not game.forces.player.technologies["tycoon-" .. next_tier .. "-housing"].researched then
+        return false
+    end
+
+    local current_tier_count = ((city.buildingCounts or {})[lower_tiers[next_tier]] or 0)
+    local next_tier_count = ((city.buildingCounts or {})[next_tier] or 0)
+    if Util.countPendingLowerTierHouses(current_tier_count, next_tier_count, house_ratios[next_tier]) > 0 then
+        return false
+    end
+    
     return true
+end
+
+
+local function getBuildables(hardwareStores)
+    local supply = Util.aggregateSupplyBuildingResources(hardwareStores)
+    
+    local buildables = {}
+    for key, resources in pairs(Constants.CONSTRUCTION_MATERIALS) do
+        local anyResourceMissing = false
+        for _, resource in ipairs(resources) do
+            if (supply[resource.name] or 0) < resource.required then
+                anyResourceMissing = true
+                break
+            end
+        end
+
+        if not anyResourceMissing then
+            buildables[key] = resources
+        end
+    end
+
+    return buildables
+end
+
+local function has_time_elapsed_for_construction(city, tier)
+    local timer = (city.construction_timers or {})[tier] or {
+        last_construction = 0,
+        construction_interval = math.huge
+    }
+    return timer.last_construction + timer.construction_interval < game.tick
+end
+
+local function start_house_construction()
+    for _, city in ipairs(global.tycoon_cities or {}) do
+        -- Check if resources are available. Without resources no growth is possible.
+        local hardware_stores = list_special_city_buildings(city, "tycoon-hardware-store")
+        if #hardware_stores > 0 then
+
+            local buildables = getBuildables(hardware_stores)
+            -- If there are no hardware stores, then no construction resources are available.
+            -- use CITIZEN_COUNTS as housing tiers list
+            for tier, _ in pairs(Constants.CITIZEN_COUNTS) do
+                if has_time_elapsed_for_construction(city, tier)
+                    and buildables[tier] ~= nil then
+                        
+                    assert((city.construction_timers or {})[tier], "Expected construction timer to be defined by them time the timer check resolves to true.")
+                    city.construction_timers[tier].last_construction = game.tick
+
+                    if tier == "simple" then
+                        startConstruction(city, {
+                            buildingType = "simple",
+                            constructionTimeInTicks = city.generator(600, 1200)
+                        }, "buildingLocationQueue")
+                    elseif is_allowed_upgrade_to_tier(city, tier) then
+                        upgradeHouse(city, tier)
+                    end
+                end
+            end
+        end
+    end
+end
+
+local function complete_house_construction()
+    for _, city in ipairs(global.tycoon_cities or {}) do
+        completeConstruction(city, {"simple", "residential", "highrise", "tycoon-treasury", "garden"})
+    end
 end
 
 local CITY = {
     growAtRandomRoadEnd = growAtRandomRoadEnd,
+    growCitizenCount = growCitizenCount,
     updatepossibleBuildingLocations = addBuildingLocations,
     completeConstruction = completeConstruction,
-    upgradeHouse = upgradeHouse,
     startConstruction = startConstruction,
-    isCellFree = isCellFree
+    isCellFree = isCellFree,
+    removeBuilding = removeBuilding,
+    freeCellAtPosition = freeCellAtPosition,
+    construct_priority_buildings = construct_priority_buildings,
+    construct_gardens = construct_gardens,
+    start_house_construction = start_house_construction,
+    complete_house_construction = complete_house_construction,
 }
 
 return CITY

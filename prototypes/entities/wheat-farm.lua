@@ -4,6 +4,7 @@ data:extend{
         name = "tycoon-wheat-farm",
         icon = "__tycoon__/graphics/icons/wheat-farm.png",
         icon_size = 256,
+        map_color = {r=1, g=1, b=0.8},
         max_health = 200,
         rotatable = false,
         flags = { "not-rotatable" },

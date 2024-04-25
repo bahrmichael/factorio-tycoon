@@ -4,6 +4,7 @@ data:extend{
         name = "tycoon-apple-farm",
         icon = "__tycoon__/graphics/icons/apple-farm.png",
         icon_size = 256,
+        map_color = {r=1, g=0.8, b=0.8},
         max_health = 200,
         rotatable = false,
         flags = { "not-rotatable" },
@@ -18,14 +19,14 @@ data:extend{
                 height = 2,
                 base_level = -1,
                 pipe_connections = {
-                    { type = "input", position = { 7.3, 0.4 } },
+                    { type = "input", position = { 7.3, 0.0 } },
                 },
             },
             off_when_no_fluid_recipe = false,
         },
-        collision_box = { { -6.9, -5.4}, {6.9, 6.9} },
+        collision_box = { { -6.9, -5.4}, {6.9, 7.4} },
         collision_mask = { "player-layer", "water-tile", "resource-layer", "item-layer", "ghost-layer", "object-layer", "train-layer", "rail-layer", "transport-belt-layer" },
-        selection_box = { { -6.9, -5.4}, {6.9, 6.9} },
+        selection_box = { { -6.9, -5.4}, {6.9, 7.4} },
         window_bounding_box = { { -0.125, 0.6875 }, { 0.1875, 1.1875 } },
         animation = {
             layers = {
@@ -34,7 +35,7 @@ data:extend{
                     priority = "high",
                     width = 500,
                     height = 500,
-                    shift = {0, 0},
+                    shift = {0, 0.5},
                     scale = 1
                 }
             },
