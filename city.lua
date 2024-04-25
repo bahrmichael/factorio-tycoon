@@ -1432,7 +1432,7 @@ local function removeBuilding(city, unit_number)
             tostring(city.id), tostring(building.cityId), unit_number)
         log(msg)
         -- shout to players as well!
-        game.print(msg)
+        game.print("[color=orange]Factorio Tycoon:[/color] ".. msg)
 
         -- switch city reference in this case
         city = Util.findCityById(building.cityId)
@@ -1451,7 +1451,7 @@ local function removeBuilding(city, unit_number)
             housingTier = "highrise"
         end
 
-        assert(housingTier, "removeBuilding(): Uknown housingTier: ".. housingTier)
+        assert(housingTier, "removeBuilding(): Unknown housingTier: ".. housingTier)
 
         -- must still check city...
         if city ~= nil then

@@ -285,7 +285,7 @@ end
 --- @param unit_number number
 --- @param cityId number
 --- @param entity LuaEntity | nil
---- @return Building
+--- @return Building | nil
 local function addGlobalBuilding(unit_number, cityId, entity)
     if global.tycoon_city_buildings == nil then
         global.tycoon_city_buildings = {}
@@ -325,7 +325,7 @@ local function removeGlobalBuilding(unit_number)
 end
 
 --- @param unit_number number
---- @return Building
+--- @return Building | nil
 local function getGlobalBuilding(unit_number)
     if global.tycoon_city_buildings == nil or unit_number == nil then
         return
