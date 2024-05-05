@@ -232,6 +232,7 @@ end
 --- @param city City
 local function updateProvidedAmounts(city)
     local markets = Util.list_special_city_buildings(city, "tycoon-market")
+    local supply = Util.aggregateSupplyBuildingResources(markets)
 
     -- BASIC NEEDS
     for resource, _ in pairs(city.stats.basic_needs) do

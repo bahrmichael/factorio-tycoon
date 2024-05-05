@@ -429,8 +429,6 @@ end
 
 return {
     addMoreCities = addMoreCities,
-    getRequiredFundsForNextCity = getRequiredFundsForNextCity,
-    getTotalAvailableFunds = getTotalAvailableFunds,
     addCity = addCity,
     tag_cities = tag_cities,
     build_initial_city = build_initial_city,

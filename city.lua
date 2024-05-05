@@ -1622,7 +1622,6 @@ local CITY = {
     construct_gardens = construct_gardens,
     start_house_construction = start_house_construction,
     complete_house_construction = complete_house_construction,
-    list_special_city_buildings = list_special_city_buildings,
 }
 
 return CITY
