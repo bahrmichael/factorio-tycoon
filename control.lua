@@ -56,8 +56,17 @@ end)
 
 local function add_more_cities()
     if #(global.tycoon_cities or {}) > 0 then
-        -- todo: only run this when total population reaches a certain threshold
-        CityPlanning.addMoreCities(false)
+        local global_citizen_count = 0
+        for _, city in pairs(global.tycoon_cities) do
+            for _, n in pairs(city.citizens) do
+                global_citizen_count = global_citizen_count + n
+            end
+        end
+
+        local threshold = #(global.tycoon_cities or {}) * 500
+        if global_citizen_count > threshold then
+            CityPlanning.addMoreCities(false)
+        end
     end
 end
 

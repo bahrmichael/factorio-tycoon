@@ -368,7 +368,6 @@ local function addCity(position, surface_index, predefinedCityName)
     return cityName
 end
 
--- todo: trigger this function only when cities grow enough
 local function addMoreCities(isInitialCity)
     local surface_index = Constants.STARTING_SURFACE_ID
     if global.tycoon_cities == nil then
