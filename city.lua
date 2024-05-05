@@ -897,8 +897,7 @@ local function clearAreaAndPrintTiles(city, coordinates, map, tileType)
         x = coordinates.x,
         y = coordinates.y,
     })
-    Util.printTiles(currentCellStartCoordinates, map, tileType, city.surface_index)
-    -- {Constants.GROUND_TILE_TYPES.residential, Constants.GROUND_TILE_TYPES.highrise}
+    Util.printTiles(currentCellStartCoordinates, map, tileType, city.surface_index, {Constants.GROUND_TILE_TYPES.residential, Constants.GROUND_TILE_TYPES.highrise})
 
     local currentArea = {
         {currentCellStartCoordinates.x, currentCellStartCoordinates.y},
@@ -1010,7 +1009,7 @@ local function growAtRandomRoadEnd(city)
             end
 
             local neighbourSocket = invertDirection(direction)
-            clearAreaAndPrintTiles(city, neighbourPosition, getMap(direction), Constants.GROUND_TILE_TYPES.road)
+            clearAreaAndPrintTiles(city, neighbourPosition, getMap(neighbourSocket), Constants.GROUND_TILE_TYPES.road)
 
             local neighbourCell = GridUtil.safeGridAccess(city, neighbourPosition, "processPickedExpansionDirectionNeighbour")
             if neighbourCell == nil then

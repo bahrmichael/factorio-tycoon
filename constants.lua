@@ -90,8 +90,8 @@ local CONSTANTS = {
     },
 
     GROUND_TILE_TYPES = {
-        road = "stone-path",
-        simple = "stone-path",
+        road = "landfill",
+        simple = "landfill",
         residential = "stone-path",
         highrise = "concrete",
     },
