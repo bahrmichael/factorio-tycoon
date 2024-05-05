@@ -2,7 +2,6 @@ local Consumption = require("consumption")
 local Constants = require("constants")
 local CityPlanner = require("city-planner")
 local Util = require("util")
-local City = require("city")
 
 local function setConstructionMaterialsProvided(city, resource, amount)
     -- dev support, delete me

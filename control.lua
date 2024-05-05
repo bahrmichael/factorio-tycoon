@@ -81,43 +81,6 @@ local function consume_resources()
     end
 end
 
-local function return_urban_planning_center_currency()
-    if global.tycoon_urban_planning_center_currency_pending ~= nil then
-
-        local city = (global.tycoon_cities or {})[1]
-        if city == nil then
-            -- Not planning to localise this as it should rarely happen and is just a temporary migration
-            game.print({"", "[color=orange]Factorio Tycoon:[/color] ", "With the new version we removed the urban planning centers, but were not able to return the currency. We're sorry about that!"})
-            global.tycoon_urban_planning_center_currency_pending = nil
-            return
-        end
-        local treasuries = City.list_special_city_buildings(city, "tycoon-treasury")
-        if #treasuries == 0 then
-            -- Not planning to localise this as it should rarely happen and is just a temporary migration
-            game.print({"", "[color=orange]Factorio Tycoon:[/color] ", "With the new version we removed the urban planning centers, but were not able to return the currency. We're sorry about that!"})
-            global.tycoon_urban_planning_center_currency_pending = nil
-            return
-        else
-            if global.tycoon_urban_planning_center_currency_info == nil then
-                game.print({"", "[color=orange]Factorio Tycoon:[/color] ", "We're returning all currency from urban planning centers to your first treasury. Please make sure you have enough free space in your first treasury."})
-                global.tycoon_urban_planning_center_currency_info = True
-            end
-            local treasury = treasuries[1]
-            local inserted_count = treasury.insert{name = "tycoon-currency", count = global.tycoon_urban_planning_center_currency_pending}
-            global.tycoon_urban_planning_center_currency_pending = global.tycoon_urban_planning_center_currency_pending - inserted_count
-            if global.tycoon_urban_planning_center_currency_pending <= 0 then
-                game.print({"", "[color=orange]Factorio Tycoon:[/color] ", "Completed returning all currency from urban planning centers to your first treasury."})
-                global.tycoon_urban_planning_center_currency_pending = nil
-                global.tycoon_urban_planning_center_currency_info = nil
-                return
-            end
-        end
-
-
-    end
-    -- todo: display message about returning currency
-end
-
 script.on_nth_tick(ONE_MINUTE, function()
     for _, city in pairs(global.tycoon_cities or {}) do
         UsedBottlesStore.return_used_bottles(city)
@@ -125,9 +88,6 @@ script.on_nth_tick(ONE_MINUTE, function()
     consume_resources()
     City.construct_gardens()
     display_intro_messages()
-
-    -- Drop this migration mechanism with version 0.6 or 0.7
-    return_urban_planning_center_currency()
 end)
 
 --- EVENT HANDLERS
