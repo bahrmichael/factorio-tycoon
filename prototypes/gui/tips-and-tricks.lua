@@ -77,11 +77,23 @@ data:extend({
             technology = "tycoon-residential-housing"
         },
     },
+
+    {
+        type = "tips-and-tricks-item",
+        name = "tycoon-recycling",
+        category = "tycoon",
+        order = "a[tycoon]-e-b",
+        indent = 1,
+        trigger = {
+            type = "research",
+            technology = "tycoon-bottling"
+        },
+    },
     {
         type = "tips-and-tricks-item",
         name = "tycoon-highrise-needs",
         category = "tycoon",
-        order = "a[tycoon]-e-b",
+        order = "a[tycoon]-e-c",
         indent = 1,
         trigger = {
             type = "research",

@@ -23,6 +23,10 @@ local function on_research_finished(event)
         increase_productivity("tycoon-grow-wheat-with-water-" .. research.level, "tycoon-wheat-farm")
     elseif name == "tycoon-fishery-productivity" then
         increase_productivity("tycoon-fishing-" .. research.level, "tycoon-fishery")
+    elseif name == "tycoon-bottling" then
+        for _, city in pairs(global.tycoon_cities or {}) do
+            table.insert(city.priority_buildings, {name = "tycoon-bottle-return-station", priority = 5})
+        end
     end
 end
 

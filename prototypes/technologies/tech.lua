@@ -628,6 +628,10 @@ data:extend{
                 type = "unlock-recipe",
                 recipe = "tycoon-gloves",
             },
+            {
+                type = "unlock-recipe",
+                recipe = "tycoon-refurbish-bottle-with-soap",
+            },
         },
         prerequisites = { "oil-processing", "tycoon-residential-housing" },
         order = "g-e-e",

@@ -317,6 +317,9 @@ local function initializeCity(city)
     end
 
     table.insert(city.priority_buildings, { name = "tycoon-treasury", priority = 10 })
+    if (game.forces.player.technologies["tycoon-bottling"] or {}).researched then
+        table.insert(city.priority_buildings, {name = "tycoon-bottle-return-station", priority = 5})
+    end
 
     Consumption.updateNeeds(city)
 end

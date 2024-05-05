@@ -1118,7 +1118,7 @@ end
 --- @param buildingTypes BuildingType[] | nil
 --- @return ExcavationPit | nil excavationPit
 local function findReadyExcavationPit(excavationPits, buildingTypes)
-    local completableBuildingTypes = {"tycoon-treasury", "garden"}
+    local completableBuildingTypes = {"tycoon-treasury", "garden", "tycoon-bottle-return-station"}
     if buildingTypes ~= nil then
         for _, value in ipairs(buildingTypes) do
             table.insert(completableBuildingTypes, value)
@@ -1314,6 +1314,10 @@ local function completeConstruction(city, buildingTypes)
     if housingTier == "tycoon-treasury" and not global.tycoon_intro_message_treasury_displayed then
         game.print({"", "[color=orange]Factorio Tycoon:[/color] ", {"tycooon-info-message-treasury"}})
         global.tycoon_intro_message_treasury_displayed = true
+    end
+    if housingTier == "tycoon-bottle-return-station" and not global.tycoon_intro_message_bottle_return_station_displayed then
+        game.print({"", "[color=orange]Factorio Tycoon:[/color] ", {"tycooon-info-message-bottle-return-station"}})
+        global.tycoon_intro_message_bottle_return_station_displayed = true
     end
 
     return housingTier
