@@ -78,7 +78,7 @@ data:extend{
         name = "tycoon-refurbish-bottle",
         category = "crafting-with-fluid",
         subgroup = "tycoon-intermediate-products",
-        order = "a[tycoon]-g[used-bottle]",
+        order = "a[tycoon]-g[used-bottle]-a",
         energy_required = 15,
         enabled = false,
         icon = "__tycoon__/graphics/icons/used-bottle.png",
@@ -90,6 +90,26 @@ data:extend{
         results = {
             {name = "tycoon-bottle", amount = 20},
             {name = "tycoon-bottle", amount = 5, probability = 0.2}
+        },
+    },
+    {
+        type = "recipe",
+        name = "tycoon-refurbish-bottle-with-soap",
+        category = "crafting-with-fluid",
+        subgroup = "tycoon-intermediate-products",
+        order = "a[tycoon]-g[used-bottle]-b",
+        energy_required = 5,
+        enabled = false,
+        icon = "__tycoon__/graphics/icons/used-bottle.png",
+        icon_size = 64,
+        ingredients = {
+            { type = "item", name = "tycoon-used-bottle", amount = 25 },
+            { type = "item", name = "tycoon-soap", amount = 1 },
+            { type = "fluid", name = "water", amount = 50 },
+        },
+        results = {
+            {name = "tycoon-bottle", amount = 20},
+            {name = "tycoon-bottle", amount = 5, probability = 0.75}
         },
     },
     {

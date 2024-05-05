@@ -283,6 +283,27 @@ local function findCityByEntityUnitNumber(unitNumber)
     return cityName or "Unknown"
 end
 
+local function list_special_city_buildings(city, name)
+    local entities = {}
+    if city.special_buildings.other[name] ~= nil and #city.special_buildings.other[name] > 0 then
+        entities = city.special_buildings.other[name]
+    else
+        entities = game.surfaces[city.surface_index].find_entities_filtered{
+            name=name,
+            position=city.center,
+            radius=Constants.CITY_RADIUS,
+        }
+        city.special_buildings.other[name] = entities
+    end
+
+    local result = {}
+    for _, entity in ipairs(entities) do
+        if entity ~= nil and entity.valid then
+            table.insert(result, entity)
+        end
+    end
+    return result
+end
 
 --- @class Building
 --- @field cityId number
@@ -429,4 +450,5 @@ return {
 
     printTiles = printTiles,
     aggregateSupplyBuildingResources = aggregateSupplyBuildingResources,
+    list_special_city_buildings = list_special_city_buildings,
 }

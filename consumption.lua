@@ -1,4 +1,5 @@
 local Constants = require("constants")
+local UsedBottlesStore = require("used-bottles-store")
 local Util = require("util")
 
 --- @class Need
@@ -415,6 +416,12 @@ local function consumeItem(item, suppliers, city)
         if reward > 0 then
             randomTreasury.insert{name = "tycoon-currency", count = reward}
         end
+    end
+
+    -- When the city consumes bottled products, they'll return the bottles eventually.
+    -- We use this code to keep track of the number of bottles a city has consumed, and return them in used-bottles-store.lua
+    if item.name == "tycoon-milk-bottle" then
+        UsedBottlesStore.change_used_bottles(city.id, consumedAmount)
     end
 end
 

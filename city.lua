@@ -754,28 +754,6 @@ local function isConnectedToRoad(city, coordinates)
     return false
 end
 
-local function list_special_city_buildings(city, name)
-    local entities = {}
-    if city.special_buildings.other[name] ~= nil and #city.special_buildings.other[name] > 0 then
-        entities = city.special_buildings.other[name]
-    else
-        entities = game.surfaces[city.surface_index].find_entities_filtered{
-            name=name,
-            position=city.center,
-            radius=Constants.CITY_RADIUS,
-        }
-        city.special_buildings.other[name] = entities
-    end
-
-    local result = {}
-    for _, entity in ipairs(entities) do
-        if entity ~= nil and entity.valid then
-            table.insert(result, entity)
-        end
-    end
-    return result
-end
-
 --- @param city City
 --- @param buildingConstruction BuildingConstruction
 --- @param queueIndex string
@@ -840,7 +818,7 @@ local function startConstruction(city, buildingConstruction, queueIndex, allowed
         else
             local construction_materials = Constants.CONSTRUCTION_MATERIALS[buildingConstruction.buildingType] or {}
             for _, item in pairs(construction_materials) do
-                local hardwareStores = list_special_city_buildings(city, "tycoon-hardware-store")
+                local hardwareStores = Util.list_special_city_buildings(city, "tycoon-hardware-store")
                 Consumption.consumeItem(item, hardwareStores, city)
             end
 
@@ -1072,7 +1050,7 @@ end
 --- @param buildingTypes BuildingType[] | nil
 --- @return ExcavationPit | nil excavationPit
 local function findReadyExcavationPit(excavationPits, buildingTypes)
-    local completableBuildingTypes = {"tycoon-treasury", "garden"}
+    local completableBuildingTypes = {"tycoon-treasury", "garden", "tycoon-bottle-return-station"}
     if buildingTypes ~= nil then
         for _, value in ipairs(buildingTypes) do
             table.insert(completableBuildingTypes, value)
@@ -1268,6 +1246,10 @@ local function completeConstruction(city, buildingTypes)
     if housingTier == "tycoon-treasury" and not global.tycoon_intro_message_treasury_displayed then
         game.print({"", "[color=orange]Factorio Tycoon:[/color] ", {"tycooon-info-message-treasury"}})
         global.tycoon_intro_message_treasury_displayed = true
+    end
+    if housingTier == "tycoon-bottle-return-station" and not global.tycoon_intro_message_bottle_return_station_displayed then
+        game.print({"", "[color=orange]Factorio Tycoon:[/color] ", {"tycooon-info-message-bottle-return-station"}})
+        global.tycoon_intro_message_bottle_return_station_displayed = true
     end
 
     return housingTier
@@ -1594,7 +1576,7 @@ end
 local function start_house_construction()
     for _, city in ipairs(global.tycoon_cities or {}) do
         -- Check if resources are available. Without resources no growth is possible.
-        local hardware_stores = list_special_city_buildings(city, "tycoon-hardware-store")
+        local hardware_stores = Util.list_special_city_buildings(city, "tycoon-hardware-store")
         if #hardware_stores > 0 then
 
             local buildables = getBuildables(hardware_stores)

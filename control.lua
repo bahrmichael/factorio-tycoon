@@ -14,6 +14,7 @@ local Consumption = require("consumption")
 local City = require("city")
 local Queue = require("queue")
 local PrimaryIndustries = require("primary-industries")
+local UsedBottlesStore = require("used-bottles-store")
 local FloorUpgradesQueue = require("floor-upgrades-queue")
 
 --- TICK HANDLERS
@@ -80,6 +81,9 @@ local function consume_resources()
 end
 
 script.on_nth_tick(ONE_MINUTE, function()
+    for _, city in pairs(global.tycoon_cities or {}) do
+        UsedBottlesStore.return_used_bottles(city)
+    end
     consume_resources()
     City.construct_gardens()
     display_intro_messages()
