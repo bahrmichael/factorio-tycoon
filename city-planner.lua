@@ -210,8 +210,10 @@ local function initializeCity(city)
                 local startCoordinates = GridUtil.translateCityGridToTileCoordinates(city, { x = x, y = y })
                 clearCell(startCoordinates.y, startCoordinates.x)
                 if map ~= nil then
-                    -- Landfill is what we start with. It's later upgraded to higher tier roads as the citizens improve.
-                    Util.printTiles(startCoordinates, map, Constants.GROUND_TILE_TYPES.simple, city.surface_index)
+                    -- If we were to start with landfill around the town hall, we'd get unpretty edges when new dirt roads are built.
+                    -- It also looks odd when residential buildings upgrade to stone around them, but their range doesn't reach the town hall.
+                    -- That's why it looks nicer to just start with stone tiles around the town hall.
+                    Util.printTiles(startCoordinates, map, Constants.GROUND_TILE_TYPES.residential, city.surface_index)
                 end
                 if cell.initKey == "town-hall" then
                     local thPosition = {
