@@ -754,28 +754,6 @@ local function isConnectedToRoad(city, coordinates)
     return false
 end
 
-local function list_special_city_buildings(city, name)
-    local entities = {}
-    if city.special_buildings.other[name] ~= nil and #city.special_buildings.other[name] > 0 then
-        entities = city.special_buildings.other[name]
-    else
-        entities = game.surfaces[city.surface_index].find_entities_filtered{
-            name=name,
-            position=city.center,
-            radius=Constants.CITY_RADIUS,
-        }
-        city.special_buildings.other[name] = entities
-    end
-
-    local result = {}
-    for _, entity in ipairs(entities) do
-        if entity ~= nil and entity.valid then
-            table.insert(result, entity)
-        end
-    end
-    return result
-end
-
 --- @param city City
 --- @param buildingConstruction BuildingConstruction
 --- @param queueIndex string
@@ -840,7 +818,7 @@ local function startConstruction(city, buildingConstruction, queueIndex, allowed
         else
             local construction_materials = Constants.CONSTRUCTION_MATERIALS[buildingConstruction.buildingType] or {}
             for _, item in pairs(construction_materials) do
-                local hardwareStores = list_special_city_buildings(city, "tycoon-hardware-store")
+                local hardwareStores = Util.list_special_city_buildings(city, "tycoon-hardware-store")
                 Consumption.consumeItem(item, hardwareStores, city)
             end
 
