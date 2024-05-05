@@ -598,7 +598,10 @@ local function addCityOverview(city, anchor)
     tbl.add{type = "label", caption = {"", countCitizens(city)}}
     -- debt
     tbl.add{type = "label", caption = {"", {"tycoon-gui-debt"}, ": "}, tooltip = {"", {"tycoon-gui-debt-tooltip"}}}
-    tbl.add{type = "label", caption = {"", string.format("%.2f", city.stats.debt)}}
+    tbl.add{type = "label",
+        caption = {"", tostring(math.floor(city.stats.debt))},
+        tooltip = {"", string.format("%.2f", city.stats.debt)},
+    }
     -- overall basic needs status
     tbl.add{type = "label", caption = {"", {"tycoon-gui-basic-needs"}, ": "}}
     tbl.add{type = "label", caption = getOverallBasicNeedsCaption(city)}
