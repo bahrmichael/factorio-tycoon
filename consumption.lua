@@ -231,32 +231,8 @@ local function updateNeeds(city)
 end
 
 --- @param city City
---- @param name string
-local function listSpecialCityBuildings(city, name)
-    local entities = {}
-    if city.special_buildings.other[name] ~= nil and #city.special_buildings.other[name] > 0 then
-        entities = city.special_buildings.other[name]
-    else
-        entities = game.surfaces[city.surface_index].find_entities_filtered{
-            name=name,
-            position=city.center,
-            radius=Constants.CITY_RADIUS
-        }
-        city.special_buildings.other[name] = entities
-    end
-
-    local result = {}
-    for _, entity in ipairs(entities) do
-        if entity ~= nil and entity.valid then
-            table.insert(result, entity)
-        end
-    end
-    return result
-end
-
---- @param city City
 local function updateProvidedAmounts(city)
-    local markets = listSpecialCityBuildings(city, "tycoon-market")
+    local markets = Util.list_special_city_buildings(city, "tycoon-market")
     local supply = Util.aggregateSupplyBuildingResources(markets)
 
     -- BASIC NEEDS
@@ -271,7 +247,7 @@ local function updateProvidedAmounts(city)
         setAdditionalNeedsProvided(city, resource, supply[resource] or 0)
     end
     
-    local waterTowers = listSpecialCityBuildings(city, "tycoon-water-tower")
+    local waterTowers = Util.list_special_city_buildings(city, "tycoon-water-tower")
     if #waterTowers >= 1 then
         local totalAvailable = 0
         for _, waterTower in ipairs(waterTowers) do
@@ -392,7 +368,7 @@ local function payToTreasury(city)
     end
 
     -- pay as much as possible. treasuries could be full or absent
-    local treasuries = listSpecialCityBuildings(city, "tycoon-treasury")
+    local treasuries = Util.list_special_city_buildings(city, "tycoon-treasury")
     local leftover = city.stats.debt
     for _, entity in ipairs(treasuries) do
         local paid = entity.insert({name = "tycoon-currency", count = math.floor(city.stats.debt)})
@@ -538,8 +514,8 @@ local function consumeBasicNeeds(city)
 
     local citizen_count = countCitizens(city)
 
-    local markets = listSpecialCityBuildings(city, "tycoon-market")
-    local waterTowers = listSpecialCityBuildings(city, "tycoon-water-tower")
+    local markets = Util.list_special_city_buildings(city, "tycoon-market")
+    local waterTowers = Util.list_special_city_buildings(city, "tycoon-water-tower")
 
     local countNeedsMet = 0
 
@@ -584,7 +560,7 @@ end
 --- @param city City
 local function consumeAdditionalNeeds(city)
     
-    local markets = listSpecialCityBuildings(city, "tycoon-market")
+    local markets = Util.list_special_city_buildings(city, "tycoon-market")
 
     if #markets >= 1 then
         for resource, amounts in pairs(city.stats.additional_needs or {}) do

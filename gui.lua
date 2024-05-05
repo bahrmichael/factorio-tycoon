@@ -339,28 +339,6 @@ local function countCitizens(city, filter)
     return total
 end
 
-local function listSpecialCityBuildings(city, name)
-    local entities = {}
-    if city.special_buildings.other[name] ~= nil and #city.special_buildings.other[name] > 0 then
-        entities = city.special_buildings.other[name]
-    else
-        entities = game.surfaces[city.surface_index].find_entities_filtered{
-            name=name,
-            position=city.center,
-            radius=Constants.CITY_RADIUS
-        }
-        city.special_buildings.other[name] = entities
-    end
-
-    local result = {}
-    for _, entity in ipairs(entities) do
-        if entity ~= nil and entity.valid then
-            table.insert(result, entity)
-        end
-    end
-    return result
-end
-
 local basicNeeds = {
     simple = {"water", "tycoon-apple"},
     residential = {"water", "tycoon-milk-bottle", "tycoon-meat", "tycoon-bread", "tycoon-fish-filet"},
@@ -405,7 +383,7 @@ local function mapSupplyLevelToLocalised(supplyLevel)
 end
 
 local function areConstructionNeedsMet(city, housingTier, stores) 
-    local hardwareStores = stores or listSpecialCityBuildings(city, "tycoon-hardware-store")
+    local hardwareStores = stores or Util.list_special_city_buildings(city, "tycoon-hardware-store")
     local supply = Util.aggregateSupplyBuildingResources(hardwareStores)
     local needs = Constants.CONSTRUCTION_MATERIALS[housingTier]
 
@@ -418,7 +396,7 @@ local function areConstructionNeedsMet(city, housingTier, stores)
 end
 
 local function areThereEnoughConstructionMaterials(city, housingTier)
-    local hardwareStores = listSpecialCityBuildings(city, "tycoon-hardware-store")
+    local hardwareStores = Util.list_special_city_buildings(city, "tycoon-hardware-store")
     local isMet = areConstructionNeedsMet(city, housingTier, hardwareStores)
     return isMet
 end
@@ -451,9 +429,9 @@ local function addHousingView(housingType, city, anchor)
         return
     end
 
-    local waterTowers = listSpecialCityBuildings(city, "tycoon-water-tower")
-    local markets = listSpecialCityBuildings(city, "tycoon-market")
-    local hardwareStores = listSpecialCityBuildings(city, "tycoon-hardware-store")
+    local waterTowers = Util.list_special_city_buildings(city, "tycoon-water-tower")
+    local markets = Util.list_special_city_buildings(city, "tycoon-market")
+    local hardwareStores = Util.list_special_city_buildings(city, "tycoon-hardware-store")
 
     local tabbed_pane = anchor.add{type="tabbed-pane"}
     local tab_overview = tabbed_pane.add{type="tab", caption={"", {"tycoon-gui-overview"}}}
@@ -576,7 +554,7 @@ local function getOverallBasicNeedsCaption(city)
 end
 
 local function getOverallConstructionMaterialsCaption(city)
-    local hardwareStores = listSpecialCityBuildings(city, "tycoon-hardware-store")
+    local hardwareStores = Util.list_special_city_buildings(city, "tycoon-hardware-store")
     local simpleMet = areConstructionNeedsMet(city, "simple", hardwareStores)
     local residentialMet = not game.forces.player.technologies["tycoon-residential-housing"].researched or areConstructionNeedsMet(city, "residential", hardwareStores)
     local highriseMet = not game.forces.player.technologies["tycoon-highrise-housing"].researched or areConstructionNeedsMet(city, "highrise", hardwareStores)

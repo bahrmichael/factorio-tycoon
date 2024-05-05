@@ -283,6 +283,8 @@ local function findCityByEntityUnitNumber(unitNumber)
     return cityName or "Unknown"
 end
 
+--- @param city City
+--- @param name string
 local function list_special_city_buildings(city, name)
     local entities = {}
     if city.special_buildings.other[name] ~= nil and #city.special_buildings.other[name] > 0 then

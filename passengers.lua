@@ -17,30 +17,6 @@ local function countCitizens(city, filter)
 end
 
 --- @param city City
---- @param name string
-local function listSpecialCityBuildings(city, name)
-    local entities = {}
-    if city.special_buildings.other[name] ~= nil and #city.special_buildings.other[name] > 0 then
-        entities = city.special_buildings.other[name]
-    else
-        entities = game.surfaces[city.surface_index].find_entities_filtered{
-            name=name,
-            position=city.center,
-            radius=Constants.CITY_RADIUS
-        }
-        city.special_buildings.other[name] = entities
-    end
-
-    local result = {}
-    for _, entity in ipairs(entities) do
-        if entity ~= nil and entity.valid then
-            table.insert(result, entity)
-        end
-    end
-    return result
-end
-
---- @param city City
 --- @param excludedNames string[] | nil
 --- @return string | nil name
 local function getRandomCityName(city, excludedNames)
@@ -100,7 +76,7 @@ local function spawnPassengers(city)
     -- Residential housing have 20 citizens and highrise have 100. That means we generate up to 1 per residential and up to 5 per highrise house.
     local newPassengerCount = math.floor((residentialCount * 0.05 + highriseCount * 0.05) * citizenFactor * city.generator())
     if newPassengerCount > 0 then
-        local trainStations = listSpecialCityBuildings(city, "tycoon-passenger-train-station")
+        local trainStations = Util.list_special_city_buildings(city, "tycoon-passenger-train-station")
         if #trainStations > 0 then
             local selectedTrainStation = trainStations[city.generator(#trainStations)]
             if selectedTrainStation ~= nil and selectedTrainStation.valid then
@@ -202,7 +178,7 @@ local function clearPassengers(city)
 
     local passengerName = "tycoon-passenger-" .. string.lower(city.name)
 
-    local trainStations = listSpecialCityBuildings(city, "tycoon-passenger-train-station")
+    local trainStations = Util.list_special_city_buildings(city, "tycoon-passenger-train-station")
     if #trainStations > 0 then
         for _, trainStation in ipairs(trainStations) do
 
