@@ -600,90 +600,45 @@ local function pickRoadExpansion(city, roadEnd)
 end
 
 --- @param direction Direction
---- @param wide boolean
 --- @return string[] map
 local function getMap(direction, wide)
     local result = nil
     if direction == "north" then
-        if wide then
-            result = {
-                "011110",
-                "011110",
-                "011110",
-                "011110",
-                "000000",
-                "000000",
-            }
-        else
-            result = {
-                "001100",
-                "001100",
-                "001100",
-                "001100",
-                "000000",
-                "000000",
-            }
-        end
+        result = {
+            "001100",
+            "001100",
+            "001100",
+            "001100",
+            "000000",
+            "000000",
+        }
     elseif direction == "south" then
-        if wide then
-            result = {
-                "000000",
-                "000000",
-                "011110",
-                "011110",
-                "011110",
-                "011110",
-            }
-        else
-            result = {
-                "000000",
-                "000000",
-                "001100",
-                "001100",
-                "001100",
-                "001100",
-            }
-        end
+        result = {
+            "000000",
+            "000000",
+            "001100",
+            "001100",
+            "001100",
+            "001100",
+        }
     elseif direction == "west" then
-        if wide then
-            result = {
-                "000000",
-                "111100",
-                "111100",
-                "111100",
-                "111100",
-                "000000",
-            }
-        else
-            result = {
-                "000000",
-                "000000",
-                "111100",
-                "111100",
-                "000000",
-                "000000",
-            }
-        end
+        result = {
+            "000000",
+            "000000",
+            "111100",
+            "111100",
+            "000000",
+            "000000",
+        }
     elseif direction == "east" then
-        if wide then
-            result = {
-                "000000",
-                "001111",
-                "001111",
-                "001111",
-                "001111",
-                "000000",
-            }
-        else
-            result = {
-                "000000",
-                "000000",
-                "001111",
-                "001111",
-                "000000",
-                "000000",
-            }
-        end
+        result = {
+            "000000",
+            "000000",
+            "001111",
+            "001111",
+            "000000",
+            "000000",
+        }
     end
     assert(result ~= nil, "Invalid direction for getMap")
     return result
@@ -943,6 +898,7 @@ local function clearAreaAndPrintTiles(city, coordinates, map, tileType)
         y = coordinates.y,
     })
     Util.printTiles(currentCellStartCoordinates, map, tileType, city.surface_index)
+    -- {Constants.GROUND_TILE_TYPES.residential, Constants.GROUND_TILE_TYPES.highrise}
 
     local currentArea = {
         {currentCellStartCoordinates.x, currentCellStartCoordinates.y},
@@ -1028,8 +984,7 @@ local function growAtRandomRoadEnd(city)
         -- For each direction, fill the current cell with the direction and the neighbour with the inverse direction
         for _, direction in ipairs(pickedExpansionDirections) do
 
-            -- Landfill is what we start with. It's later upgraded to higher tier roads as the citizens improve.
-            clearAreaAndPrintTiles(city, roadEnd.coordinates, getMap(direction, true), Constants.GROUND_TILE_TYPES.road)
+            clearAreaAndPrintTiles(city, roadEnd.coordinates, getMap(direction), Constants.GROUND_TILE_TYPES.road)
 
             local currentCell = GridUtil.safeGridAccess(city, roadEnd.coordinates, "processPickedExpansionDirectionCurrent")
             if currentCell == nil then
@@ -1055,7 +1010,7 @@ local function growAtRandomRoadEnd(city)
             end
 
             local neighbourSocket = invertDirection(direction)
-            clearAreaAndPrintTiles(city, neighbourPosition, getMap(neighbourSocket, true), Constants.GROUND_TILE_TYPES.road)
+            clearAreaAndPrintTiles(city, neighbourPosition, getMap(direction), Constants.GROUND_TILE_TYPES.road)
 
             local neighbourCell = GridUtil.safeGridAccess(city, neighbourPosition, "processPickedExpansionDirectionNeighbour")
             if neighbourCell == nil then

@@ -338,14 +338,25 @@ end
 --- @param start Coordinates
 --- @param map string[]
 --- @param tileName string
+--- @param dont_override_tiles string[] | nil
 --- @param surface_index number
-local function printTiles(start, map, tileName, surface_index)
+local function printTiles(start, map, tileName, surface_index, dont_override_tiles)
+    if dont_override_tiles == nil then
+        dont_override_tiles = {}
+    end
     local x, y = start.x, start.y
     for _, value in ipairs(map) do
         for i = 1, #value do
             local char = string.sub(value, i, i)
             if char == "1" then
-                game.surfaces[surface_index or Constants.STARTING_SURFACE_ID].set_tiles({ { name = tileName, position = { x, y } } })
+                local can_print = true
+                if #dont_override_tiles > 0 then
+                    local tile = game.surfaces[surface_index].get_tile(x, y)
+                    can_print = indexOf(dont_override_tiles, tile.name) == nil
+                end
+                if can_print then
+                    game.surfaces[surface_index or Constants.STARTING_SURFACE_ID].set_tiles({ { name = tileName, position = { x, y } } })
+                end
             end
             x = x + 1
         end
