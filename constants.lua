@@ -27,6 +27,7 @@ local CONSTANTS = {
         ["tycoon-water-tower"] = true,
         ["tycoon-treasury"] = false,
         ["tycoon-passenger-train-station"] = false,
+        ["tycoon-bottle-return-station"] = false,
     },
     PRIMARY_INDUSTRIES = {"tycoon-apple-farm", "tycoon-wheat-farm", "tycoon-fishery"},
     CITIZEN_COUNTS = {
@@ -47,6 +48,11 @@ local CONSTANTS = {
         ["tycoon-treasury"] = {
             ["stone-brick"] = 1,
             ["iron-plate"] = 1,
+        },
+        ["tycoon-bottle-return-station"] = {
+            ["stone-brick"] = 20,
+            ["iron-plate"] = 10,
+            ["steel-plate"] = 5,
         },
         highrise = {
             ["concrete"] = 50,
