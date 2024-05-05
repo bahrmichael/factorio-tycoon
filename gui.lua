@@ -684,8 +684,6 @@ end
 
 local function addCityView(city, anchor)
     
-    Consumption.updateNeeds(city)
-
     local tabbed_pane = anchor.add{type="tabbed-pane"}
     local tab_overview = tabbed_pane.add{type="tab", caption={"", {"tycoon-gui-city-overview"}}}
     local tab_simple = tabbed_pane.add{type="tab", caption={"", {"technology-name.tycoon-simple-housing"}}}

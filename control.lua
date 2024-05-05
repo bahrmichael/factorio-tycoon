@@ -71,17 +71,11 @@ local function display_intro_messages()
     ChatMessages.show_info_messages()
 end
 
-local housing_tiers = {"simple", "residential", "highrise"}
-
 local function consume_resources()
     for _, city in ipairs(global.tycoon_cities or {}) do
         Consumption.consumeBasicNeeds(city)
         Consumption.consumeAdditionalNeeds(city)
-
-        for _, tier in ipairs(housing_tiers) do
-            Consumption.update_construction_timers(city, tier)
-        end
-
+        Consumption.update_construction_timers_all(city)
     end
 end
 

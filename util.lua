@@ -184,13 +184,78 @@ local function findCityByTownHallUnitNumber(townHallUnitNumber)
     return nil
 end
 
-local function isSupplyBuilding(entityName)
-    for _, supplyBuildingName in ipairs(Constants.CITY_SUPPLY_BUILDINGS) do
-        if entityName == supplyBuildingName then
-            return true
-        end
+--- @param surface LuaSurface
+--- @param position MapPosition
+--- @param radius number | nil
+--- @param limit number | nil
+--- @return Entity[] | {}
+local function findTownHallsAtPosition(surface, position, radius, limit)
+    if surface == nil or position == nil then
+        return {}
     end
-    return false
+
+    return surface.find_entities_filtered{
+        position=position,
+        radius=radius or Constants.CITY_RADIUS,
+        name="tycoon-town-hall",
+        limit=limit or 1,
+    }
+end
+
+--- @param surface LuaSurface
+--- @param position MapPosition
+--- @param radius number | nil
+--- @param limit number | nil
+--- @return City
+local function findCityAtPosition(surface, position, radius, limit)
+    local town_halls = findTownHallsAtPosition(surface, position, radius, limit)
+    if #town_halls < 1 then
+        return
+    end
+
+    -- can't use getGlobalBuilding(), it is declared below
+    local building = global.tycoon_city_buildings[town_halls[1].unit_number]
+    if building == nil then
+        log("ERROR: Found a town hall, but it has no city mapping.")
+        return
+    end
+
+    local city = findCityById(building.cityId)
+    if city == nil then
+        log("ERROR: Found a cityId, but there is no city for it.")
+        return
+    end
+    return city
+end
+
+--- tries harder to find city when surface_index is unknown and entity is invalid
+local function findCityByBuilding(building)
+    if building == nil then return end
+
+    local city = nil
+    city = findCityById(building.cityId)
+    if city ~= nil then return city end
+
+    if building.entity ~= nil and building.entity.valid and building.entity.surface_index ~= nil then
+        city = findCityAtPosition(game.surfaces[building.entity.surface_index], building.position)
+    end
+    if city ~= nil then return city end
+
+    -- when there is no surface_index and no entity, try every surface
+    for _, surface in pairs(game.surfaces) do
+        city = findCityAtPosition(surface, building.position)
+        if city ~= nil then return city end
+    end
+    log("findCityByBuilding(): ERROR: unable to find city on any surface! building: ".. serpent.line(building))
+end
+
+
+local function isSupplyBuilding(entityName)
+    return Constants.CITY_SPECIAL_BUILDINGS[entityName] == true
+end
+
+local function isSpecialBuilding(entityName)
+    return Constants.CITY_SPECIAL_BUILDINGS[entityName] ~= nil
 end
 
 --- @param entityName string
@@ -230,6 +295,66 @@ local function list_special_city_buildings(city, name)
     end
     return result
 end
+
+--- @class Building
+--- @field cityId number
+--- @field entity LuaEntity
+--- @field entity_name string
+--- @field position MapPosition | Coordinates
+--- @field isSpecial boolean | nil
+
+--- @param unit_number number
+--- @param cityId number
+--- @param entity LuaEntity | nil
+--- @return Building | nil
+local function addGlobalBuilding(unit_number, cityId, entity)
+    if global.tycoon_city_buildings == nil then
+        global.tycoon_city_buildings = {}
+    end
+
+    if unit_number == nil then
+        return
+    end
+
+    local building = nil
+    if entity ~= nil and entity.valid then
+        building = {
+            cityId = cityId,
+            entity_name = entity.name,
+            entity = entity,
+            position = {
+                x = math.floor(entity.position.x),
+                y = math.floor(entity.position.y),
+            },
+        }
+        if isSpecialBuilding(entity.name) then
+            building.isSpecial = true
+        end
+    end
+
+    global.tycoon_city_buildings[unit_number] = building
+    return building
+end
+
+--- @param unit_number number
+local function removeGlobalBuilding(unit_number)
+    if global.tycoon_city_buildings == nil or unit_number == nil then
+        return
+    end
+
+    global.tycoon_city_buildings[unit_number] = nil
+end
+
+--- @param unit_number number
+--- @return Building | nil
+local function getGlobalBuilding(unit_number)
+    if global.tycoon_city_buildings == nil or unit_number == nil then
+        return
+    end
+
+    return global.tycoon_city_buildings[unit_number]
+end
+
 
 --- @param start Coordinates
 --- @param map string[]
@@ -289,10 +414,18 @@ return {
 
     findCityByTownHallUnitNumber = findCityByTownHallUnitNumber,
     findCityById = findCityById,
+    findTownHallsAtPosition = findTownHallsAtPosition,
+    findCityAtPosition = findCityAtPosition,
+    findCityByBuilding = findCityByBuilding,
+
     isSupplyBuilding = isSupplyBuilding,
+    isSpecialBuilding = isSpecialBuilding,
     isHouse = isHouse,
     findCityByEntityUnitNumber = findCityByEntityUnitNumber,
 
+    addGlobalBuilding = addGlobalBuilding,
+    removeGlobalBuilding = removeGlobalBuilding,
+    getGlobalBuilding = getGlobalBuilding,
 
     printTiles = printTiles,
     aggregateSupplyBuildingResources = aggregateSupplyBuildingResources,
