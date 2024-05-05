@@ -102,14 +102,10 @@ local function addConstructionMaterialsGui(rootGui, constructionNeeds, city, har
     if #hardwareStores == 0 then
         tbl.add{type = "label", caption = {"", "[color=red]", {"tycoon-gui-missing", {"entity-name.tycoon-hardware-store"}}, "[/color]"}}
     else
+        local supply = Util.aggregateSupplyBuildingResources(hardwareStores)
         for _, resource in ipairs(constructionNeeds) do
 
-            local totalResourceCount = 0
-            for _, hardwareStore in ipairs(hardwareStores or {}) do
-                local availableCount = hardwareStore.get_item_count(resource)
-                totalResourceCount = totalResourceCount + availableCount
-            end
-            setConstructionMaterialsProvided(city, resource, totalResourceCount)
+            setConstructionMaterialsProvided(city, resource, supply[resource] or 0)
 
             local amounts = city.stats.construction_materials[resource] or {provided =  0}
 
@@ -388,27 +384,20 @@ local function mapSupplyLevelToLocalised(supplyLevel)
 end
 
 local function areConstructionNeedsMet(city, housingTier, stores) 
-    local hardwareStores = stores or City.list_special_city_buildings(city, "tycoon-hardware-store")
+    local hardwareStores = stores or Util.list_special_city_buildings(city, "tycoon-hardware-store")
+    local supply = Util.aggregateSupplyBuildingResources(hardwareStores)
     local needs = Constants.CONSTRUCTION_MATERIALS[housingTier]
 
     for _, need in ipairs(needs) do
-        -- name/required
-        local totalAvailable = 0
-        for _, store in ipairs(hardwareStores) do
-            local availableCount = store.get_item_count(need.name)
-            totalAvailable = totalAvailable + availableCount
-        end
-
-        if need.required > totalAvailable then
+        if need.required > (supply[need.name] or 0) then
             return false
         end
     end
-
     return true
 end
 
 local function areThereEnoughConstructionMaterials(city, housingTier)
-    local hardwareStores = City.list_special_city_buildings(city, "tycoon-hardware-store")
+    local hardwareStores = Util.list_special_city_buildings(city, "tycoon-hardware-store")
     local isMet = areConstructionNeedsMet(city, housingTier, hardwareStores)
     return isMet
 end
@@ -441,9 +430,9 @@ local function addHousingView(housingType, city, anchor)
         return
     end
 
-    local waterTowers = City.list_special_city_buildings(city, "tycoon-water-tower")
-    local markets = City.list_special_city_buildings(city, "tycoon-market")
-    local hardwareStores = City.list_special_city_buildings(city, "tycoon-hardware-store")
+    local waterTowers = Util.list_special_city_buildings(city, "tycoon-water-tower")
+    local markets = Util.list_special_city_buildings(city, "tycoon-market")
+    local hardwareStores = Util.list_special_city_buildings(city, "tycoon-hardware-store")
 
     local tabbed_pane = anchor.add{type="tabbed-pane"}
     local tab_overview = tabbed_pane.add{type="tab", caption={"", {"tycoon-gui-overview"}}}
@@ -566,7 +555,7 @@ local function getOverallBasicNeedsCaption(city)
 end
 
 local function getOverallConstructionMaterialsCaption(city)
-    local hardwareStores = City.list_special_city_buildings(city, "tycoon-hardware-store")
+    local hardwareStores = Util.list_special_city_buildings(city, "tycoon-hardware-store")
     local simpleMet = areConstructionNeedsMet(city, "simple", hardwareStores)
     local residentialMet = not game.forces.player.technologies["tycoon-residential-housing"].researched or areConstructionNeedsMet(city, "residential", hardwareStores)
     local highriseMet = not game.forces.player.technologies["tycoon-highrise-housing"].researched or areConstructionNeedsMet(city, "highrise", hardwareStores)
@@ -674,8 +663,6 @@ end
 
 local function addCityView(city, anchor)
     
-    Consumption.updateNeeds(city)
-
     local tabbed_pane = anchor.add{type="tabbed-pane"}
     local tab_overview = tabbed_pane.add{type="tab", caption={"", {"tycoon-gui-city-overview"}}}
     local tab_simple = tabbed_pane.add{type="tab", caption={"", {"technology-name.tycoon-simple-housing"}}}

@@ -1,14 +1,6 @@
 local Util = require("util")
 local Constants = require("constants")
-local Consumption = require("consumption")
-
-local function growCitizenCount(city, count, tier)
-    if city.citizens[tier] == nil then
-        city.citizens[tier] = 0
-    end
-    city.citizens[tier] = city.citizens[tier] + count
-    Consumption.updateNeeds(city)
-end
+local City = require("city")
 
 local function invalidateSpecialBuildingsList(city, name)
     assert(city.special_buildings ~= nil, "The special buildings should never be nil. There has been one error though, so I added this assertion.")
@@ -20,107 +12,87 @@ local function invalidateSpecialBuildingsList(city, name)
 end
 
 local function on_built(event)
-    assert(event.created_entity, "Called on_removed without a unit_number or created_entity. Wrong event?")
+    assert(event.created_entity, "Called on_built without a created_entity. Wrong event?")
 
     local entity = event.created_entity
+    -- LuaEntity inherits surface_index from LuaControl
+    local surface_index = entity.surface_index
 
-    if Util.isSupplyBuilding(entity.name) or entity.name == "tycoon-passenger-train-station" then
-        local nearbyTownHall = game.surfaces[Constants.STARTING_SURFACE_ID].find_entities_filtered{
-            position=entity.position,
-            radius=Constants.CITY_RADIUS,
-            name="tycoon-town-hall",
-            limit=1
-        }
-        if #nearbyTownHall == 0 then
+    local city = nil
+    if Util.isSpecialBuilding(entity.name) then
+        log("on_built(): event: ".. event.name .." unit: ".. entity.unit_number .." name: ".. entity.name)
+        city = Util.findCityAtPosition(game.surfaces[surface_index], entity.position)
+        if city == nil then
             if event.player_index ~= nil then
                 game.players[event.player_index].print({"", {"tycoon-supply-building-not-connected"}})
             end
             return
         end
 
-        local cityMapping = global.tycoon_city_buildings[nearbyTownHall[1].unit_number]
-        assert(cityMapping ~= nil, "When building an entity we found a town hall, but it has no city mapping.")
-        local cityId = cityMapping.cityId
-        local city = Util.findCityById(cityId)
-        assert(city ~= nil, "When building an entity we found a cityId, but there is no city for it.")
-
         invalidateSpecialBuildingsList(city, entity.name)
 
+        -- TODO: this could be dropped in favor of Util.getGlobalBuilding()
         if global.tycoon_entity_meta_info == nil then
             global.tycoon_entity_meta_info = {}
         end
         global.tycoon_entity_meta_info[entity.unit_number] = {
-            cityId = cityId
+            cityId = city.id
         }
+
+        Util.addGlobalBuilding(entity.unit_number, city.id, entity)
+        -- WARN: we must always register
+        script.register_on_entity_destroyed(entity)
     end
 end
 
 local function on_removed(event)
-    local unit_number = event.unit_number
+    local unit_number = event.unit_number or (event.entity or {}).unit_number
     if unit_number == nil then
         return
     end
 
-    if global.tycoon_city_buildings == nil then
-        return
-    end
-    
-    local building = global.tycoon_city_buildings[unit_number]
-
-    if (building or {}).entity == nil then
+    local city = nil
+    local building = Util.getGlobalBuilding(unit_number)
+    if building == nil then
         return
     end
 
-    if Util.isSupplyBuilding(building.entity_name) or building.entity_name == "tycoon-passenger-train-station" then
-        
-        local nearby_town_hall = game.surfaces[Constants.STARTING_SURFACE_ID].find_entities_filtered{
-            position=building.entity.position,
-            radius=Constants.CITY_RADIUS,
-            name="tycoon-town-hall",
-            limit=1
-        }
-        if #nearby_town_hall == 0 then
-            -- If there's no town hall in range then it probably was destroyed
-            -- todo: how should we handle that situation? Is the whole city gone?
-            -- probably in the "destroyed" event, because the player can't mine the town hall
-            return
-        end
+    --  67: defines.events.on_player_mined_entity
+    -- 160: defines.events.on_entity_destroyed
+    log(string.format("on_removed(): event: %d unit: %s valid: %s position: %s cityId: %s name: %s",
+        event.name, tostring(unit_number), tostring(building.entity ~= nil and building.entity.valid),
+        serpent.line(building.position), tostring(building.cityId), building.entity_name
+    ))
 
-        local city_mapping = global.tycoon_city_buildings[nearby_town_hall[1].unit_number]
-        assert(city_mapping ~= nil, "When mining an entity an entity we found a town hall, but it has no city mapping.")
-        local cityId = city_mapping.cityId
-        local city = Util.findCityById(cityId)
-        assert(city ~= nil, "When mining an entity we found a cityId, but there is no city for it.")
+    -- this function handles no surface_index and no entity case
+    city = Util.findCityByBuilding(building)
+    if city == nil then
+        -- If there's no town hall in range then it probably was destroyed
+        -- todo: how should we handle that situation? Is the whole city gone?
+        -- probably in the "destroyed" event, because the player can't mine the town hall
+        log("on_removed(): ERROR: unable to find city! building: ".. serpent.line(building))
 
+        -- remove from global
+        Util.removeGlobalBuilding(unit_number)
+        return
+    end
+
+    if building.isSpecial or Util.isSpecialBuilding(building.entity_name) then
         invalidateSpecialBuildingsList(city, building.entity_name)
-    elseif Util.isHouse(building.entity_name) then
-        
-        local housing_type
-        if string.find(building.entity_name, "tycoon-house-simple-", 1, true) then
-            housing_type = "simple"
-        elseif string.find(building.entity_name, "tycoon-house-residential-", 1, true) then
-            housing_type = "residential"
-        elseif string.find(building.entity_name, "tycoon-house-highrise-", 1, true) then
-            housing_type = "highrise"
-        end
 
-        assert(housing_type, "Uknown housing_type in on_removed: " .. housing_type)
-        
-        local cityId = building.cityId
-        local city = Util.findCityById(cityId)
-        if city ~= nil then
-            growCitizenCount(city, -1 * Constants.CITIZEN_COUNTS[housing_type], housing_type)
+        -- TODO: this could be dropped in favor of Util.removeGlobalBuilding()
+        if global.tycoon_entity_meta_info == nil then
+            global.tycoon_entity_meta_info = {}
         end
-
-        if global.tycoon_house_lights ~= nil then
-            local light = global.tycoon_house_lights[unit_number]
-            if light ~= nil and light.valid then
-                light.destroy()
-            end
-        end
+        global.tycoon_entity_meta_info[unit_number] = nil
+    else
+        assert(building.position, "building.position is nil, DO FIX migration script!")
+        -- todo: mark cell as unused again, clear paving if necessary
+        City.freeCellAtPosition(city, building.position, unit_number)
     end
 
-    -- todo: mark cell as unused again, clear paving if necessary
+    -- remove from global
+    Util.removeGlobalBuilding(unit_number)
 end
 
 return {

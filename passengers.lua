@@ -1,6 +1,5 @@
 local Constants = require("constants")
 local Util = require("util")
-local City = require("city")
 
 --- @param city City
 --- @param filter string | nil
@@ -76,7 +75,7 @@ local function spawnPassengers(city)
     -- Residential housing have 20 citizens and highrise have 100. That means we generate up to 1 per residential and up to 5 per highrise house.
     local newPassengerCount = math.floor((residentialCount * 0.05 + highriseCount * 0.05) * citizenFactor * city.generator())
     if newPassengerCount > 0 then
-        local trainStations = City.list_special_city_buildings(city, "tycoon-passenger-train-station")
+        local trainStations = Util.list_special_city_buildings(city, "tycoon-passenger-train-station")
         if #trainStations > 0 then
             local selectedTrainStation = trainStations[city.generator(#trainStations)]
             if selectedTrainStation ~= nil and selectedTrainStation.valid then
@@ -178,8 +177,8 @@ local function clearPassengers(city)
 
     local passengerName = "tycoon-passenger-" .. string.lower(city.name)
 
-    local trainStations = City.list_special_city_buildings(city, "tycoon-passenger-train-station")
-    local treasuries = City.list_special_city_buildings(city, "tycoon-treasury")
+    local trainStations = Util.list_special_city_buildings(city, "tycoon-passenger-train-station")
+    local treasuries = Util.list_special_city_buildings(city, "tycoon-treasury")
     if #trainStations > 0 then
         for _, trainStation in ipairs(trainStations) do
 

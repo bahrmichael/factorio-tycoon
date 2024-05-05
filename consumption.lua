@@ -1,5 +1,6 @@
 local Constants = require("constants")
-local City = require("city")
+local UsedBottlesStore = require("used-bottles-store")
+local Util = require("util")
 
 --- @class Need
 --- @field provided number
@@ -8,6 +9,7 @@ local City = require("city")
 --- @class CityStats
 --- @field basic_needs { string: Need }
 --- @field additional_needs { string: Need }
+--- @field providedUpdateTick number
 
 --- @class SpecialBuildings
 --- @field town_hall any
@@ -229,45 +231,21 @@ end
 
 --- @param city City
 local function updateProvidedAmounts(city)
-    local markets = City.list_special_city_buildings(city, "tycoon-market")
+    local markets = Util.list_special_city_buildings(city, "tycoon-market")
 
     -- BASIC NEEDS
-    if #markets >= 1 then
-        for resource, _ in pairs(city.stats.basic_needs) do
-            if resource ~= "water" then
-                local totalAvailable = 0
-                for _, market in ipairs(markets) do
-                    local availableCount = market.get_item_count(resource)
-                    totalAvailable = totalAvailable + availableCount
-                end
-                setBasicNeedsProvided(city, resource, totalAvailable)
-            end
-        end
-    else
-        for resource, _ in pairs(city.stats.basic_needs) do
-            if resource ~= "water" then
-                setBasicNeedsProvided(city, resource, 0)
-            end
+    for resource, _ in pairs(city.stats.basic_needs) do
+        if resource ~= "water" then
+            setBasicNeedsProvided(city, resource, supply[resource] or 0)
         end
     end
 
     -- ADDITIONAL NEEDS
-    if #markets >= 1 then
-        for resource, _ in pairs(city.stats.additional_needs or {}) do
-            local totalAvailable = 0
-            for _, market in ipairs(markets) do
-                local availableCount = market.get_item_count(resource)
-                totalAvailable = totalAvailable + availableCount
-            end
-            setAdditionalNeedsProvided(city, resource, totalAvailable)
-        end
-    else
-        for resource, _ in pairs(city.stats.additional_needs) do
-            setAdditionalNeedsProvided(city, resource, 0)
-        end
+    for resource, _ in pairs(city.stats.additional_needs or {}) do
+        setAdditionalNeedsProvided(city, resource, supply[resource] or 0)
     end
     
-    local waterTowers = City.list_special_city_buildings(city, "tycoon-water-tower")
+    local waterTowers = Util.list_special_city_buildings(city, "tycoon-water-tower")
     if #waterTowers >= 1 then
         local totalAvailable = 0
         for _, waterTower in ipairs(waterTowers) do
@@ -278,6 +256,9 @@ local function updateProvidedAmounts(city)
     else
         setBasicNeedsProvided(city, "water", 0)
     end
+
+    -- remember update tick
+    city.stats.providedUpdateTick = game.tick
 end
 
 --- @param city City
@@ -286,6 +267,12 @@ end
 local function getSupplyLevels(city, needs)
     assert(needs ~= nil, "Expected needs in getSupplyLevels to not be nil.")
     updateProvidedAmounts(city)
+
+    --- NOTE: we're called from update_construction_timers() every minute, but also on gui events
+    -- only update if enough time has passed
+    if ((city.stats.providedUpdateTick or 0) + Constants.CITY_STATS_LIFETIME_TICKS) < game.tick then
+        updateProvidedAmounts(city)
+    end
 
     local waterDemand = (needs or {}).water
 
@@ -395,7 +382,7 @@ local function consumeItem(item, suppliers, city)
         end
     end
 
-    local treasuries = City.list_special_city_buildings(city, "tycoon-treasury")
+    local treasuries = Util.list_special_city_buildings(city, "tycoon-treasury")
     if #treasuries > 0 then
         local randomTreasury = treasuries[city.generator(#treasuries)]
         local currencyPerUnit = resourcePrices[item.name]
@@ -405,6 +392,12 @@ local function consumeItem(item, suppliers, city)
             randomTreasury.insert{name = "tycoon-currency", count = reward}
         end
     end
+
+    -- When the city consumes bottled products, they'll return the bottles eventually.
+    -- We use this code to keep track of the number of bottles a city has consumed, and return them in used-bottles-store.lua
+    if item.name == "tycoon-milk-bottle" then
+        UsedBottlesStore.change_used_bottles(city.id, consumedAmount)
+    end
 end
 
 --- @param city City
@@ -412,8 +405,8 @@ local function consumeBasicNeeds(city)
 
     local citizen_count = countCitizens(city)
 
-    local markets = City.list_special_city_buildings(city, "tycoon-market")
-    local waterTowers = City.list_special_city_buildings(city, "tycoon-water-tower")
+    local markets = Util.list_special_city_buildings(city, "tycoon-market")
+    local waterTowers = Util.list_special_city_buildings(city, "tycoon-water-tower")
 
     local countNeedsMet = 0
 
@@ -458,7 +451,7 @@ end
 --- @param city City
 local function consumeAdditionalNeeds(city)
     
-    local markets = City.list_special_city_buildings(city, "tycoon-market")
+    local markets = Util.list_special_city_buildings(city, "tycoon-market")
 
     if #markets >= 1 then
         for resource, amounts in pairs(city.stats.additional_needs or {}) do
@@ -584,7 +577,16 @@ local function update_construction_timers(city, tier)
     end
 end
 
+local function update_construction_timers_all(city)
+    -- use CITIZEN_COUNTS as housing tiers list
+    for tier, _ in pairs(Constants.CITIZEN_COUNTS) do
+        update_construction_timers(city, tier)
+    end
+end
+
+
 return {
+    updateProvidedAmounts = updateProvidedAmounts,
     getSupplyLevels = getSupplyLevels,
     updateNeeds = updateNeeds,
     consumeBasicNeeds = consumeBasicNeeds,
@@ -592,4 +594,5 @@ return {
     consumeItem = consumeItem,
     resourcePrices = resourcePrices,
     update_construction_timers = update_construction_timers,
+    update_construction_timers_all = update_construction_timers_all,
 }

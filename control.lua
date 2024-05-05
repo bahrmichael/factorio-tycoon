@@ -7,12 +7,15 @@ local ResearchHandler = require("research-event-handler")
 local OnPlayerEventHandler = require("player-event-handler")
 local OnChunkChartedHandler = require("chunk-charted-handler")
 local OnConstructionHandler = require("construction-event-handler")
+local SurfaceEventHandler = require("surface-event-handler")
 local Passengers = require("passengers")
 local ChatMessages = require("chat-messages")
 local Consumption = require("consumption")
 local City = require("city")
 local Queue = require("queue")
 local PrimaryIndustries = require("primary-industries")
+local UsedBottlesStore = require("used-bottles-store")
+local FloorUpgradesQueue = require("floor-upgrades-queue")
 
 --- TICK HANDLERS
 local ONE_SECOND = 60;
@@ -48,6 +51,7 @@ script.on_nth_tick(FIVE_SECONDS, function()
     expand_roads()
     City.complete_house_construction()
     handle_passengers()
+    FloorUpgradesQueue.process()
 end)
 
 local function add_more_cities()
@@ -69,17 +73,11 @@ local function display_intro_messages()
     ChatMessages.show_info_messages()
 end
 
-local housing_tiers = {"simple", "residential", "highrise"}
-
 local function consume_resources()
     for _, city in ipairs(global.tycoon_cities or {}) do
         Consumption.consumeBasicNeeds(city)
         Consumption.consumeAdditionalNeeds(city)
-
-        for _, tier in ipairs(housing_tiers) do
-            Consumption.update_construction_timers(city, tier)
-        end
-
+        Consumption.update_construction_timers_all(city)
     end
 end
 
@@ -121,6 +119,9 @@ local function return_urban_planning_center_currency()
 end
 
 script.on_nth_tick(ONE_MINUTE, function()
+    for _, city in pairs(global.tycoon_cities or {}) do
+        UsedBottlesStore.return_used_bottles(city)
+    end
     consume_resources()
     City.construct_gardens()
     display_intro_messages()
@@ -189,6 +190,23 @@ end)
 
 script.on_event(defines.events.on_gui_checked_state_changed, function(event)
     GuiEventHandler.on_gui_checked_state_changed(event)
+end)
+
+-- surface events
+script.on_event(defines.events.on_surface_cleared, function (event)
+    SurfaceEventHandler.on_surface_cleared(event)
+end)
+script.on_event(defines.events.on_surface_created, function (event)
+    SurfaceEventHandler.on_surface_created(event)
+end)
+script.on_event(defines.events.on_surface_deleted, function (event)
+    SurfaceEventHandler.on_surface_deleted(event)
+end)
+script.on_event(defines.events.on_surface_imported, function (event)
+    SurfaceEventHandler.on_surface_imported(event)
+end)
+script.on_event(defines.events.on_surface_renamed, function (event)
+    SurfaceEventHandler.on_surface_renamed(event)
 end)
 
 --- REMOTE INTERFACES

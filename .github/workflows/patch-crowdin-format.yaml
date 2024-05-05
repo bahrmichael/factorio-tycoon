@@ -26,7 +26,7 @@ jobs:
       id: changed-files
       with:
         files: "locale/**/*.cfg"
-      uses: tj-actions/verify-changed-files@v19
+      uses: tj-actions/verify-changed-files@v20
 
     - name: Push changes
       if: ${{ steps.changed-files.outputs.files_changed == 'true' }}
