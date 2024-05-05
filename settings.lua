@@ -27,4 +27,11 @@ data:extend({
         setting_type = "runtime-global",
         default_value = false,
     },
+    {
+        type = "bool-setting",
+        name = "tycoon-reveal-spawned",
+        order = "6-r-s",
+        setting_type = "runtime-global",
+        default_value = false,
+    },
 })

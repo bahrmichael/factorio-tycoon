@@ -210,8 +210,10 @@ local function initializeCity(city)
                 local startCoordinates = GridUtil.translateCityGridToTileCoordinates(city, { x = x, y = y })
                 clearCell(startCoordinates.y, startCoordinates.x)
                 if map ~= nil then
-                    -- Landfill is what we start with. It's later upgraded to higher tier roads as the citizens improve.
-                    Util.printTiles(startCoordinates, map, Constants.GROUND_TILE_TYPES.simple, city.surface_index)
+                    -- If we were to start with landfill around the town hall, we'd get unpretty edges when new dirt roads are built.
+                    -- It also looks odd when residential buildings upgrade to stone around them, but their range doesn't reach the town hall.
+                    -- That's why it looks nicer to just start with stone tiles around the town hall.
+                    Util.printTiles(startCoordinates, map, Constants.GROUND_TILE_TYPES.residential, city.surface_index)
                 end
                 if cell.initKey == "town-hall" then
                     local thPosition = {
@@ -357,9 +359,12 @@ local function addCity(position, surface_index, predefinedCityName)
     })
     initializeCity(global.tycoon_cities[cityId])
 
+    local gps = (math.floor(position.x) + 1.5 * Constants.CELL_SIZE) ..",".. (math.floor(position.y) + 1.5 * Constants.CELL_SIZE)
+    if surface_index ~= Constants.STARTING_SURFACE_ID then
+        gps = gps ..",".. game.surfaces[surface_index].name
+    end
     game.print({ "",
-        "[color=orange]Factorio Tycoon:[/color] ", { "tycooon-new-city", cityName }, ": ",
-        "[gps=" .. (math.floor(position.x) + 1.5 * Constants.CELL_SIZE) .. "," .. (math.floor(position.y) + 1.5 * Constants.CELL_SIZE) .. "]",
+        "[color=orange]Factorio Tycoon:[/color] ", { "tycooon-new-city", cityName }, ": [gps=".. gps .."]",
     })
     return cityName
 end

@@ -100,6 +100,15 @@ local function chunkToIndex2D(ch, size)
     return math.floor(ch.y % size)*size + math.floor(ch.x % size)
 end
 
+--- @param index number Index in 2D-array
+--- @param size number Size of array in one dimension
+--- @return ChunkPosition Index in array
+local function chunkFromIndex2D(index, size)
+    local y, x = math.modf(index / size)
+    x = math.floor(x * size)
+    return { x = x, y = y }
+end
+
 --- we could use string.format("%d;%d", p.x, p.y), but it looks slower
 --- @param p ChunkPosition, only integers please! For floats use math.floor()
 --- @return number Hash to be used for dictionary keys
@@ -359,14 +368,25 @@ end
 --- @param start Coordinates
 --- @param map string[]
 --- @param tileName string
+--- @param dont_override_tiles string[] | nil
 --- @param surface_index number
-local function printTiles(start, map, tileName, surface_index)
+local function printTiles(start, map, tileName, surface_index, dont_override_tiles)
+    if dont_override_tiles == nil then
+        dont_override_tiles = {}
+    end
     local x, y = start.x, start.y
     for _, value in ipairs(map) do
         for i = 1, #value do
             local char = string.sub(value, i, i)
             if char == "1" then
-                game.surfaces[surface_index or Constants.STARTING_SURFACE_ID].set_tiles({ { name = tileName, position = { x, y } } })
+                local can_print = true
+                if #dont_override_tiles > 0 then
+                    local tile = game.surfaces[surface_index].get_tile(x, y)
+                    can_print = indexOf(dont_override_tiles, tile.name) == nil
+                end
+                if can_print then
+                    game.surfaces[surface_index or Constants.STARTING_SURFACE_ID].set_tiles({ { name = tileName, position = { x, y } } })
+                end
             end
             x = x + 1
         end
@@ -407,6 +427,7 @@ return {
     chunkToPosition = chunkToPosition,
     chunkToRegion = chunkToRegion,
     chunkToIndex2D = chunkToIndex2D,
+    chunkFromIndex2D = chunkFromIndex2D,
     chunkToHash = chunkToHash,
     chunkFromHash = chunkFromHash,
 
