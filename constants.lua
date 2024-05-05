@@ -12,13 +12,12 @@ local CONSTANTS = {
 
     -- Each cell has 6x6 tiles
     CELL_SIZE = 6,
-    CITY_GROWTH_TICKS = OneSecond * 60,
     CITY_STATS_LIFETIME_TICKS = OneSecond * 30,
     CITY_RADIUS = 150,
-    -- Minimum ticks until we try adding another city
-    MORE_CITIES_TICKS = OneSecond * 120,
-    INITIAL_CITY_TICK = 30,
     PASSENGER_SPAWNING_TICKS = OneSecond * 2,
+    -- Global number of citizens required per city, before another city will be added 
+    -- 500 is a random guess. Need to verify if it's a good value through playtesting.
+    NEW_CITY_THRESHOLD = 500,
 
     -- all special buildings, true if required for supply
     CITY_SPECIAL_BUILDINGS = {

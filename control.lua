@@ -16,6 +16,7 @@ local Queue = require("queue")
 local PrimaryIndustries = require("primary-industries")
 local UsedBottlesStore = require("used-bottles-store")
 local FloorUpgradesQueue = require("floor-upgrades-queue")
+local Constants = require("constants")
 
 --- TICK HANDLERS
 local ONE_SECOND = 60;
@@ -63,7 +64,7 @@ local function add_more_cities()
             end
         end
 
-        local threshold = #(global.tycoon_cities or {}) * 500
+        local threshold = #(global.tycoon_cities or {}) * Constants.NEW_CITY_THRESHOLD
         if global_citizen_count > threshold then
             CityPlanning.addMoreCities(false)
         end
