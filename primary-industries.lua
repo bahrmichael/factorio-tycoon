@@ -164,10 +164,10 @@ local function place_primary_industry_at_position(position, entity_name, surface
             entity.set_recipe(getFixedRecipeForIndustry(entity.name))
             entity.recipe_locked = true
 
-            return entity
-        else
-            game.print("Factorio Error: The mod has encountered an issue when placing primary industries. Please report this to the developer. You can continue playing.")
-        end
+                return entity
+            else
+                game.print({"", "[color=orange]Factorio Tycoon:[/color] ", "The mod has encountered an issue when placing primary industries. Please report this to the developer. You can continue playing."})
+            end
     end
 end
 
