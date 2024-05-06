@@ -1,4 +1,3 @@
-DEBUG = require("debug")
 local Queue = require("queue")
 local Constants = require("constants")
 local Consumption = require("consumption")
@@ -294,7 +293,6 @@ local function hasSurroundingRoad(city, coordinates)
     for _, s in ipairs(surroundsOfUnused) do
         local surroundingCell = GridUtil.safeGridAccess(city, s)
         if surroundingCell ~= nil and surroundingCell.type == "road" then
-            DEBUG.log("y=" .. coordinates.y .. " x=" .. coordinates.x .. " has road neighbour: y=" .. s.y .. " x=" .. s.x)
             return true
         end
     end
@@ -416,22 +414,17 @@ local streetIgnorables = {"big-electric-pole", "medium-electric-pole", "small-el
 --- @param lookoutDirections Direction[]
 --- @return boolean canBuild
 local function testRoadDirection(city, roadEnd, lookoutDirections)
-    DEBUG.log("Testing directions: " .. table.concat(lookoutDirections, ","))
-
     -- Test the compatibility of the directions
     for _, direction in ipairs(lookoutDirections) do
-        DEBUG.log("Testing direction: " .. direction)
         local neighbourPosition = continueInDirection(roadEnd.coordinates, direction, 1)
 
         local collidables = checkForCollidables(city, neighbourPosition, streetIgnorables)
 
         if collidables == "blocked" then
-            DEBUG.log("Test result: False, because collidables")
             return false
         elseif collidables == "only-straight-rail" then
              local isCrossing = areStraightRailsOrthogonal(city, neighbourPosition, direction)
              if not isCrossing then
-                DEBUG.log("Test result: False, because not a rail crossing")
                 return false
              end
         end
@@ -442,33 +435,17 @@ local function testRoadDirection(city, roadEnd, lookoutDirections)
             return false
         end
 
-        if global.tycoon_enable_debug_logging then
-            if neighbourCell.type ~= nil and neighbourCell.type ~= "unused" then
-                DEBUG.log("Neighbour: " .. neighbourCell.type)
-                if neighbourCell.type == "road" then
-                    DEBUG.log("Neighbour(" .. "y=" .. neighbourPosition.y .. " x=" .. neighbourPosition.x  .. ") road sockets: " .. table.concat(neighbourCell.roadSockets, ","))
-                end
-            end
-        end
-
         -- Streets must not expand into buildings or collidables, but may expand into empty fields or streets
         if neighbourCell.type == "unused" then
             -- noop, cell is free
         elseif neighbourCell.type == "building" then
-            DEBUG.log("Test result: False, because building")
             return false
         elseif neighbourCell.type == "road" then
             if Util.indexOf(neighbourCell.roadSockets, invertDirection(direction)) ~= nil then
-                DEBUG.log("Test result: False, because road with inverted direction")
                 return false
             end
         elseif #neighbourCell == 1 and (neighbourCell[1] == "linear.vertical" or neighbourCell[1] == "linear.horizontal" or neighbourCell[1] == "town-hall" or neighbourCell[1] == "intersection") then
-            DEBUG.log("Test result: False, because start field")
             return false
-        elseif neighbourCell.type ~= "road" then
-            DEBUG.log("---1")
-        else
-            DEBUG.log("---2")
         end
 
         -- Streets must not continue directly next to and parallel to each other
@@ -488,7 +465,6 @@ local function testRoadDirection(city, roadEnd, lookoutDirections)
                 local sockets = cell.roadSockets or {}
                 for _, socket in ipairs(sockets) do
                     if socket == direction or socket == invertDirection(direction) then
-                        DEBUG.log("Test result: False, because parallel road (" .. socket .. ", y=" .. position.y .. "x=" .. position.x .. ")")
                         return false
                     end
                 end
@@ -496,8 +472,7 @@ local function testRoadDirection(city, roadEnd, lookoutDirections)
         end
     end
 
-    DEBUG.log("Test result: True")
-    return true
+        return true
 end
 
 local weightedRoadConnections
@@ -541,7 +516,6 @@ end
 --- @param roadEnd RoadEnd
 --- @return Direction[] | nil
 local function pickRoadExpansion(city, roadEnd)
-    DEBUG.log('ENTER pickRoadExpansion')
     local left = getLeftDirection(roadEnd.direction)
     local right = getRightDirection(roadEnd.direction)
 
@@ -549,7 +523,6 @@ local function pickRoadExpansion(city, roadEnd)
     shuffle(options)
 
     for _, option in ipairs(options) do
-        DEBUG.log('Check connections: ' .. option)
         local picked
         if option == "3" then
             picked = {roadEnd.direction, left, right}
@@ -578,7 +551,6 @@ local function pickRoadExpansion(city, roadEnd)
                 end
             end
             local shouldBuildStraight = city.generator() > (straightStreetLength / 10)
-            DEBUG.log("Should build straight: " .. tostring(shouldBuildStraight) .. " (straight length: " .. straightStreetLength .. ")")
             if shouldBuildStraight then
                 picked = {roadEnd.direction}
             else
@@ -888,10 +860,6 @@ end
 --- @param city City
 --- @return Coordinates | nil coordinates
 local function growAtRandomRoadEnd(city)
-
-    DEBUG.log("\n\nENTER growAtRandomRoadEnd")
-    DEBUG.logGrid(city.grid)
-
     if city.roadEnds == nil then
         city.roadEnds = Queue.new()
         return
@@ -901,9 +869,7 @@ local function growAtRandomRoadEnd(city)
     if roadEnd == nil then
         return
     end
-
-    DEBUG.log('Coordinates: y=' .. roadEnd.coordinates.y .. " x=" .. roadEnd.coordinates.x)
-
+    
     if roadEnd.coordinates.x <= 1
      or roadEnd.coordinates.x >= GridUtil.getGridSize(city.grid)
      or roadEnd.coordinates.y <= 1
@@ -911,8 +877,6 @@ local function growAtRandomRoadEnd(city)
      then
         -- We need to put the item back first, so that the expansion is applied to it properly
         Queue.pushleft(city.roadEnds, roadEnd)
-        DEBUG.log('Expanding city')
-        DEBUG.logRoadEnds(city.roadEnds)
         -- When expanding the grid I noticed that there sometimes were duplicates, which may have multiplied the coordinate shift (e.g. 3 duplicates meant that x/y for each would be shifted by 3 cells)
         -- No idea why there are duplicates or why the multiplication happens, but removing duplicates helped as well
         Queue.removeDuplicates(city.roadEnds, function(v)
@@ -945,19 +909,15 @@ local function growAtRandomRoadEnd(city)
                 incraseCoordinates(r, city)
             end
         end
-        DEBUG.logRoadEnds(city.roadEnds)
-
         return
     end
 
     if not isCharted(city, roadEnd.coordinates) then
-        DEBUG.log("RoadEnd is not charted: x=" .. roadEnd.coordinates.x .. " y=" .. roadEnd.coordinates.y)
         return
     end
 
     local pickedExpansionDirections = pickRoadExpansion(city, roadEnd)
     if pickedExpansionDirections ~= nil then
-        DEBUG.log('Picked Expansion Directions: ' .. #pickedExpansionDirections .. " (" .. table.concat(pickedExpansionDirections, ",") .. ")")
         -- For each direction, fill the current cell with the direction and the neighbour with the inverse direction
         for _, direction in ipairs(pickedExpansionDirections) do
 
@@ -1004,7 +964,6 @@ local function growAtRandomRoadEnd(city)
                     roadSockets = {neighbourSocket}
                 }
                 -- When creating a new road cell, then we also mark that as a roadEnd to later continue from
-                DEBUG.log('Add roadEnd: ' .. neighbourPosition.y .. "/" .. neighbourPosition.x)
                 Queue.pushright(city.roadEnds, {
                     coordinates = neighbourPosition,
                     -- We need to use the original direction, so that the next expansion continues in the same direction
@@ -1022,7 +981,6 @@ local function growAtRandomRoadEnd(city)
         -- roadEnd.additionalWeight = (roadEnd.additionalWeight or 1) * 1.2
         Queue.pushright(city.roadEnds, roadEnd)
     end
-    DEBUG.logGrid(city.grid)
     return roadEnd.coordinates
 end
 
