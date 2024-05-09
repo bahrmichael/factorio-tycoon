@@ -41,7 +41,7 @@ local CONSTANTS = {
 
     -- This array is ordered from most expensive to cheapest, so that
     -- we do expensive upgrades first (instead of just letting the road always expand).
-    -- Sepcial buildings (like the treasury) are an exception that should ideally come first.
+    -- Special buildings (like the treasury) are an exception that should ideally come first.
     CONSTRUCTION_MATERIALS = {
         specialBuildings = {{
             name = "stone-brick",

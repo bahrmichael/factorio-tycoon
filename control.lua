@@ -42,7 +42,7 @@ local function expand_roads()
         if Queue.count(city.buildingLocationQueue) < #city.grid then
             local coordinates = City.growAtRandomRoadEnd(city)
             if coordinates ~= nil then
-                City.updatepossibleBuildingLocations(city, coordinates)
+                City.updatePossibleBuildingLocations(city, coordinates)
             end
         end
     end
