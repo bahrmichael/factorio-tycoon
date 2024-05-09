@@ -155,7 +155,7 @@ local function getCircularSurroundingCoordinates(origin, size, city)
 --- @param area any
 --- @param surface_index number
 --- @param ignorables string[] | nil
-local function removeColldingEntities(area, surface_index, ignorables)
+local function removeCollidingEntities(area, surface_index, ignorables)
     local printEntities = game.surfaces[surface_index].find_entities_filtered({
         area=area,
         type = {"tree", "simple-entity"}
@@ -617,6 +617,7 @@ local function getMap(direction, wide)
 end
 
 -- TODO: build this table from prototypes or data-constants
+-- Maybe we can replace this entire mechanism by using variations instead.
 local totalBuildingSprites = {
     ["garden"] = 13,
     ["excavation-pit"] = 20,
@@ -795,7 +796,7 @@ local function startConstruction(city, buildingConstruction, queueIndex, allowed
             end
 
             -- We can start a construction site here
-            removeColldingEntities(area, city.surface_index)
+            removeCollidingEntities(area, city.surface_index)
 
             -- Place an excavation site entity that will be later replaced with the actual building
             local excavationPit = game.surfaces[city.surface_index].create_entity{
@@ -836,7 +837,7 @@ local function isCharted(city, coordinates)
 end
 
 --- @param coordinates Coordinates
-local function incraseCoordinates(coordinates, city)
+local function increaseCoordinates(coordinates, city)
     -- Debugged a case where the new value would be above the current grid size --> coordinates.x > #city.grid
     coordinates.x = coordinates.x + 1
     coordinates.y = coordinates.y + 1
@@ -853,7 +854,7 @@ local function clearAreaAndPrintTiles(city, coordinates, map, tileType)
         {currentCellStartCoordinates.x, currentCellStartCoordinates.y},
         {currentCellStartCoordinates.x + Constants.CELL_SIZE, currentCellStartCoordinates.y + Constants.CELL_SIZE}
     }
-    removeColldingEntities(currentArea, city.surface_index, streetIgnorables)
+    removeCollidingEntities(currentArea, city.surface_index, streetIgnorables)
 
 end
 
@@ -886,27 +887,27 @@ local function growAtRandomRoadEnd(city)
         -- Since we extended the grid (and inserted a top/left row/colum) all roadEnd coordinates need to shift one
         if city.roadEnds ~= nil then
             for value in Queue.iterate(city.roadEnds) do
-                incraseCoordinates(value.coordinates, city)
+                increaseCoordinates(value.coordinates, city)
             end
         end
         if city.gardenLocationQueue ~= nil then
             for value in Queue.iterate(city.gardenLocationQueue) do
-                incraseCoordinates(value, city)
+                increaseCoordinates(value, city)
             end
         end
         if city.buildingLocationQueue ~= nil then
             for value in Queue.iterate(city.buildingLocationQueue) do
-                incraseCoordinates(value, city)
+                increaseCoordinates(value, city)
             end
         end
         if city.excavationPits ~= nil then
             for _, r in ipairs(city.excavationPits) do
-                incraseCoordinates(r.coordinates, city)
+                increaseCoordinates(r.coordinates, city)
             end
         end
         if city.houseLocations ~= nil then
             for _, r in ipairs(city.houseLocations) do
-                incraseCoordinates(r, city)
+                increaseCoordinates(r, city)
             end
         end
         return
@@ -1162,9 +1163,9 @@ local function completeConstruction(city, buildingTypes)
         if housingTier == "residential" or housingTier == "highrise" then
             local range = housingTier == "residential" and 2 or 3
             local allNeighboursOfCompletedHouse = getCircularSurroundingCoordinates(coordinates, range, city)
-            for _, neioghbourCoords in pairs(allNeighboursOfCompletedHouse) do
-                if neioghbourCoords ~= nil then
-                    FloorUpgradesQueue.push(city, neioghbourCoords, Constants.GROUND_TILE_TYPES[housingTier])
+            for _, neighbourCoords in pairs(allNeighboursOfCompletedHouse) do
+                if neighbourCoords ~= nil then
+                    FloorUpgradesQueue.push(city, neighbourCoords, Constants.GROUND_TILE_TYPES[housingTier])
                 end
             end
         end
@@ -1414,7 +1415,7 @@ local function freeCellAtPosition(city, position, unit_number)
     end
 
     if cell.type == "building" then
-        -- WARN: this can't call removeBuilding() on_entity_destoyed event, so we provide unit_number in ugly way
+        -- WARN: this can't call removeBuilding() on_entity_destroyed event, so we provide unit_number in ugly way
         clearCell(city, {cell = cell, coordinates = cellCoordinates, unit_number = unit_number})
     end
 
@@ -1570,7 +1571,7 @@ end
 local CITY = {
     growAtRandomRoadEnd = growAtRandomRoadEnd,
     growCitizenCount = growCitizenCount,
-    updatepossibleBuildingLocations = addBuildingLocations,
+    updatePossibleBuildingLocations = addBuildingLocations,
     completeConstruction = completeConstruction,
     startConstruction = startConstruction,
     isCellFree = isCellFree,

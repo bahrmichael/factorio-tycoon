@@ -96,7 +96,7 @@ local function tagIndustry(pos, entity_name, surface_index)
         text = localizePrimaryProductionName(entity_name),
     })
 
-    -- to accomodate that ^, we keep failed tags in a queue
+    -- to accommodate that ^, we keep failed tags in a queue
     -- using chunk coords, so that on_chunk_*() handlers can easily check by key
     local chunk_position = Util.positionToChunk(pos)
     if tag == nil then
@@ -124,7 +124,7 @@ local function place_primary_industry_at_position(position, entity_name, surface
         if nearby_primary_industries_count > 0 then
             return nil
         end
-        -- Fisheries don't have a pipe input and therfore don't need this condition
+        -- Fisheries don't have a pipe input and therefore don't need this condition
         -- they are also placed near water, so this would lead to no fisheries being placed anywhere.
         if entity_name ~= "tycoon-fishery" then
             local nearby_cliffs_or_water_count = game.surfaces[surface_index].count_tiles_filtered{

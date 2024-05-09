@@ -105,7 +105,7 @@ end
 
 -- apples should yield 0.5 currency as a baseline
 local kwPerCurrency = 180 * 2
--- Just copied this to get a list of item names that we may need to calcuate
+-- Just copied this to get a list of item names that we may need to calculate
 -- Copied and adjusted from consumption.lua
 local resources = {
     ["tycoon-apple"] = 180 / kwPerCurrency,
