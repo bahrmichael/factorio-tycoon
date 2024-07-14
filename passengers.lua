@@ -156,7 +156,7 @@ local function getCredits(passenger)
     local originCity = findCityByName(passenger.origin)
     local destinationCity = findCityByName(passenger.destination)
     if originCity == nil or destinationCity == nil then
-        game.print("The tycoon mod has encountered a problem: Credits for a passenger couldn't be awarded because the origin or destination city could not be found.")
+        game.print({"", "[color=orange]Factorio Tycoon:[/color] ", "The tycoon mod has encountered a problem: Credits for a passenger couldn't be awarded because the origin or destination city could not be found."})
         return 0
     end
     

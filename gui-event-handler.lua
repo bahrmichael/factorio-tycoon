@@ -49,21 +49,6 @@ local function on_gui_opened(event)
             trainStationGui,
             Util.findCityById(cityId)
         )
-    elseif (event.entity or {}).name == "tycoon-urban-planning-center" then
-        local player = game.players[event.player_index]
-
-        local guiKey = "urban_planning_center_view"
-        local urbanPlanningCenterGui = player.gui.relative[guiKey]
-        if urbanPlanningCenterGui ~= nil then
-            -- clear any previous gui so that we can fully reconstruct it
-            urbanPlanningCenterGui.destroy()
-        end
-
-        local anchor = {gui = defines.relative_gui_type.container_gui, name = "tycoon-urban-planning-center", position = defines.relative_gui_position.right}
-        urbanPlanningCenterGui = player.gui.relative.add{type = "frame", anchor = anchor, caption = {"", {"entity-name.tycoon-urban-planning-center"}}, direction = "vertical", name = guiKey}
-
-        Gui.addUrbanPlanningCenterView(urbanPlanningCenterGui)
-        
     elseif event.entity ~= nil and Util.isSupplyBuilding(event.entity.name) then
         local player = game.players[event.player_index]
         

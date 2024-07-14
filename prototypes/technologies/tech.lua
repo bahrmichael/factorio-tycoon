@@ -358,10 +358,10 @@ data:extend{
         icon = "__tycoon__/graphics/icons/multiple-cities.png",
         icon_size = 256,
         effects = {
-            {
-                type = "unlock-recipe",
-                recipe = "tycoon-urban-planning-center",
-            },
+            -- {
+            --     type = "unlock-recipe",
+            --     recipe = "tycoon-urban-planning-center",
+            -- },
         },
         prerequisites = { "tycoon-residential-housing" },
         order = "g-e-e",

@@ -31,7 +31,6 @@ require("prototypes.items.smoothie")
 require("prototypes.items.fish-filet")
 require("prototypes.items.passengers")
 require("prototypes.items.passenger-train-station")
-require("prototypes.items.urban-planning-center")
 require("prototypes.items.bicycle")
 require("prototypes.items.candle")
 require("prototypes.items.cutlery")
@@ -79,3 +78,17 @@ require("prototypes.hotkeys")
 require("prototypes.shortcuts")
 require("prototypes.gui.sprites")
 require("prototypes.gui.tips-and-tricks")
+
+-- urban planning center is deprecated, we're just keeping this here for compatibility with mods that change this item
+data:extend{
+    {
+      type = "item",
+      name = "tycoon-urban-planning-center",
+      icon = "__tycoon__/graphics/icons/cow.png",
+      icon_size = 64,
+      subgroup = "tycoon-buildings",
+      order = "a[tycoon]-h[urban-planning-center]",
+      stack_size = 1,
+      place_result = "tycoon-urban-planning-center",
+    }
+  }

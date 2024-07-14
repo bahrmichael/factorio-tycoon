@@ -497,9 +497,9 @@ local function addHousingView(housingType, city, anchor)
         last_construction = 0,
         construction_interval = math.huge
     }
-    local remainig_seconds = math.max(math.ceil(((timer.last_construction + timer.construction_interval) - game.tick) / 60), 0)
-    local minutes = math.floor(remainig_seconds / 60)
-    local seconds = remainig_seconds % 60
+    local remaining_seconds = math.max(math.ceil(((timer.last_construction + timer.construction_interval) - game.tick) / 60), 0)
+    local minutes = math.floor(remaining_seconds / 60)
+    local seconds = remaining_seconds % 60
     if not (met_hardware_store and met_construction_material and met_lower_tier_houses) or minutes > 30 then
         construction_info_table.add{type = "label", caption = {"", "[color=red]", {"tycoon-housing-missing-prerequisites"}, "[/color]"}}
     elseif minutes > 10 then
@@ -532,11 +532,11 @@ local function getOverallSupplyLevelsSummary(city, needsFn)
 
     local simpleLevelSummary = getSupplyLevelsSummary(simpleLevels)
     local residentialLevelSummary = game.forces.player.technologies["tycoon-residential-housing"].researched and getSupplyLevelsSummary(residentialLevels) or "supplied"
-    local highriseLevelSymmary = game.forces.player.technologies["tycoon-highrise-housing"].researched and getSupplyLevelsSummary(highriseLevels) or "supplied"
+    local highriseLevelSummary = game.forces.player.technologies["tycoon-highrise-housing"].researched and getSupplyLevelsSummary(highriseLevels) or "supplied"
 
-    if simpleLevelSummary == "supplied" and residentialLevelSummary == "supplied" and highriseLevelSymmary == "supplied" then
+    if simpleLevelSummary == "supplied" and residentialLevelSummary == "supplied" and highriseLevelSummary == "supplied" then
         return "supplied"
-    elseif simpleLevelSummary == "missing" and residentialLevelSummary == "missing" and highriseLevelSymmary == "missing" then
+    elseif simpleLevelSummary == "missing" and residentialLevelSummary == "missing" and highriseLevelSummary == "missing" then
         return "missing"
     else
         return "lacking"
@@ -591,14 +591,14 @@ local function addCityOverview(city, anchor)
     tbl.add{type = "label", caption = getOverallConstructionMaterialsCaption(city)}
 end
 
-local function canCreatePassengerForCity(train_station_numer, destination_city_id)
+local function canCreatePassengerForCity(train_station_number, destination_city_id)
     -- If the player has not set any filters for this station (i.e. they are nil or none are false), then we can display new cities as accepted
     -- If any city has been disabled, then we won't allow new cities to automatically show up and produce passengers
 
     local areAllFiltersPositive = true
-    if global.tycoon_train_station_passenger_filters ~= nil and global.tycoon_train_station_passenger_filters[train_station_numer] ~= nil then
+    if global.tycoon_train_station_passenger_filters ~= nil and global.tycoon_train_station_passenger_filters[train_station_number] ~= nil then
         for _, c in ipairs(global.tycoon_cities) do
-            if global.tycoon_train_station_passenger_filters[train_station_numer][c.id] == false then
+            if global.tycoon_train_station_passenger_filters[train_station_number][c.id] == false then
                 areAllFiltersPositive = false
                 break
             end
@@ -610,11 +610,11 @@ local function canCreatePassengerForCity(train_station_numer, destination_city_i
     end
 
     -- If the station does not know how to filter a station yet and not all filters are positive, then set the new one to negative
-    if global.tycoon_train_station_passenger_filters[train_station_numer][destination_city_id] == nil then
-        global.tycoon_train_station_passenger_filters[train_station_numer][destination_city_id] = areAllFiltersPositive
+    if global.tycoon_train_station_passenger_filters[train_station_number][destination_city_id] == nil then
+        global.tycoon_train_station_passenger_filters[train_station_number][destination_city_id] = areAllFiltersPositive
     end
 
-    return global.tycoon_train_station_passenger_filters[train_station_numer][destination_city_id]
+    return global.tycoon_train_station_passenger_filters[train_station_number][destination_city_id]
 end
 
 local function addTrainStationView(trainStationUnitNumber, anchor, city)
@@ -693,26 +693,6 @@ local function addCityView(city, anchor)
     tabbed_pane.selected_tab_index = 1
 end
 
-local function addUrbanPlanningCenterView(anchor)
-    local totalAvailable = CityPlanner.getTotalAvailableFunds()
-    local requiredFunds = CityPlanner.getRequiredFundsForNextCity()
-    local tbl = anchor.add{type = "table", column_count = 2, draw_horizontal_lines = true}
-    tbl.add{type = "label", caption = {"", {"tycoon-required-funds-for-next-city"}, ":"}}
-    tbl.add{type = "label", caption = {"", requiredFunds}}
-    tbl.add{type = "label", caption = {"", {"tycoon-total-available-funds"}, ":"}}
-    tbl.add{type = "label", caption = {"", totalAvailable}}
-
-    anchor.add{type = "label", caption = {"", {"tycoon-progress"}}}
-    anchor.add{type = "progressbar", value = totalAvailable / requiredFunds}
-    
-    if requiredFunds < totalAvailable then
-        anchor.add{type = "line", direction = "horizontal"}
-        anchor.add{type = "label", caption = {"", {"tycoon-urban-planning-center-hint-1"}}}
-        anchor.add{type = "label", caption = {"", {"tycoon-urban-planning-center-hint-2"}}}
-        anchor.add{type = "label", caption = {"", {"tycoon-urban-planning-center-hint-3"}}}
-    end
-end
-
 local function addCitiesOverview(anchor)
     local columnWidth = 100
     local tbl = anchor.add{type = "table", column_count = 4, draw_horizontal_lines = true}
@@ -776,7 +756,6 @@ local GUI = {
     addConstructionMaterialsGui = addConstructionMaterialsGui,
     addCityView = addCityView,
     addTrainStationView = addTrainStationView,
-    addUrbanPlanningCenterView = addUrbanPlanningCenterView,
     addMultipleCitiesOverview = addMultipleCitiesOverview,
     addSupplyBuildingOverview = addSupplyBuildingOverview,
 }
