@@ -573,7 +573,7 @@ end
 
 --- @param direction Direction
 --- @return string[] map
-local function getMap(direction, wide)
+local function getMap(direction)
     local result = nil
     if direction == "north" then
         result = {
@@ -741,8 +741,13 @@ local function startConstruction(city, buildingConstruction, queueIndex, allowed
         return v.x .. "-" .. v.y
     end)
 
+    local function log_failure(reason)
+        log("startConstruction(): unable to construct: ".. tostring(buildingConstruction.buildingType) ..", reason: ".. reason)
+    end
+
     -- Make up to 10 attempts to find a location where we can start a construction site
     local attempts = 10
+    local log_reason = "attempts"
     if allowedCoordinates ~= nil then
         attempts = #allowedCoordinates
     end
@@ -754,6 +759,7 @@ local function startConstruction(city, buildingConstruction, queueIndex, allowed
             coordinates = Queue.popleft(city[queueIndex])
             if coordinates == nil then
                 -- If there are no more entries left in the queue, then abort
+                log_failure(log_reason)
                 return false
             end
         end
@@ -789,10 +795,13 @@ local function startConstruction(city, buildingConstruction, queueIndex, allowed
         elseif buildingConstruction.buildingType == "garden" and isConnectedToRoad(city, coordinates) then
             -- Don't build gardens if there's a road right next to it
         else
-            local construction_materials = Constants.CONSTRUCTION_MATERIALS[buildingConstruction.buildingType] or {}
-            for _, item in pairs(construction_materials) do
-                local hardwareStores = Util.list_special_city_buildings(city, "tycoon-hardware-store")
-                Consumption.consumeItem(item, hardwareStores, city)
+            local construction_materials = Constants.CONSTRUCTION_MATERIALS[buildingConstruction.buildingType]
+            local hardwareStores = Util.list_special_city_buildings(city, "tycoon-hardware-store")
+            local cost = Consumption.consumeRequired(construction_materials, hardwareStores, city)
+            if cost == nil then
+                log_reason = "materials"
+                log_failure(log_reason)
+                return false
             end
 
             -- We can start a construction site here
@@ -823,6 +832,8 @@ local function startConstruction(city, buildingConstruction, queueIndex, allowed
             return true
         end
     end
+
+    log_failure(log_reason)
     return false
 end
 
@@ -1508,9 +1519,11 @@ local function getBuildables(hardwareStores)
     
     local buildables = {}
     for key, resources in pairs(Constants.CONSTRUCTION_MATERIALS) do
+        --log("key: ".. serpent.line(key) .." needs: ".. serpent.line(resources))
         local anyResourceMissing = false
-        for _, resource in ipairs(resources) do
-            if (supply[resource.name] or 0) < resource.required then
+        for name, required in pairs(resources) do
+            --log("key: ".. serpent.line(key) .." name: ".. serpent.line(name) .." required: ".. serpent.line(required) .." available: ".. serpent.line(supply[name]))
+            if (supply[name] or 0) < required then
                 anyResourceMissing = true
                 break
             end

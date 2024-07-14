@@ -387,8 +387,8 @@ local function areConstructionNeedsMet(city, housingTier, stores)
     local supply = Util.aggregateSupplyBuildingResources(hardwareStores)
     local needs = Constants.CONSTRUCTION_MATERIALS[housingTier]
 
-    for _, need in ipairs(needs) do
-        if need.required > (supply[need.name] or 0) then
+    for name, required in pairs(needs) do
+        if (supply[name] or 0) < required then
             return false
         end
     end
@@ -574,6 +574,12 @@ local function addCityOverview(city, anchor)
     -- citizen count
     tbl.add{type = "label", caption = {"", {"tycoon-gui-citizens"}, ": "}}
     tbl.add{type = "label", caption = {"", countCitizens(city)}}
+    -- debt
+    tbl.add{type = "label", caption = {"", {"tycoon-gui-debt"}, ": "}, tooltip = {"", {"tycoon-gui-debt-tooltip"}}}
+    tbl.add{type = "label",
+        caption = {"", tostring(math.floor(city.stats.debt))},
+        tooltip = {"", string.format("%.2f", city.stats.debt)},
+    }
     -- overall basic needs status
     tbl.add{type = "label", caption = {"", {"tycoon-gui-basic-needs"}, ": "}}
     tbl.add{type = "label", caption = getOverallBasicNeedsCaption(city)}

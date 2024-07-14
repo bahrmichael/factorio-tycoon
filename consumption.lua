@@ -9,6 +9,7 @@ local Util = require("util")
 --- @class CityStats
 --- @field basic_needs { string: Need }
 --- @field additional_needs { string: Need }
+--- @field debt number
 --- @field providedUpdateTick number
 
 --- @class SpecialBuildings
@@ -347,6 +348,45 @@ local function countCitizens(city)
     return total
 end
 
+local function payCurrency(city, cost)
+    assert(city ~= nil)
+    -- ban super-low values
+    if math.abs(cost) < 0.001 then
+        return
+    end
+
+    --log(string.format("payCurrency(): debt: %.2f cost: %d city: %s", city.stats.debt, cost, city.name))
+    city.stats.debt = city.stats.debt + cost
+end
+
+local function payToTreasury(city)
+    assert(city ~= nil)
+    assert(city.stats.debt >= 0, "debt is wrong")
+    -- we can pay only integer values
+    if city.stats.debt < 1.0 then
+        return 0
+    end
+
+    -- pay as much as possible. treasuries could be full or absent
+    local treasuries = Util.list_special_city_buildings(city, "tycoon-treasury")
+    local leftover = city.stats.debt
+    for _, entity in ipairs(treasuries) do
+        local paid = entity.insert({name = "tycoon-currency", count = math.floor(city.stats.debt)})
+        leftover = city.stats.debt - paid
+        if leftover <= 1.0 then
+            break
+        end
+    end
+    local paid = city.stats.debt - leftover
+    city.stats.debt = leftover
+
+    if paid >= 1.0 then
+        log(string.format("payToTreasury(): debt: %.2f paid: %d city: %s", leftover, paid, city.name))
+    end
+
+    return city.stats.debt
+end
+
 --- @class Item
 --- @field name string
 --- @field required number
@@ -399,6 +439,80 @@ local function consumeItem(item, suppliers, city)
     if item.name == "tycoon-milk-bottle" then
         UsedBottlesStore.change_used_bottles(city.id, consumedAmount)
     end
+end
+
+--- @param items dict{}
+--- @param suppliers any[]
+--- @param city City
+--- @return number | nil Items total cost on success, nil if anything is missing
+local function consumeRequired(items, suppliers, city)
+    assert(items ~= nil, "items is nil, constants is missing building entry! empty must be listed as well")
+    if items == nil or suppliers == nil or city == nil then
+        log("consumeRequired(): called with weird args:"
+            .." items: ".. serpent.line(items)
+            .." suppliers: ".. serpent.line(suppliers)
+            .." city: ".. tostring((city or {}).name)
+        )
+        return
+    end
+
+    -- free construction is allowed (by empty table in constants)
+    if table_size(items) == 0 then
+        return 0
+    end
+    -- no suppliers is failure
+    if #suppliers == 0 then
+        return
+    end
+
+    local cost = 0
+    local found = {}
+    local stores = {}
+    for name, required in pairs(items) do
+        assert(required ~= nil and required >= 0, "Required amount must be a number 0 or larger.")
+
+        local unfilled = required
+        for _, entity in ipairs(suppliers) do
+            local partial = math.min(unfilled, entity.get_item_count(name))
+            if partial > 0 then
+                table.insert(stores, {name = name, entity = entity, amount = partial})
+            end
+            unfilled = unfilled - partial
+            log(string.format("name: %s required: %d unfilled: %d partial: %d", name, required, unfilled, partial))
+            if unfilled <= 0 then
+                found[name] = required
+                break
+            end
+        end
+
+        -- calculate cost inplace
+        local price = resourcePrices[name]
+        assert(price ~= nil, "Missing price for " .. name)
+        cost = cost + price * required
+    end
+
+    -- missing required is failure
+    if table_size(found) ~= table_size(items) then
+        log(string.format("consumeRequired(): found: %d ~= items: %d", table_size(found), table_size(items)))
+        return
+    end
+
+    -- actually remove items
+    for _, t in pairs(stores) do
+        if t.entity.valid then
+            log("removing from store: ".. t.entity.unit_number .." ".. t.name ..": ".. t.amount)
+            local removed = t.entity.remove_item({name = t.name, count = t.amount})
+            -- reduce found amount to simplify check below
+            found[t.name] = (found[t.name] or 0) - removed
+        end
+    end
+    -- and final checks
+    for name, amount in pairs(found) do
+        assert(amount == 0, "removed ~= amount")
+    end
+
+    payCurrency(city, cost)
+    return cost
 end
 
 --- @param city City
@@ -585,6 +699,12 @@ local function update_construction_timers_all(city)
     end
 end
 
+local function pay_to_treasury_all()
+    for _, city in ipairs(global.tycoon_cities or {}) do
+        payToTreasury(city)
+    end
+end
+
 
 return {
     updateProvidedAmounts = updateProvidedAmounts,
@@ -592,8 +712,12 @@ return {
     updateNeeds = updateNeeds,
     consumeBasicNeeds = consumeBasicNeeds,
     consumeAdditionalNeeds = consumeAdditionalNeeds,
+    payCurrency = payCurrency,
     consumeItem = consumeItem,
+    consumeRequired = consumeRequired,
     resourcePrices = resourcePrices,
     update_construction_timers = update_construction_timers,
     update_construction_timers_all = update_construction_timers_all,
+
+    pay_to_treasury_all = pay_to_treasury_all,
 }
