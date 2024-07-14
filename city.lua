@@ -573,7 +573,7 @@ end
 
 --- @param direction Direction
 --- @return string[] map
-local function getMap(direction, wide)
+local function getMap(direction)
     local result = nil
     if direction == "north" then
         result = {

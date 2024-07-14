@@ -73,7 +73,6 @@ local CONSTANTS = {
         garden = {
         },
     },
-
     GROUND_TILE_TYPES = {
         road = "landfill",
         simple = "landfill",
