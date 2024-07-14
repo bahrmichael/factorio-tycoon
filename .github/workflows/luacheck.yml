@@ -7,4 +7,4 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Luacheck linter
-        uses: lunarmodules/luacheck@v1.1.2
+        uses: lunarmodules/luacheck@v1.2.0

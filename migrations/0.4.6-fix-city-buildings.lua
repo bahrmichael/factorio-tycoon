@@ -115,7 +115,7 @@ for _, city in pairs(global.tycoon_cities) do
 
                 -- clear manually
                 city.grid[y][x] = { type = "unused" }
-                City.updatepossibleBuildingLocations(city, {x=x, y=y}, true)
+                City.updatePossibleBuildingLocations(city, {x=x, y=y}, true)
                 goto continue
             end
 
