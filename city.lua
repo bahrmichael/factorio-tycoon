@@ -985,6 +985,8 @@ local function growAtRandomRoadEnd(city)
                 assert(false, "Road should not be expanding into a cell that's not a road or unused.")
             end
         end
+        
+        city.surrounding_points_cache = nil
     else
         -- todo: in what cases can't we build here? entity collision? player collision?
         -- buildings should come later to fill empty gaps that have no collisions
@@ -1566,6 +1568,7 @@ local function start_house_construction()
                             buildingType = "simple",
                             constructionTimeInTicks = city.generator(600, 1200)
                         }, "buildingLocationQueue")
+                        city.surrounding_points_cache = nil
                     elseif is_allowed_upgrade_to_tier(city, tier) then
                         upgradeHouse(city, tier)
                     end

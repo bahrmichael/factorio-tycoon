@@ -47,6 +47,11 @@ local function addPadding(points, padding)
 end
 
 local function approximateCircleAroundCity(city)
+
+    if city.surrounding_points_cache ~= nil and #city.surrounding_points_cache > 3 then
+        return city.surrounding_points_cache
+    end
+
     local points = {}
     local grid = city.grid
     for y = 1, #grid do
@@ -66,6 +71,8 @@ local function approximateCircleAroundCity(city)
         local mapped = GridUtil.translateCityGridToTileCoordinates(city, p)
         table.insert(mappedPoints, mapped)
     end
+
+    city.surrounding_points_cache = mappedPoints
 
     return mappedPoints
 end
