@@ -358,7 +358,7 @@ local function list_special_city_buildings(city, name)
     local entities = {}
     if city.special_buildings.other[name] ~= nil and #city.special_buildings.other[name] > 0 then
         entities = city.special_buildings.other[name]
-    else
+    elseif city.special_buildings.other[name] == nil then
         local radius = calculateMaxRadius(city.center, approximateCircleAroundCity(city))
         entities = game.surfaces[city.surface_index].find_entities_filtered{
             name=name,
