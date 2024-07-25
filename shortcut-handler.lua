@@ -18,7 +18,7 @@ local function on_shortcut(event)
                 direction = "vertical"
             }
 
-            Gui.addMultipleCitiesOverview(frame)
+            Gui.addMultipleCitiesOverview(frame, event.player_index)
         end
     end
 end

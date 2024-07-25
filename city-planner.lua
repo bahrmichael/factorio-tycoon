@@ -6,97 +6,48 @@ local DataConstants = require("data-constants")
 local Queue = require("queue")
 local Util = require("util")
 
-
-
--- With an additional space of 200 the cities still spawned relatively close to each other, so I raised it to 400
-local MIN_DISTANCE = Constants.CITY_RADIUS * 2 + 400
-
-local function isInRangeOfCity(city, position, surface_index)
-    if city.surface_index ~= surface_index then
-        return false
-    end
-    local distance = Util.calculateDistance(city.center, position)
-    return distance < MIN_DISTANCE
-end
-
-local function isInRangeOfAnyCity(position, surface_index)
-    for _, city in ipairs(global.tycoon_cities) do
-        if isInRangeOfCity(city, position, surface_index) then
-            return true
-        end
-    end
-    return false
-end
-
-local function find_random_city_position(surface_index)
-    local chunk = game.surfaces[surface_index].get_random_chunk()
-    if chunk ~= nil then
-        if game.forces.player.is_chunk_charted(game.surfaces[surface_index], chunk) then
-            return Util.chunkToPosition(chunk)
-        end
-    end
-    return nil
-end
-
-local function findNewCityPosition(isInitialTown, surface_index)
+local function findNewCityPosition(surface_index)
     local scorings = {}
     -- make up to 10 attempts
     for i = 1, 10, 1 do
-        local position = isInitialTown and { x = math.random(-50, 50), y = math.random(-50, 50) } or find_random_city_position(surface_index)
-        if position ~= nil and (isInitialTown or not isInRangeOfAnyCity(position, surface_index)) then
+        local position = { x = math.random(-50, 50), y = math.random(-50, 50) }
+        if position ~= nil then
             local newCityPosition = game.surfaces[surface_index].find_non_colliding_position("tycoon-town-center-virtual", position,
                 Constants.CITY_RADIUS, 5, true)
             if newCityPosition ~= nil then
-                local isChunkCharted = isInitialTown or game.forces.player.is_chunk_charted(game.surfaces[surface_index], {
-                    x = math.floor(newCityPosition.x / 32),
-                    y = math.floor(newCityPosition.y / 32),
+                local record = {
+                    position = {
+                        x = math.floor(newCityPosition.x),
+                        y = math.floor(newCityPosition.y),
+                    },
+                }
+                
+                local radius = 50 / i + 18
+                local tiles = game.surfaces[surface_index].find_tiles_filtered {
+                    position = newCityPosition,
+                    radius = radius,         -- The initial grid is 6x3=18, so 50 allows for 32 more, or 16 on each side, which is nearly 3 more cells. That should give the city enough space to grow outwards.
+                    name = {
+                        "deepwater",
+                        "deepwater-green",
+                        "out-of-map",
+                        "water",
+                        "water-green",
+                        "water-shallow",
+                        "water-mud",
+                        "water-wube",
+                    },
+                }
+                local entities = game.surfaces[surface_index].find_entities_filtered({
+                    position = newCityPosition,
+                    radius = radius,         -- The initial grid is 6x3=18, so 50 allows for 32 more, or 16 on each side, which is nearly 3 more cells. That should give the city enough space to grow outwards.
+                    name = { "character", "tycoon-town-hall" },
+                    type = { "tree", "simple-entity", "fish" },
+                    invert = true
                 })
-                if isChunkCharted then
-                    local skip = false
-                    local record = {
-                        position = {
-                            x = math.floor(newCityPosition.x),
-                            y = math.floor(newCityPosition.y),
-                        },
-                    }
-                    if not isInitialTown then
-                        local playerEntities = game.surfaces[surface_index].find_entities_filtered {
-                            position = newCityPosition,
-                            radius = Constants.CITY_RADIUS,
-                            force = game.forces.player,
-                            limit = 1
-                        }
-                        skip = #playerEntities > 0
-                    end
-                    if not skip then
-                        local radius = 50 / i + 18
-                        local tiles = game.surfaces[surface_index].find_tiles_filtered {
-                            position = newCityPosition,
-                            radius = radius,         -- The initial grid is 6x3=18, so 50 allows for 32 more, or 16 on each side, which is nearly 3 more cells. That should give the city enough space to grow outwards.
-                            name = {
-                                "deepwater",
-                                "deepwater-green",
-                                "out-of-map",
-                                "water",
-                                "water-green",
-                                "water-shallow",
-                                "water-mud",
-                                "water-wube",
-                            },
-                        }
-                        local entities = game.surfaces[surface_index].find_entities_filtered({
-                            position = newCityPosition,
-                            radius = radius,         -- The initial grid is 6x3=18, so 50 allows for 32 more, or 16 on each side, which is nearly 3 more cells. That should give the city enough space to grow outwards.
-                            name = { "character", "tycoon-town-hall" },
-                            type = { "tree", "simple-entity", "fish" },
-                            invert = true
-                        })
-                        record.entities = #entities
-                        record.tiles = #tiles
+                record.entities = #entities
+                record.tiles = #tiles
 
-                        table.insert(scorings, record)
-                    end
-                end
+                table.insert(scorings, record)
             end
         end
     end
@@ -109,10 +60,7 @@ local function findNewCityPosition(isInitialTown, surface_index)
         autoplaceCounter = autoplaceCounter + 1
     end
     local entitiesFactor = 2 / (autoplaceTotal / autoplaceCounter)
-    local distanceWeight = 0
-    if isInitialTown then
-        distanceWeight = 2
-    end
+    local distanceWeight = 2
     local function weight(s)
         return math.pow(s.position.y, distanceWeight)
             + math.pow(s.position.x, distanceWeight)
@@ -180,7 +128,7 @@ local function initialGrid()
     }
 end
 
-local function initializeCity(city)
+local function initializeCity(city, existing_town_hall)
     city.grid = initialGrid()
 
     local function clearCell(y, x)
@@ -219,7 +167,7 @@ local function initializeCity(city)
                         x = startCoordinates.x - 1 + Constants.CELL_SIZE / 2,
                         y = startCoordinates.y - 1 + Constants.CELL_SIZE / 2,
                     }
-                    local townHall = game.surfaces[city.surface_index].create_entity {
+                    local townHall = existing_town_hall or game.surfaces[city.surface_index].create_entity {
                         name = "tycoon-town-hall",
                         position = thPosition,
                         force = "neutral",
@@ -325,7 +273,7 @@ local function initializeCity(city)
     Consumption.updateNeeds(city)
 end
 
-local function addCity(position, surface_index, predefinedCityName)
+local function addCity(position, surface_index, predefinedCityName, existing_town_hall)
     if global.tycoon_cities == nil then
         global.tycoon_cities = {}
     end
@@ -357,7 +305,7 @@ local function addCity(position, surface_index, predefinedCityName)
             highrise = 0,
         },
     })
-    initializeCity(global.tycoon_cities[cityId])
+    initializeCity(global.tycoon_cities[cityId], existing_town_hall)
 
     local gps = (math.floor(position.x) + 1.5 * Constants.CELL_SIZE) ..",".. (math.floor(position.y) + 1.5 * Constants.CELL_SIZE)
     if surface_index ~= Constants.STARTING_SURFACE_ID then
@@ -366,7 +314,10 @@ local function addCity(position, surface_index, predefinedCityName)
     game.print({ "",
         "[color=orange]Factorio Tycoon:[/color] ", { "tycooon-new-city", cityName }, ": [gps=".. gps .."]",
     })
-    return cityName
+    return {
+        cityName = cityName,
+        cityId = cityId,
+    }
 end
 
 local function addMoreCities(isInitialCity)
@@ -383,7 +334,7 @@ local function addMoreCities(isInitialCity)
         return false
     end
 
-    local newCityPosition = findNewCityPosition(isInitialCity, surface_index)
+    local newCityPosition = findNewCityPosition(surface_index)
     if newCityPosition ~= nil then
         addCity(newCityPosition, surface_index)
         return true

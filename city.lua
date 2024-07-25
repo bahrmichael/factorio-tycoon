@@ -1581,6 +1581,38 @@ local function complete_house_construction()
     end
 end
 
+local function isPointWithinCity(city, point)
+    local circlePoints = Util.approximateCircleAroundCity(city)
+    local n = #circlePoints
+    local inside = false
+
+    for i = 1, n do
+        local j = i % n + 1
+        local vi = circlePoints[i]
+        local vj = circlePoints[j]
+
+        if ((vi.y > point.y) ~= (vj.y > point.y)) and
+           (point.x < (vj.x - vi.x) * (point.y - vi.y) / (vj.y - vi.y) + vi.x) then
+            inside = not inside
+        end
+    end
+
+    return inside
+end
+
+local function findTriples(city)
+    local cornerList = Util.approximateCircleAroundCity(city)
+
+    local triples = {}
+    for i = 1, #cornerList do
+        local c1 = cornerList[i]
+        local c2 = cornerList[i % #cornerList + 1]
+        table.insert(triples, {{target=c1}, {target=c2}, {target=city.center}})
+    end
+    
+    return triples
+end
+
 local CITY = {
     growAtRandomRoadEnd = growAtRandomRoadEnd,
     growCitizenCount = growCitizenCount,
@@ -1594,6 +1626,8 @@ local CITY = {
     construct_gardens = construct_gardens,
     start_house_construction = start_house_construction,
     complete_house_construction = complete_house_construction,
+    findTriples = findTriples,
+    is_point_within_city = isPointWithinCity,
 }
 
 return CITY

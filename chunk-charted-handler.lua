@@ -22,15 +22,6 @@ local function insideStartingArea(chunk)
     return chunk.x >= -sa and chunk.x < sa and chunk.y >= -sa and chunk.y < sa
 end
 
--- TODO: we can use similar (another option?) when city builds, to refresh map
---- forces to chart chunk if enabled in settings
-local function chartChunk(surface, chunk)
-    if (settings.global["tycoon-reveal-spawned"] or {}).value then
-        local p = Util.chunkToPosition(chunk)
-        game.forces.player.chart(surface, {p, p})
-    end
-end
-
 
 --
 -- event handlers: on_chunk_*()
@@ -45,7 +36,10 @@ end
 
 -- WARN: might be called very frequently, for ex: when there are biters wandering - avoid useless stuff
 local function on_chunk_charted(event)
-    if event.surface_index == Constants.STARTING_SURFACE_ID and insideStartingArea(event.position) then
+    if event.surface_index ~= Constants.STARTING_SURFACE_ID then
+        -- We only want to place industries on the primary planet
+        return
+    elseif insideStartingArea(event.position) then
         return
     end
 

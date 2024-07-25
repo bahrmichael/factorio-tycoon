@@ -149,38 +149,26 @@ script.on_init(function()
     global.tycoon_city_buildings = {}
 end)
 
-script.on_event(defines.events.on_gui_opened, function (event)
-    GuiEventHandler.on_gui_opened(event)
-end)
+script.on_event(defines.events.on_gui_opened, GuiEventHandler.on_gui_opened)
 
-script.on_event(defines.events.on_gui_text_changed, function(event)
-    GuiEventHandler.on_gui_text_changed(event)
-end)
+script.on_event(defines.events.on_gui_text_changed, GuiEventHandler.on_gui_text_changed)
 
-script.on_event(defines.events.on_gui_click, function(event)
-    GuiEventHandler.on_gui_click(event)
-end)
+script.on_event(defines.events.on_gui_click, GuiEventHandler.on_gui_click)
 
-script.on_event(defines.events.on_gui_checked_state_changed, function(event)
-    GuiEventHandler.on_gui_checked_state_changed(event)
-end)
+script.on_event(defines.events.on_gui_checked_state_changed, GuiEventHandler.on_gui_checked_state_changed)
+
+script.on_event(defines.events.on_gui_closed, GuiEventHandler.on_gui_closed)
 
 -- surface events
-script.on_event(defines.events.on_surface_cleared, function (event)
-    SurfaceEventHandler.on_surface_cleared(event)
-end)
-script.on_event(defines.events.on_surface_created, function (event)
-    SurfaceEventHandler.on_surface_created(event)
-end)
-script.on_event(defines.events.on_surface_deleted, function (event)
-    SurfaceEventHandler.on_surface_deleted(event)
-end)
-script.on_event(defines.events.on_surface_imported, function (event)
-    SurfaceEventHandler.on_surface_imported(event)
-end)
-script.on_event(defines.events.on_surface_renamed, function (event)
-    SurfaceEventHandler.on_surface_renamed(event)
-end)
+script.on_event(defines.events.on_surface_cleared, SurfaceEventHandler.on_surface_cleared)
+
+script.on_event(defines.events.on_surface_created, SurfaceEventHandler.on_surface_created)
+
+script.on_event(defines.events.on_surface_deleted, SurfaceEventHandler.on_surface_deleted)
+
+script.on_event(defines.events.on_surface_imported, SurfaceEventHandler.on_surface_imported)
+
+script.on_event(defines.events.on_surface_renamed, SurfaceEventHandler.on_surface_renamed)
 
 --- REMOTE INTERFACES
 remote.add_interface("tycoon", {
