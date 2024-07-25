@@ -353,31 +353,6 @@ data:extend{
     },
     {
         type = "technology",
-        name = "tycoon-multiple-cities",
-        mod = "Tycoon",
-        icon = "__tycoon__/graphics/icons/multiple-cities.png",
-        icon_size = 256,
-        effects = {
-            -- {
-            --     type = "unlock-recipe",
-            --     recipe = "tycoon-urban-planning-center",
-            -- },
-        },
-        prerequisites = { "tycoon-residential-housing" },
-        order = "g-e-e",
-        unit = {
-          count = 100,
-          ingredients = {
-            { "automation-science-pack", 1 },
-            { "logistic-science-pack", 1 },
-            { "chemical-science-pack", 1 },
-            { "production-science-pack", 1 },
-          },
-          time = 60,
-        },
-    },
-    {
-        type = "technology",
         name = "tycoon-public-transportation",
         mod = "Tycoon",
         icon = "__tycoon__/graphics/icons/public-transportation.png",
@@ -388,15 +363,14 @@ data:extend{
                 recipe = "tycoon-passenger-train-station",
             },
         },
-        prerequisites = { "tycoon-multiple-cities", "automated-rail-transportation" },
+        prerequisites = { "tycoon-new-cities", "automated-rail-transportation" },
         order = "g-e-e",
         unit = {
-          count = 200,
+          count = 50,
           ingredients = {
             { "automation-science-pack", 1 },
             { "logistic-science-pack", 1 },
             { "chemical-science-pack", 1 },
-            { "production-science-pack", 1 },
           },
           time = 60,
         },
@@ -644,5 +618,31 @@ data:extend{
           },
           time = 30,
         },
+    },
+    {
+        type = "technology",
+        name = "tycoon-new-cities",
+        mod = "Tycoon",
+        icon = "__tycoon__/graphics/icons/multiple-cities.png",
+        icon_size = 256,
+        effects = {
+            {
+                -- this still triggers the on_research_finished event
+                type = "nothing",
+            },
+        },
+        prerequisites = { "tycoon-residential-housing" },
+        unit = {
+            count_formula = "(L^2)*100",
+            ingredients = {
+                { "automation-science-pack", 1 },
+                { "logistic-science-pack", 1 },
+                { "chemical-science-pack", 1 },
+                { "production-science-pack", 1 },
+            },
+            time = 120,
+        },
+        max_level = 5,
+        upgrade = true,
     },
 }

@@ -108,7 +108,7 @@ data:extend({
         indent = 1,
         trigger = {
             type = "research",
-            technology = "tycoon-multiple-cities"
+            technology = "tycoon-new-cities"
         },
     },
     {
@@ -119,7 +119,7 @@ data:extend({
         indent = 1,
         trigger = {
             type = "research",
-            technology = "tycoon-multiple-cities"
+            technology = "tycoon-new-cities"
         },
     },
     {
