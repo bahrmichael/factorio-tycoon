@@ -87,4 +87,15 @@ data:extend{
         result = "tycoon-passenger-train-station",
         result_count = 1,
     },
+    {
+        type = "recipe",
+        name = "tycoon-citizen-science-lab",
+        energy_required = 5,
+        ingredients = {
+          {"electronic-circuit", 10},
+          {"iron-gear-wheel", 10},
+          {"transport-belt", 4}
+        },
+        result = "tycoon-citizen-science-lab"
+      }
 }

@@ -77,4 +77,17 @@ data:extend{
         result = "utility-science-pack",
         result_count = 1,
     },
+    {
+        type = "recipe",
+        name = "tycoon-citizen-science-pack",
+        category = "tycoon-university-science",
+        energy_required = 10,
+        enabled = true,
+        ingredients = {
+            { type = "item", name = "tycoon-money-stack", amount = 100 },
+        },
+        results = {
+            { type = "item", name = "tycoon-citizen-science-pack", amount = 1, probability = 0.75 },
+        },
+    },
 }

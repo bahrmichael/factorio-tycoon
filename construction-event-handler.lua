@@ -23,7 +23,7 @@ local function on_built(event)
     if Util.isSpecialBuilding(entity.name) then
         log("on_built(): event: ".. event.name .." unit: ".. entity.unit_number .." name: ".. entity.name)
         city = Util.findCityAtPosition(game.surfaces[surface_index], entity.position)
-        if city == nil then
+        if city == nil or not City.is_point_within_city(city, entity.position) then
             if event.player_index ~= nil then
                 game.players[event.player_index].print({"", {"tycoon-supply-building-not-connected"}})
             end
@@ -72,7 +72,7 @@ local function on_built(event)
             local required_distance = minimum_distance - nearest_distance
             entity.destroy()
             player.insert{name = "tycoon-town-hall", count = 1}
-            player.print({"", {"tycoon-town-hall-too-close", {required_distance = math.ceil(required_distance)}}})
+            player.print({"", {"tycoon-town-hall-too-close", math.ceil(required_distance)}})
             return
         end
 

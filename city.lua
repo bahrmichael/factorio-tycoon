@@ -760,6 +760,7 @@ local function startConstruction(city, buildingConstruction, queueIndex, allowed
             if coordinates == nil then
                 -- If there are no more entries left in the queue, then abort
                 log_failure(log_reason)
+                Queue.pushright(city[queueIndex], coordinates)
                 return false
             end
         end
@@ -801,6 +802,7 @@ local function startConstruction(city, buildingConstruction, queueIndex, allowed
             if cost == nil then
                 log_reason = "materials"
                 log_failure(log_reason)
+                Queue.pushright(city[queueIndex], coordinates)
                 return false
             end
 
