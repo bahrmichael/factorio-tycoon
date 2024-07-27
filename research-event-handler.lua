@@ -29,9 +29,11 @@ local function on_research_finished(event)
         end
     elseif name == "tycoon-new-cities" then
         for _, city in pairs(global.tycoon_cities or {}) do
-            city.special_buildings.town_hall.insert({name = "tycoon-town-hall", count = 1})
-            game.print("You can find a new town hall item in the inventory of the " .. city.name .. "'s town hall. Place it somewhere to start a new city!")
-            break
+            if city.special_buildings.town_hall ~= nil and city.special_buildings.town_hall.valid then
+                city.special_buildings.town_hall.insert({name = "tycoon-town-hall", count = 1})
+                game.print("You can find a new town hall item in the inventory of the " .. city.name .. "'s town hall. Place it somewhere to start a new city!")
+                break
+            end
         end
     end
 end
