@@ -621,6 +621,35 @@ data:extend{
     },
     {
         type = "technology",
+        name = "tycoon-money-laundering",
+        mod = "Tycoon",
+        icon = "__tycoon__/graphics/icons/money-stack.png",
+        icon_size = 64,
+        effects = {
+            {
+                type = "unlock-recipe",
+                recipe = "tycoon-citizen-science-lab",
+            },
+            {
+                type = "unlock-recipe",
+                recipe = "tycoon-citizen-science-pack",
+            },
+        },
+        prerequisites = { "tycoon-public-transportation" },
+        unit = {
+            count = 75,
+            ingredients = {
+              { "automation-science-pack", 1 },
+              { "logistic-science-pack", 1 },
+              { "chemical-science-pack", 1 },
+            },
+            time = 60,
+        },
+        max_level = 5,
+        upgrade = true,
+    },
+    {
+        type = "technology",
         name = "tycoon-new-cities",
         mod = "Tycoon",
         icon = "__tycoon__/graphics/icons/multiple-cities.png",
@@ -631,7 +660,7 @@ data:extend{
                 type = "nothing",
             },
         },
-        prerequisites = { "tycoon-public-transportation" },
+        prerequisites = { "tycoon-public-transportation", "tycoon-money-laundering" },
         unit = {
             count_formula = "(L^3)*100",
             ingredients = {

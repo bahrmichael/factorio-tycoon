@@ -82,7 +82,7 @@ data:extend{
         name = "tycoon-citizen-science-pack",
         category = "tycoon-university-science",
         energy_required = 10,
-        enabled = true,
+        enabled = false,
         ingredients = {
             { type = "item", name = "tycoon-money-stack", amount = 100 },
         },
