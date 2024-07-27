@@ -92,9 +92,10 @@ data:extend{
         name = "tycoon-citizen-science-lab",
         energy_required = 5,
         ingredients = {
-          {"electronic-circuit", 10},
-          {"iron-gear-wheel", 10},
-          {"transport-belt", 4}
+          {"tycoon-laptop", 5},
+          {"tycoon-money-stack", 10},
+          {"tycoon-soap", 10},
+          {"tycoon-gloves", 50}
         },
         result = "tycoon-citizen-science-lab"
       }

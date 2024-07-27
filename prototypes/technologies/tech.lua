@@ -551,6 +551,7 @@ data:extend{
           count = 100,
           ingredients = {
             { "automation-science-pack", 1 },
+            { "logistic-science-pack", 1 },
           },
           time = 60,
         },
@@ -660,7 +661,7 @@ data:extend{
                 recipe = "tycoon-citizen-science-pack",
             },
         },
-        prerequisites = { "tycoon-money-laundering" },
+        prerequisites = { "tycoon-money-laundering", "tycoon-computers", "tycoon-hygiene" },
         unit = {
             count = 100,
             ingredients = {
