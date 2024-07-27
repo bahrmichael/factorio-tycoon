@@ -1,5 +1,6 @@
 local Util = require("util")
 local Gui = require("gui")
+local GuiState = require("gui-state")
 
 local function on_gui_opened(event)
     if (event.entity or {}).name == "tycoon-town-hall" then
@@ -28,7 +29,7 @@ local function on_gui_opened(event)
             name = guiKey
         }
 
-        Gui.addCityView(city, cityGui)
+        Gui.addCityView(city, cityGui, event.player_index)
     elseif (event.entity or {}).name == "tycoon-passenger-train-station" then
         local player = game.players[event.player_index]
         local unit_number = event.entity.unit_number
@@ -95,15 +96,36 @@ local function on_gui_click(event)
     local player = game.players[event.player_index]
     local element = event.element
 
-    if string.find(element.name, "tycoon_open_tech:", 1, true) then
-        player.open_technology_gui("tycoon-" .. Util.splitString(element.name, ":")[2])
-    elseif element.name == "close_multiple_cities_overview" then
+    if element.name == "" then
+        return
+    end
+
+    local elementNameParts = Util.splitString(element.name, ":")
+
+    if elementNameParts[1] == "tycoon_open_tech" then
+        player.open_technology_gui("tycoon-" .. elementNameParts[2])
+    elseif elementNameParts[1] == "close_multiple_cities_overview" then
         element.parent.parent.destroy()
-    elseif string.find(element.name, "multiple_cities_select_tab:", 1, true) then
-        local selectedTab = element.tags.selected_tab
-        local guiKey = "multiple_cities_overview"
-        local gui = player.gui.center[guiKey]
-        gui.children[2].selected_tab_index = selectedTab
+    elseif elementNameParts[1] == "multiple_cities_select_tab" then
+        if element.type == "button" then
+            local selectedTab = tonumber(elementNameParts[2]) + 1
+            local guiKey = "multiple_cities_overview"
+            local gui = player.gui.center[guiKey]
+            gui.children[2].selected_tab_index = selectedTab
+            GuiState.set_state(event.player_index, "city_tab", selectedTab)
+        else
+            GuiState.set_state(event.player_index, "city_tab", element.parent.selected_tab_index)
+        end
+    elseif elementNameParts[1] == "city_tab" then
+        local city_tab = tonumber(elementNameParts[2])
+        GuiState.set_state(event.player_index, "city_tab", city_tab)
+        if elementNameParts[3] == "housing_tab" then
+            GuiState.set_state(event.player_index, "city_tab:" .. city_tab .. ":housing_tab", tonumber(elementNameParts[4])) 
+            if elementNameParts[5] == "needs_tab" then
+                GuiState.set_state(event.player_index, "city_tab:" .. city_tab .. ":housing_tab:" .. elementNameParts[4] .. ":needs_tab", tonumber(elementNameParts[6]))
+            end
+        end
+
     end
 end
 
@@ -126,9 +148,25 @@ local function on_gui_checked_state_changed(event)
     end
 end
 
+local function on_gui_closed(event)
+    local player = game.players[event.player_index]
+    
+    -- Close city overview
+    if player.gui.relative["city_overview"] then
+        player.gui.relative["city_overview"].destroy()
+    end
+    
+    -- -- Close multiple cities overview
+    if player.gui.center["multiple_cities_overview"] then
+        player.gui.center["multiple_cities_overview"].destroy()
+    end
+end
+
+
 return {
     on_gui_opened = on_gui_opened,
     on_gui_text_changed = on_gui_text_changed,
     on_gui_click = on_gui_click,
     on_gui_checked_state_changed = on_gui_checked_state_changed,
+    on_gui_closed = on_gui_closed,
 }

@@ -27,6 +27,14 @@ local function on_research_finished(event)
         for _, city in pairs(global.tycoon_cities or {}) do
             table.insert(city.priority_buildings, {name = "tycoon-bottle-return-station", priority = 5})
         end
+    elseif name == "tycoon-new-cities" then
+        for _, city in pairs(global.tycoon_cities or {}) do
+            if city.special_buildings.town_hall ~= nil and city.special_buildings.town_hall.valid then
+                city.special_buildings.town_hall.insert({name = "tycoon-town-hall", count = 1})
+                game.print({"", {"tycoon-town-hall-added"}, city.name})
+                break
+            end
+        end
     end
 end
 

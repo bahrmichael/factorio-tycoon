@@ -1,5 +1,6 @@
 local Constants = require("constants")
 local Util = require("util")
+local City = require("city")
 
 local function on_player_cursor_stack_changed(event)
     if global.tycoon_player_renderings == nil then
@@ -27,17 +28,16 @@ local function on_player_cursor_stack_changed(event)
                 if (city.special_buildings or {}).town_hall ~= nil
                     and (city.special_buildings or {}).town_hall.valid
                     then
-                    local render_id = rendering.draw_circle{
-                        color = {0.1, 0.2, 0.1, 0.01},
-                        -- todo: add tech that increases this range, but only up to 250 which is the max for building cities all over the map
-                        radius = Constants.CITY_RADIUS,
-                        filled = true,
-                        target = city.special_buildings.town_hall,
-                        surface = game.surfaces[city.surface_index],
-                        draw_on_ground = true,
-                    }
-
-                    table.insert(global.tycoon_player_renderings[event.player_index], render_id)
+                    for _, triple in ipairs(City.findTriples(city)) do
+                        local render_id = rendering.draw_polygon{
+                            color = {0.1, 0.2, 0.1, 0.01},
+                            vertices = triple,
+                            filled = true,
+                            surface = game.surfaces[city.surface_index],
+                            draw_on_ground = true,
+                        }
+                        table.insert(global.tycoon_player_renderings[event.player_index], render_id)
+                    end
                 end
             end
         end

@@ -1,5 +1,81 @@
 local Constants = require("constants")
 local UtilBitwise = require("util-bitwise")
+local GridUtil = require("grid-util")
+local GrahamScan = require("grahamscan")
+
+local function calculateMaxRadius(centerPoint, circlePoints)
+    local maxRadiusSquared = 0
+
+    for _, point in ipairs(circlePoints) do
+        local dx = point.x - centerPoint.x
+        local dy = point.y - centerPoint.y
+        local distanceSquared = dx * dx + dy * dy
+        
+        if distanceSquared > maxRadiusSquared then
+            maxRadiusSquared = distanceSquared
+        end
+    end
+
+    return math.sqrt(maxRadiusSquared)
+end
+
+local function addPadding(points, padding)
+    -- Calculate centroid
+    local centroid = {x = 0, y = 0}
+    for _, p in ipairs(points) do
+        centroid.x = centroid.x + p.x
+        centroid.y = centroid.y + p.y
+    end
+    centroid.x = centroid.x / #points
+    centroid.y = centroid.y / #points
+
+    -- Move points away from centroid
+    local paddedPoints = {}
+    for _, p in ipairs(points) do
+        local dx = p.x - centroid.x
+        local dy = p.y - centroid.y
+        local distance = math.sqrt(dx*dx + dy*dy)
+        local newDistance = distance + padding
+        local scale = newDistance / distance
+        table.insert(paddedPoints, {
+            x = math.floor(centroid.x + dx * scale),
+            y = math.floor(centroid.y + dy * scale)
+        })
+    end
+
+    return paddedPoints
+end
+
+local function approximateCircleAroundCity(city)
+
+    if city.surrounding_points_cache ~= nil and #city.surrounding_points_cache > 3 then
+        return city.surrounding_points_cache
+    end
+
+    local points = {}
+    local grid = city.grid
+    for y = 1, #grid do
+        for x = 1, #grid[y] do
+            local cell = GridUtil.safeGridAccess(city, {x=x, y=y})
+            if cell and cell.type ~= "unused" then
+                table.insert(points, {x=x, y=y})
+            end
+        end
+    end
+
+    local outerPoints  = GrahamScan.approximate_circle(points)
+    local cornerList = addPadding(outerPoints, 5)
+
+    local mappedPoints = {}
+    for _, p in ipairs(cornerList) do
+        local mapped = GridUtil.translateCityGridToTileCoordinates(city, p)
+        table.insert(mappedPoints, mapped)
+    end
+
+    city.surrounding_points_cache = mappedPoints
+
+    return mappedPoints
+end
 
 local function splitString(s, delimiter)
     local parts = {}
@@ -289,11 +365,12 @@ local function list_special_city_buildings(city, name)
     local entities = {}
     if city.special_buildings.other[name] ~= nil and #city.special_buildings.other[name] > 0 then
         entities = city.special_buildings.other[name]
-    else
+    elseif city.special_buildings.other[name] == nil then
+        local radius = calculateMaxRadius(city.center, approximateCircleAroundCity(city))
         entities = game.surfaces[city.surface_index].find_entities_filtered{
             name=name,
             position=city.center,
-            radius=Constants.CITY_RADIUS,
+            radius=radius,
         }
         city.special_buildings.other[name] = entities
     end
@@ -453,4 +530,7 @@ return {
     printTiles = printTiles,
     aggregateSupplyBuildingResources = aggregateSupplyBuildingResources,
     list_special_city_buildings = list_special_city_buildings,
+
+    calculateMaxRadius = calculateMaxRadius,
+    approximateCircleAroundCity = approximateCircleAroundCity,
 }

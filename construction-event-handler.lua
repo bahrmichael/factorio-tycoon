@@ -1,6 +1,7 @@
 local Util = require("util")
 local Constants = require("constants")
 local City = require("city")
+local CityPlanner = require("city-planner")
 
 local function invalidateSpecialBuildingsList(city, name)
     assert(city.special_buildings ~= nil, "The special buildings should never be nil. There has been one error though, so I added this assertion.")
@@ -22,7 +23,7 @@ local function on_built(event)
     if Util.isSpecialBuilding(entity.name) then
         log("on_built(): event: ".. event.name .." unit: ".. entity.unit_number .." name: ".. entity.name)
         city = Util.findCityAtPosition(game.surfaces[surface_index], entity.position)
-        if city == nil then
+        if city == nil or not City.is_point_within_city(city, entity.position) then
             if event.player_index ~= nil then
                 game.players[event.player_index].print({"", {"tycoon-supply-building-not-connected"}})
             end
@@ -41,6 +42,62 @@ local function on_built(event)
 
         Util.addGlobalBuilding(entity.unit_number, city.id, entity)
         -- WARN: we must always register
+        script.register_on_entity_destroyed(entity)
+    elseif entity.name == "tycoon-town-hall" then
+        log("on_built(): Town hall built: ".. entity.unit_number .." at position: ".. serpent.line(entity.position))
+
+        local position = entity.position
+        local surface = entity.surface
+        local player = game.players[event.player_index]
+        local minimum_distance = Constants.CITY_RADIUS * 4
+        local nearest_distance = minimum_distance
+        local nearest_town_hall = nil
+
+        local nearby_town_halls = surface.find_entities_filtered{
+            name = "tycoon-town-hall",
+            area = {{position.x - nearest_distance, position.y - nearest_distance}, {position.x + nearest_distance, position.y + nearest_distance}}
+        }
+        
+        for _, nearby_entity in pairs(nearby_town_halls) do
+            if nearby_entity.unit_number ~= entity.unit_number then
+                local distance = Util.calculateDistance(position, nearby_entity.position)
+                if distance < nearest_distance then
+                    nearest_distance = distance
+                    nearest_town_hall = nearby_entity
+                end
+            end
+        end
+
+        if nearest_town_hall then
+            local required_distance = minimum_distance - nearest_distance
+            entity.destroy()
+            player.insert{name = "tycoon-town-hall", count = 1}
+            player.print({"", {"tycoon-town-hall-too-close", math.ceil(required_distance)}})
+            return
+        end
+
+        city = CityPlanner.addCity({
+            x = entity.position.x - Constants.CELL_SIZE - 2,
+            y = entity.position.y - Constants.CELL_SIZE - 2,
+        }, surface_index, nil, entity)
+        if city == nil then
+            entity.destroy()
+            if event.player_index ~= nil then
+                player.insert{name = "tycoon-town-hall", count = 1}
+                game.players[event.player_index].print({"", {"tycoon-town-hall-city-failed-player"}})
+            else
+                entity.surface.spill_item_stack(entity.position, {name = "tycoon-town-hall", count = 1})          
+                game.print({"", {"tycoon-town-hall-city-failed-general"}})
+            end
+            return
+        end
+        if global.tycoon_entity_meta_info == nil then
+            global.tycoon_entity_meta_info = {}
+        end
+        global.tycoon_entity_meta_info[entity.unit_number] = {
+            cityId = city.cityId
+        }
+        Util.addGlobalBuilding(entity.unit_number, city.cityId, entity)
         script.register_on_entity_destroyed(entity)
     end
 end

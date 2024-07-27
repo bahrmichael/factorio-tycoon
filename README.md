@@ -25,3 +25,7 @@ UEeJiuJUALUb8SA7IYUhA9Pwqw9jGQ/mkMwIwLZH2giKg5YooELZGEK
 nHjBDHcNMDwvsMN4DvMdGJlBDJCqL0AxCA8kAzMKQgs4gIObmQEBgGn
 D6ovwCgCzBqEv<<<
 ```
+
+## Libraries Used
+
+Some code and assets have been copied from [Krastorio2](https://github.com/raiguard/Krastorio2) and its assets.

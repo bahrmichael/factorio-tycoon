@@ -87,4 +87,16 @@ data:extend{
         result = "tycoon-passenger-train-station",
         result_count = 1,
     },
+    {
+        type = "recipe",
+        name = "tycoon-citizen-science-lab",
+        energy_required = 5,
+        ingredients = {
+          {"tycoon-laptop", 5},
+          {"tycoon-money-stack", 10},
+          {"tycoon-soap", 10},
+          {"tycoon-gloves", 50}
+        },
+        result = "tycoon-citizen-science-lab"
+      }
 }

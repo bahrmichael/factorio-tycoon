@@ -353,31 +353,6 @@ data:extend{
     },
     {
         type = "technology",
-        name = "tycoon-multiple-cities",
-        mod = "Tycoon",
-        icon = "__tycoon__/graphics/icons/multiple-cities.png",
-        icon_size = 256,
-        effects = {
-            -- {
-            --     type = "unlock-recipe",
-            --     recipe = "tycoon-urban-planning-center",
-            -- },
-        },
-        prerequisites = { "tycoon-residential-housing" },
-        order = "g-e-e",
-        unit = {
-          count = 100,
-          ingredients = {
-            { "automation-science-pack", 1 },
-            { "logistic-science-pack", 1 },
-            { "chemical-science-pack", 1 },
-            { "production-science-pack", 1 },
-          },
-          time = 60,
-        },
-    },
-    {
-        type = "technology",
         name = "tycoon-public-transportation",
         mod = "Tycoon",
         icon = "__tycoon__/graphics/icons/public-transportation.png",
@@ -388,15 +363,14 @@ data:extend{
                 recipe = "tycoon-passenger-train-station",
             },
         },
-        prerequisites = { "tycoon-multiple-cities", "automated-rail-transportation" },
+        prerequisites = { "tycoon-residential-housing", "automated-rail-transportation" },
         order = "g-e-e",
         unit = {
-          count = 200,
+          count = 50,
           ingredients = {
             { "automation-science-pack", 1 },
             { "logistic-science-pack", 1 },
             { "chemical-science-pack", 1 },
-            { "production-science-pack", 1 },
           },
           time = 60,
         },
@@ -577,6 +551,7 @@ data:extend{
           count = 100,
           ingredients = {
             { "automation-science-pack", 1 },
+            { "logistic-science-pack", 1 },
           },
           time = 60,
         },
@@ -644,5 +619,82 @@ data:extend{
           },
           time = 30,
         },
+    },
+    {
+        type = "technology",
+        name = "tycoon-money-laundering",
+        mod = "Tycoon",
+        icon = "__tycoon__/graphics/icons/money-stack.png",
+        icon_size = 64,
+        effects = {
+            {
+                type = "unlock-recipe",
+                recipe = "tycoon-money-stack",
+            },
+        },
+        prerequisites = { "tycoon-residential-housing" },
+        unit = {
+            count = 75,
+            ingredients = {
+              { "automation-science-pack", 1 },
+              { "logistic-science-pack", 1 },
+              { "chemical-science-pack", 1 },
+            },
+            time = 60,
+        },
+        max_level = 5,
+        upgrade = true,
+    },
+    {
+        type = "technology",
+        name = "tycoon-citizen-science",
+        mod = "Tycoon",
+        icon = "__tycoon__/graphics/entity/citizen-science-lab/citizen-science-lab.png",
+        icon_size = 256,
+        effects = {
+            {
+                type = "unlock-recipe",
+                recipe = "tycoon-citizen-science-lab",
+            },
+            {
+                type = "unlock-recipe",
+                recipe = "tycoon-citizen-science-pack",
+            },
+        },
+        prerequisites = { "tycoon-money-laundering", "tycoon-computers", "tycoon-hygiene" },
+        unit = {
+            count = 100,
+            ingredients = {
+              { "automation-science-pack", 1 },
+              { "logistic-science-pack", 1 },
+              { "chemical-science-pack", 1 },
+            },
+            time = 60,
+        },
+        max_level = 5,
+        upgrade = true,
+    },
+    {
+        type = "technology",
+        name = "tycoon-new-cities",
+        mod = "Tycoon",
+        icon = "__tycoon__/graphics/icons/multiple-cities.png",
+        icon_size = 256,
+        effects = {
+            {
+                -- this still triggers the on_research_finished event
+                type = "nothing",
+            },
+        },
+        prerequisites = { "tycoon-public-transportation", "tycoon-citizen-science" },
+        unit = {
+            count_formula = "(L^3)*100",
+            ingredients = {
+                { "tycoon-citizen-science-pack", 1 },
+            },
+            time = 60,
+        },
+        max_level = 5,
+        upgrade = true,
     },
 }

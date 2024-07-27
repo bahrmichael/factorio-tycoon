@@ -160,7 +160,8 @@ local function getCredits(passenger)
         return 0
     end
     
-    local distance = Util.calculateDistance(originCity.center, destinationCity.center)
+    local isSameSurface = originCity.surface_index == destinationCity.surface_index
+    local distance = isSameSurface and Util.calculateDistance(originCity.center, destinationCity.center) or 10000
     local ticksNeeded = game.tick - passenger.created
     -- With vanilla, robot research brings them to 9 tiles per second when level 6 is researched (the first one that needs space science).
     local fullRewardForDistance = math.ceil(distance / 100)
@@ -205,6 +206,8 @@ local function clearPassengers(city)
                 end
                 Consumption.payCurrency(city, reward)
             end
+
+            global.tycoon_passenger_transported_count = (global.tycoon_passenger_transported_count or 0) + #cleared
         end
     end
 end

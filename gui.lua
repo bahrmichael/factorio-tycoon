@@ -1,7 +1,7 @@
 local Consumption = require("consumption")
 local Constants = require("constants")
-local CityPlanner = require("city-planner")
 local Util = require("util")
+local GuiState = require("gui-state")
 
 local function setConstructionMaterialsProvided(city, resource, amount)
     -- dev support, delete me
@@ -420,7 +420,7 @@ end
 
 --- @param city City
 --- @param housingType string
-local function addHousingView(housingType, city, anchor)
+local function addHousingView(housingType, city, anchor, player_index)
     
     anchor.style.natural_height = 600
     if housingType ~= "simple" and not game.forces.player.technologies["tycoon-" .. housingType .. "-housing"].researched then
@@ -434,10 +434,10 @@ local function addHousingView(housingType, city, anchor)
     local hardwareStores = Util.list_special_city_buildings(city, "tycoon-hardware-store")
 
     local tabbed_pane = anchor.add{type="tabbed-pane"}
-    local tab_overview = tabbed_pane.add{type="tab", caption={"", {"tycoon-gui-overview"}}}
-    local tab_basic_needs = tabbed_pane.add{type="tab", caption={"", {"tycoon-gui-basic-needs"}}}
-    local tab_additional_needs = tabbed_pane.add{type="tab", caption={"", {"tycoon-gui-additional-needs"}}}
-    local tab_construction_material = tabbed_pane.add{type="tab", caption={"", {"tycoon-gui-construction-materials"}}}
+    local tab_overview = tabbed_pane.add{type="tab", caption={"", {"tycoon-gui-overview"}}, name = "city_tab:" .. city.id + 1 .. ":housing_tab:" .. GuiState.housing_type_to_tab[housingType] .. ":needs_tab:1"}
+    local tab_basic_needs = tabbed_pane.add{type="tab", caption={"", {"tycoon-gui-basic-needs"}}, name = "city_tab:" .. city.id + 1 .. ":housing_tab:" .. GuiState.housing_type_to_tab[housingType] .. ":needs_tab:2"}
+    local tab_additional_needs = tabbed_pane.add{type="tab", caption={"", {"tycoon-gui-additional-needs"}}, name = "city_tab:" .. city.id + 1 .. ":housing_tab:" .. GuiState.housing_type_to_tab[housingType] .. ":needs_tab:3"}
+    local tab_construction_material = tabbed_pane.add{type="tab", caption={"", {"tycoon-gui-construction-materials"}}, name = "city_tab:" .. city.id + 1 .. ":housing_tab:" .. GuiState.housing_type_to_tab[housingType] .. ":needs_tab:4"}
 
     local overview_container = tabbed_pane.add{type = "flow", direction = "vertical"}
     tabbed_pane.add_tab(tab_overview, overview_container)
@@ -522,7 +522,7 @@ local function addHousingView(housingType, city, anchor)
     tabbed_pane.add_tab(tab_construction_material, construction_needs_container)
     addConstructionMaterialsGui(construction_needs_container, constructionNeeds[housingType], city, hardwareStores, housingType)
     
-    tabbed_pane.selected_tab_index = 1
+    tabbed_pane.selected_tab_index = GuiState.get_state(player_index, "city_tab:" .. city.id + 1 .. ":housing_tab:" .. GuiState.housing_type_to_tab[housingType] .. ":needs_tab") or 1
 end
 
 local function getOverallSupplyLevelsSummary(city, needsFn)
@@ -666,13 +666,13 @@ local function addTrainStationView(trainStationUnitNumber, anchor, city)
     end
 end
 
-local function addCityView(city, anchor)
+local function addCityView(city, anchor, player_index)
     
     local tabbed_pane = anchor.add{type="tabbed-pane"}
-    local tab_overview = tabbed_pane.add{type="tab", caption={"", {"tycoon-gui-city-overview"}}}
-    local tab_simple = tabbed_pane.add{type="tab", caption={"", {"technology-name.tycoon-simple-housing"}}}
-    local tab_residential = tabbed_pane.add{type="tab", caption={"", {"technology-name.tycoon-residential-housing"}}}
-    local tab_highrise = tabbed_pane.add{type="tab", caption={"", {"technology-name.tycoon-highrise-housing"}}}
+    local tab_overview = tabbed_pane.add{type="tab", caption={"", {"tycoon-gui-city-overview"}}, name = "city_tab:" .. city.id + 1 .. ":housing_tab:1"}
+    local tab_simple = tabbed_pane.add{type="tab", caption={"", {"technology-name.tycoon-simple-housing"}}, name = "city_tab:" .. city.id + 1 .. ":housing_tab:2"}
+    local tab_residential = tabbed_pane.add{type="tab", caption={"", {"technology-name.tycoon-residential-housing"}}, name = "city_tab:" .. city.id + 1 .. ":housing_tab:3"}
+    local tab_highrise = tabbed_pane.add{type="tab", caption={"", {"technology-name.tycoon-highrise-housing"}}, name = "city_tab:" .. city.id + 1 .. ":housing_tab:4"}
 
     local overviewContainer = tabbed_pane.add{type = "flow", direction = "vertical"}
     tabbed_pane.add_tab(tab_overview, overviewContainer)
@@ -680,17 +680,17 @@ local function addCityView(city, anchor)
     
     local simpleContainer = tabbed_pane.add{type = "scroll-pane", direction = "vertical"}
     tabbed_pane.add_tab(tab_simple, simpleContainer)
-    addHousingView("simple", city, simpleContainer)
+    addHousingView("simple", city, simpleContainer, player_index)
     
     local residentialContainer = tabbed_pane.add{type = "scroll-pane", direction = "vertical"}
     tabbed_pane.add_tab(tab_residential, residentialContainer)
-    addHousingView("residential", city, residentialContainer)
+    addHousingView("residential", city, residentialContainer, player_index)
     
     local highriseContainer = tabbed_pane.add{type = "scroll-pane", direction = "vertical"}
     tabbed_pane.add_tab(tab_highrise, highriseContainer)
-    addHousingView("highrise", city, highriseContainer)
+    addHousingView("highrise", city, highriseContainer, player_index)
 
-    tabbed_pane.selected_tab_index = 1
+    tabbed_pane.selected_tab_index = GuiState.get_state(player_index, "city_tab:" .. city.id + 1 .. ":housing_tab") or 1
 end
 
 local function addCitiesOverview(anchor)
@@ -712,11 +712,11 @@ local function addCitiesOverview(anchor)
     end
 end
 
-local function addMultipleCitiesOverview(anchor)
+local function addMultipleCitiesOverview(anchor, player_index)
     local flow_title_bar = anchor.add{type="flow", direction="horizontal"}
     flow_title_bar.add{type = "label", caption = {"", "[font=default-bold]", {"tycoon-gui-cities-overview"}, "[/font]"}}
-    local close_button = flow_title_bar.add{
-        type="sprite-button", 
+    flow_title_bar.add{
+        type="sprite-button",
         sprite="utility/close_white",
         hovered_sprite="utility/close_black", 
         clicked_sprite="utility/close_black", 
@@ -725,21 +725,21 @@ local function addMultipleCitiesOverview(anchor)
     }
 
     local tabbed_pane = anchor.add{type="tabbed-pane", name = "multiple_cities_overview_tabbed_pane"}
-    local tab_all_cities = tabbed_pane.add{type="tab", caption={"", {"tycoon-gui-all-cities"}}}
+    local tab_all_cities = tabbed_pane.add{type="tab", caption={"", {"tycoon-gui-all-cities"}}, name = "city_tab:1"}
     local overviewContainer = tabbed_pane.add{type = "flow", direction = "vertical"}
     overviewContainer.style.padding = {10, 10, 10, 10}
     tabbed_pane.add_tab(tab_all_cities, overviewContainer)
     addCitiesOverview(overviewContainer)
 
     for i, city in ipairs(global.tycoon_cities or {}) do
-        local tab_city = tabbed_pane.add{type="tab", caption=city.name}
+        local tab_city = tabbed_pane.add{type="tab", caption=city.name, name = "city_tab:" .. i + 1}
 
         local cityContainer = tabbed_pane.add{type = "flow", direction = "vertical"}
         tabbed_pane.add_tab(tab_city, cityContainer)
-        addCityView(city, cityContainer)
+        addCityView(city, cityContainer, player_index)
     end
 
-    tabbed_pane.selected_tab_index = 1
+    tabbed_pane.selected_tab_index = GuiState.get_state(player_index, "city_tab") or 1
 end
 
 local function addSupplyBuildingOverview(anchor, cityName)

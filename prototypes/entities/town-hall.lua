@@ -8,7 +8,7 @@ data:extend{
         max_health = 10000,
         -- This has to be set in the runtime code
         -- destructible = false,
-        inventory_size = 0,
+        inventory_size = 10,
         rotatable = false,
         flags = { "not-rotatable", "not-deconstructable"},
         corpse = "small-remnants",
