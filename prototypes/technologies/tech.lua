@@ -648,7 +648,7 @@ data:extend{
         type = "technology",
         name = "tycoon-citizen-science",
         mod = "Tycoon",
-        icon = "__tycoon__/graphics/entities/citizen-science-lab/citizen-science-lab.png",
+        icon = "__tycoon__/graphics/entity/citizen-science-lab/citizen-science-lab.png",
         icon_size = 256,
         effects = {
             {
