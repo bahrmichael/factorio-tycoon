@@ -85,6 +85,7 @@ data:extend{
         enabled = false,
         ingredients = {
             { type = "item", name = "tycoon-money-stack", amount = 100 },
+            { type = "item", name = "tycoon-laptop", amount = 1 },
         },
         results = {
             { type = "item", name = "tycoon-citizen-science-pack", amount = 1, probability = 0.75 },
