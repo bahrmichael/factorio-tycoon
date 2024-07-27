@@ -648,8 +648,8 @@ data:extend{
         type = "technology",
         name = "tycoon-citizen-science",
         mod = "Tycoon",
-        icon = "__tycoon__/graphics/icons/money-stack.png",
-        icon_size = 64,
+        icon = "__tycoon__/graphics/entities/citizen-science-lab/citizen-science-lab.png",
+        icon_size = 256,
         effects = {
             {
                 type = "unlock-recipe",
