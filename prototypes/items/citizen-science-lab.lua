@@ -2,7 +2,7 @@ data:extend({
     {
       type = "item",
       name = "tycoon-citizen-science-lab",
-      icon = "__tycoon__/graphics/icons/citizen-science-pack.png",
+      icon = "__tycoon__/graphics/icons/citizen-science-lab.png",
       icon_size = 64,
       subgroup = "production-machine",
       order = "g[lab]",

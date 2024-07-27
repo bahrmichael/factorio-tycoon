@@ -628,6 +628,31 @@ data:extend{
         effects = {
             {
                 type = "unlock-recipe",
+                recipe = "tycoon-money-stack",
+            },
+        },
+        prerequisites = { "tycoon-residential-housing" },
+        unit = {
+            count = 75,
+            ingredients = {
+              { "automation-science-pack", 1 },
+              { "logistic-science-pack", 1 },
+              { "chemical-science-pack", 1 },
+            },
+            time = 60,
+        },
+        max_level = 5,
+        upgrade = true,
+    },
+    {
+        type = "technology",
+        name = "tycoon-citizen-science",
+        mod = "Tycoon",
+        icon = "__tycoon__/graphics/icons/money-stack.png",
+        icon_size = 64,
+        effects = {
+            {
+                type = "unlock-recipe",
                 recipe = "tycoon-citizen-science-lab",
             },
             {
@@ -635,9 +660,9 @@ data:extend{
                 recipe = "tycoon-citizen-science-pack",
             },
         },
-        prerequisites = { "tycoon-public-transportation" },
+        prerequisites = { "tycoon-money-laundering" },
         unit = {
-            count = 75,
+            count = 100,
             ingredients = {
               { "automation-science-pack", 1 },
               { "logistic-science-pack", 1 },
@@ -660,7 +685,7 @@ data:extend{
                 type = "nothing",
             },
         },
-        prerequisites = { "tycoon-public-transportation", "tycoon-money-laundering" },
+        prerequisites = { "tycoon-public-transportation", "tycoon-citizen-science" },
         unit = {
             count_formula = "(L^3)*100",
             ingredients = {
