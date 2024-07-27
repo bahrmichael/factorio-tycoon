@@ -206,6 +206,8 @@ local function clearPassengers(city)
                 end
                 Consumption.payCurrency(city, reward)
             end
+
+            global.tycoon_passenger_transported_count = (global.tycoon_passenger_transported_count or 0) + #cleared
         end
     end
 end

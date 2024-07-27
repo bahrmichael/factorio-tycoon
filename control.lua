@@ -17,6 +17,7 @@ local PrimaryIndustries = require("primary-industries")
 local UsedBottlesStore = require("used-bottles-store")
 local FloorUpgradesQueue = require("floor-upgrades-queue")
 local Constants = require("constants")
+local Achievements = require("achievements")
 
 --- TICK HANDLERS
 local ONE_SECOND = 60;
@@ -58,28 +59,13 @@ script.on_nth_tick(FIVE_SECONDS, function()
     Consumption.pay_to_treasury_all()
 end)
 
-local function add_more_cities()
-    if #(global.tycoon_cities or {}) > 0 then
-        local global_citizen_count = 0
-        for _, city in pairs(global.tycoon_cities) do
-            for _, n in pairs(city.citizens) do
-                global_citizen_count = global_citizen_count + n
-            end
-        end
-
-        local threshold = #(global.tycoon_cities or {}) * Constants.NEW_CITY_THRESHOLD
-        if global_citizen_count > threshold then
-            CityPlanning.addMoreCities(false)
-        end
-    end
-end
-
 script.on_nth_tick(THIRTY_SECONDS, function()
     City.construct_priority_buildings()
-    -- todo: implement me later
-    -- rediscover_unused_fields()
-    add_more_cities()
     CityPlanning.tag_cities()
+
+    global.tycoon_passenger_transported_count = (global.tycoon_passenger_transported_count or 10) * 10
+    Achievements.check_population_achievements()
+    Achievements.check_passenger_transport_achievements()
 end)
 
 local function display_intro_messages()
