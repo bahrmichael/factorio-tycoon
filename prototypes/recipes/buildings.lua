@@ -5,7 +5,7 @@ data:extend{
         category = "crafting",
         enabled = true,
         ingredients = {
-            { type = "item", name = "stone", amount = 50 },
+            { type = "item", name = "stone-brick", amount = 50 },
             { type = "item", name = "copper-cable", amount = 10 },
             { type = "item", name = "transport-belt", amount = 5 },
             { type = "item", name = "inserter", amount = 5 },
@@ -19,7 +19,7 @@ data:extend{
         category = "crafting",
         enabled = true,
         ingredients = {
-            { type = "item", name = "stone", amount = 5 },
+            { type = "item", name = "stone-brick", amount = 5 },
             { type = "item", name = "iron-plate", amount = 10 },
             { type = "item", name = "pipe", amount = 5 },
         },
@@ -32,7 +32,7 @@ data:extend{
         category = "crafting",
         enabled = true,
         ingredients = {
-            { type = "item", name = "stone", amount = 10 },
+            { type = "item", name = "stone-brick", amount = 10 },
             { type = "item", name = "wood", amount = 10 },
         },
         result = "tycoon-market",
@@ -44,7 +44,7 @@ data:extend{
         category = "crafting",
         enabled = true,
         ingredients = {
-            { type = "item", name = "stone", amount = 10 },
+            { type = "item", name = "stone-brick", amount = 10 },
             { type = "item", name = "iron-plate", amount = 10 },
         },
         result = "tycoon-hardware-store",
@@ -56,7 +56,7 @@ data:extend{
         category = "crafting",
         enabled = false,
         ingredients = {
-            { type = "item", name = "stone", amount = 20 },
+            { type = "item", name = "stone-brick", amount = 20 },
             { type = "item", name = "pipe", amount = 5 },
             { type = "item", name = "inserter", amount = 2 },
         },
@@ -69,7 +69,7 @@ data:extend{
         category = "crafting",
         enabled = false,
         ingredients = {
-            { type = "item", name = "stone", amount = 10 },
+            { type = "item", name = "stone-brick", amount = 10 },
             { type = "item", name = "steel-plate", amount = 5 },
             { type = "item", name = "inserter", amount = 5 },
         },
