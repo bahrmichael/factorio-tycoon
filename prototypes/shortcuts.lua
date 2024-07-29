@@ -2,7 +2,6 @@ data:extend({
 	{
     type = "shortcut",
     name = "tycoon-cities-overview",
-    technology_to_unlock = "tycoon-new-cities",
     localised_name = { "shortcut.tycoon-cities-overview"},
     icon = {
       filename = "__tycoon__/graphics/shortcut_open_x32.png",
