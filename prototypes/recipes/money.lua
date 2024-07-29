@@ -6,7 +6,7 @@ data:extend{
         icon = "__tycoon__/graphics/icons/money-stack.png",
         icon_size = 64,
         energy_required = 5,
-        subgroup = "tycoon-intermediate-products",
+        subgroup = "tycoon-additional-intermediates",
         order = "a[tycoon]-e[money-stack]",
         enabled = true,
         ingredients = {

@@ -4,8 +4,8 @@ data:extend{
       name = "tycoon-gloves",
       icon = "__tycoon__/graphics/icons/gloves.png",
       icon_size = 256,
-      subgroup = "tycoon-intermediate-products",
-      order = "a[tycoon]-a[gloves]",
+      subgroup = "tycoon-additional-intermediates",
+      order = "a[tycoon]-c[gloves]",
       stack_size = 50
     }
   }

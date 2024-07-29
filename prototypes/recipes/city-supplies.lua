@@ -57,6 +57,7 @@ data:extend{
         enabled = false,
         ingredients = {
             { type = "item", name = "steel-plate", amount = 3 },
+            { type = "item", name = "copper-plate", amount = 1 },
         },
         result = "tycoon-cutlery",
         result_count = 10,
@@ -130,6 +131,7 @@ data:extend{
         ingredients = {
             { type = "item", name = "steel-plate", amount = 1 },
             { type = "item", name = "iron-stick", amount = 1 },
+            { type = "item", name = "copper-plate", amount = 1 },
         },
         result = "tycoon-cooking-pan",
         result_count = 1,

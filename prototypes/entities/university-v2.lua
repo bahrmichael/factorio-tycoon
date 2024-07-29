@@ -1,13 +1,15 @@
 data:extend{
     {
         type = "assembling-machine",
-        name = "tycoon-university",
+        name = "tycoon-university-v2",
+        localised_name = {"entity-name.tycoon-university"},
+        localised_description = {"entity-description.tycoon-university"},
         icon = "__tycoon__/graphics/icons/university.png",
         icon_size = 64,
         max_health = 200,
         rotatable = false,
-        collision_box = { { -12, -9}, {12, 11} },
-        selection_box = { { -12, -9}, {12, 11} },
+        collision_box = { { -3.9, -3.4}, {3.9, 3.4} },
+        selection_box = { { -3.9, -3.4}, {3.9, 3.4} },
         flags = {"placeable-player", "player-creation", "not-rotatable"},
         minable = {mining_time = 1, result = "tycoon-university"},
         animation = {
@@ -17,8 +19,8 @@ data:extend{
                     priority = "high",
                     width = 800,
                     height = 800,
-                    shift = {0, 0},
-                    scale = 1
+                    shift = {0, -0.4},
+                    scale = 0.35
                 }
             },
         },
@@ -33,7 +35,7 @@ data:extend{
         },
         allowed_effects = {"speed", "productivity", "consumption", "pollution"},
         module_specification = {
-            module_slots = 2,
+            module_slots = 3,
         }
     }
 }
