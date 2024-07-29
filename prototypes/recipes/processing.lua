@@ -15,7 +15,7 @@ data:extend{
         type = "recipe",
         name = "tycoon-flour-to-dough",
         category = "crafting-with-fluid",
-        energy_required = 15,
+        energy_required = 5,
         enabled = false,
         ingredients = {
             { type = "item", name = "tycoon-flour", amount = 30 },
