@@ -9,39 +9,45 @@ data:extend({
     },
     {
         type = "item-subgroup",
-        name = "tycoon-primary-resources",
+        name = "tycoon-buildings",
         group = "tycoon",
         order = "a"
     },
     {
         type = "item-subgroup",
-        name = "tycoon-intermediate-products",
+        name = "tycoon-basic-needs",
         group = "tycoon",
         order = "b"
     },
     {
         type = "item-subgroup",
-        name = "tycoon-finished-products",
+        name = "tycoon-basic-intermediates",
         group = "tycoon",
         order = "c"
     },
     {
         type = "item-subgroup",
-        name = "tycoon-food",
+        name = "tycoon-additional-needs",
         group = "tycoon",
         order = "d"
     },
     {
         type = "item-subgroup",
-        name = "tycoon-buildings",
+        name = "tycoon-additional-intermediates",
         group = "tycoon",
         order = "e"
     },
     {
         type = "item-subgroup",
-        name = "tycoon-passengers",
+        name = "tycoon-primary-resources",
         group = "tycoon",
         order = "f"
+    },
+    {
+        type = "item-subgroup",
+        name = "tycoon-passengers",
+        group = "tycoon",
+        order = "g"
     },
     {
         type = "item-subgroup",

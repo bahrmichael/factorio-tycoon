@@ -642,8 +642,6 @@ data:extend{
             },
             time = 60,
         },
-        max_level = 5,
-        upgrade = true,
     },
     {
         type = "technology",
@@ -671,8 +669,6 @@ data:extend{
             },
             time = 60,
         },
-        max_level = 5,
-        upgrade = true,
     },
     {
         type = "technology",

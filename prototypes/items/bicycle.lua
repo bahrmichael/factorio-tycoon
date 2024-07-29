@@ -4,8 +4,8 @@ data:extend{
       name = "tycoon-bicycle",
       icon = "__tycoon__/graphics/icons/bicycle.png",
       icon_size = 256,
-      subgroup = "tycoon-finished-products",
-      order = "a[tycoon]-a[bicycle]",
+      subgroup = "tycoon-additional-needs",
+      order = "a[tycoon]-d[bicycle]",
       stack_size = 10
     }
   }

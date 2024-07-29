@@ -6,7 +6,7 @@ data:extend{
     icon_size = 64,
     subgroup = "tycoon-buildings",
     order = "a[tycoon]-d[university]",
-    stack_size = 1,
-    place_result = "tycoon-university"
+    stack_size = 10,
+    place_result = "tycoon-university-v2"
   }
 }

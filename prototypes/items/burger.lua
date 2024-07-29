@@ -4,8 +4,8 @@ data:extend{
       name = "tycoon-burger",
       icon = "__tycoon__/graphics/icons/burger.png",
       icon_size = 64,
-      subgroup = "tycoon-food",
-      order = "a[tycoon]-h[burger]",
+      subgroup = "tycoon-basic-needs",
+      order = "a[tycoon]-i[burger]",
       stack_size = 200
     }
   }

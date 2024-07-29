@@ -4,8 +4,8 @@ data:extend{
       name = "tycoon-cow",
       icon = "__tycoon__/graphics/icons/cow.png",
       icon_size = 64,
-      subgroup = "tycoon-intermediate-products",
-      order = "a[tycoon]-d[cow]",
+      subgroup = "tycoon-basic-intermediates",
+      order = "a[tycoon]-a[food]-d[cow]",
       stack_size = 50
     }
   }

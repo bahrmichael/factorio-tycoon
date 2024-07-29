@@ -33,7 +33,7 @@ data:extend{
         },
         allowed_effects = {"speed", "productivity", "consumption", "pollution"},
         module_specification = {
-            module_slots = 2,
+            module_slots = 3,
         }
     }
 }

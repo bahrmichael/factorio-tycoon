@@ -50,7 +50,7 @@ local function mapToEntity(craftingType)
     if craftingType == "chemical" then
         return "chemical-plant";
     elseif craftingType == "tycoon-husbandry" then
-        return "tycoon-stable";
+        return "tycoon-stable-v2";
     elseif craftingType == "tycoon-butchery" then
         return "tycoon-butchery";
     elseif craftingType == "oil-processing" then

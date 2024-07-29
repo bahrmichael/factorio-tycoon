@@ -35,6 +35,7 @@ local function on_player_cursor_stack_changed(event)
                             filled = true,
                             surface = game.surfaces[city.surface_index],
                             draw_on_ground = true,
+                            players = {event.player_index},
                         }
                         table.insert(global.tycoon_player_renderings[event.player_index], render_id)
                     end
