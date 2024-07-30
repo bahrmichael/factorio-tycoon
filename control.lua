@@ -92,9 +92,10 @@ end)
 --- EVENT HANDLERS
 script.on_event({
     defines.events.on_built_entity,
-    defines.events.on_robot_built_entity
+    defines.events.on_robot_built_entity,
+    defines.events.script_raised_built
 }, function(event)
-    OnConstructionHandler.on_built(event)
+    OnConstructionHandler.on_built(event, event.name == defines.events.script_raised_built)
 end)
 
 script.on_event({
@@ -102,6 +103,7 @@ script.on_event({
     defines.events.on_robot_mined_entity,
     -- Register entities with script.register_on_entity_destroyed(entity) so that this event fires.
     defines.events.on_entity_destroyed,
+    defines.events.script_raised_destroy
 }, function(event)
     OnConstructionHandler.on_removed(event)
 end)

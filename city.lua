@@ -617,7 +617,6 @@ local function getMap(direction)
 end
 
 -- TODO: build this table from prototypes or data-constants
--- Maybe we can replace this entire mechanism by using variations instead.
 local totalBuildingSprites = {
     ["garden"] = 13,
     ["excavation-pit"] = 20,
@@ -1105,8 +1104,6 @@ local function completeConstruction(city, buildingTypes)
     local cell = GridUtil.safeGridAccess(city, coordinates, "completeConstruction")
     if cell ~= nil and cell.entity ~= nil then
         if cell.entity.valid then
-            --log("completeConstruction(): calling .destroy():"
-            --    .." entity: ".. cell.entity.unit_number .." name: ".. cell.entity.name)
             cell.entity.destroy()
         end
         cell.entity = nil
@@ -1203,7 +1200,8 @@ local function completeConstruction(city, buildingTypes)
             name = housingTier,
             position = {x = startCoordinates.x + Constants.CELL_SIZE / 2 + xModifier, y = startCoordinates.y  + Constants.CELL_SIZE / 2 + yModifier},
             force = "player",
-            move_stuck_players = true
+            move_stuck_players = true,
+            raise_built = true,
         }
     end
 
@@ -1523,10 +1521,8 @@ local function getBuildables(hardwareStores)
     
     local buildables = {}
     for key, resources in pairs(Constants.CONSTRUCTION_MATERIALS) do
-        --log("key: ".. serpent.line(key) .." needs: ".. serpent.line(resources))
         local anyResourceMissing = false
         for name, required in pairs(resources) do
-            --log("key: ".. serpent.line(key) .." name: ".. serpent.line(name) .." required: ".. serpent.line(required) .." available: ".. serpent.line(supply[name]))
             if (supply[name] or 0) < required then
                 anyResourceMissing = true
                 break
@@ -1625,7 +1621,6 @@ local CITY = {
     completeConstruction = completeConstruction,
     startConstruction = startConstruction,
     isCellFree = isCellFree,
-    removeBuilding = removeBuilding,
     freeCellAtPosition = freeCellAtPosition,
     construct_priority_buildings = construct_priority_buildings,
     construct_gardens = construct_gardens,

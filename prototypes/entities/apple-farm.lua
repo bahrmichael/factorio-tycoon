@@ -4,7 +4,6 @@ data:extend{
         name = "tycoon-apple-farm",
         icon = "__tycoon__/graphics/icons/apple-farm.png",
         icon_size = 256,
-        map_color = {r=1, g=0.8, b=0.8},
         max_health = 200,
         rotatable = false,
         flags = { "not-rotatable" },

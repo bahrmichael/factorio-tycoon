@@ -11,7 +11,6 @@ data:extend{
                 recipe = "tycoon-wheat-to-grain",
             }
         },
-        order = "g-e-e",
         unit = {
           count = 30,
           ingredients = {
@@ -41,7 +40,6 @@ data:extend{
             },
         },
         prerequisites = { "tycoon-farming" },
-        order = "g-e-e",
         unit = {
           count = 60,
           ingredients = {
@@ -63,7 +61,6 @@ data:extend{
             },
         },
         prerequisites = { "tycoon-husbandry" },
-        order = "g-e-e",
         unit = {
           count = 60,
           ingredients = {
@@ -94,7 +91,6 @@ data:extend{
             },
         },
         prerequisites = { "tycoon-farming", "tycoon-husbandry", "automation-2", "tycoon-milking" },
-        order = "g-e-e",
         unit = {
           count = 100,
           ingredients = {
@@ -125,7 +121,6 @@ data:extend{
             },
         },
         prerequisites = { "tycoon-milking", "automation-2" },
-        order = "g-e-e",
         unit = {
           count = 150,
           ingredients = {
@@ -160,7 +155,6 @@ data:extend{
             },
         },
         prerequisites = { "tycoon-husbandry" },
-        order = "g-e-e",
         unit = {
           count = 30,
           ingredients = {
@@ -187,7 +181,6 @@ data:extend{
             },
         },
         prerequisites = { "steel-processing", "optics", "tycoon-meat-processing", "tycoon-baking", "tycoon-milking", "tycoon-bottling" },
-        order = "g-e-e",
         unit = {
           count = 100,
           ingredients = {
@@ -210,7 +203,6 @@ data:extend{
             },
         },
         prerequisites = { "tycoon-husbandry" },
-        order = "g-e-e",
         unit = {
           count = 60,
           ingredients = {
@@ -233,7 +225,6 @@ data:extend{
             },
         },
         prerequisites = { "tycoon-bottling" },
-        order = "g-e-e",
         unit = {
           count = 100,
           ingredients = {
@@ -257,7 +248,6 @@ data:extend{
             },
         },
         prerequisites = { "tycoon-egg-production", "tycoon-dairy-products", "tycoon-baking" },
-        order = "g-e-e",
         unit = {
             count = 150,
             ingredients = {
@@ -285,7 +275,6 @@ data:extend{
             },
         },
         prerequisites = { "tycoon-milking" },
-        order = "g-e-e",
         unit = {
           count = 60,
           ingredients = {
@@ -312,7 +301,6 @@ data:extend{
             },
         },
         prerequisites = { "tycoon-meat-processing", "tycoon-dairy-products", "tycoon-baking" },
-        order = "g-e-e",
         unit = {
             count = 200,
             ingredients = {
@@ -340,7 +328,6 @@ data:extend{
             },
         },
         prerequisites = { "fluid-handling", "concrete", "tycoon-residential-housing", "tycoon-desserts", "tycoon-main-dish", "tycoon-dairy-products", "tycoon-drinks" },
-        order = "g-e-e",
         unit = {
           count = 400,
           ingredients = {
@@ -364,7 +351,6 @@ data:extend{
             },
         },
         prerequisites = { "tycoon-residential-housing", "automated-rail-transportation" },
-        order = "g-e-e",
         unit = {
           count = 50,
           ingredients = {
@@ -468,7 +454,6 @@ data:extend{
             },
         },
         prerequisites = { "tycoon-residential-housing", "plastics" },
-        order = "g-e-e",
         unit = {
           count = 200,
           ingredients = {
@@ -492,7 +477,6 @@ data:extend{
             },
         },
         prerequisites = { "tycoon-residential-housing", "oil-processing" },
-        order = "g-e-e",
         unit = {
           count = 50,
           ingredients = {
@@ -524,7 +508,6 @@ data:extend{
             },
         },
         prerequisites = { "steel-processing" },
-        order = "g-e-e",
         unit = {
           count = 100,
           ingredients = {
@@ -546,7 +529,6 @@ data:extend{
             },
         },
         prerequisites = { "advanced-electronics" },
-        order = "g-e-e",
         unit = {
           count = 100,
           ingredients = {
@@ -577,7 +559,6 @@ data:extend{
             },
         },
         prerequisites = { "tycoon-electronic-devices", "tycoon-residential-housing" },
-        order = "g-e-e",
         unit = {
           count = 200,
           ingredients = {
@@ -609,7 +590,6 @@ data:extend{
             },
         },
         prerequisites = { "oil-processing", "tycoon-residential-housing" },
-        order = "g-e-e",
         unit = {
           count = 100,
           ingredients = {
@@ -624,8 +604,8 @@ data:extend{
         type = "technology",
         name = "tycoon-money-laundering",
         mod = "Tycoon",
-        icon = "__tycoon__/graphics/icons/money-stack.png",
-        icon_size = 64,
+        icon = "__tycoon__/graphics/icons/money-tech.png",
+        icon_size = 256,
         effects = {
             {
                 type = "unlock-recipe",

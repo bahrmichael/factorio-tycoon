@@ -355,7 +355,6 @@ local function payCurrency(city, cost)
         return
     end
 
-    --log(string.format("payCurrency(): debt: %.2f cost: %d city: %s", city.stats.debt, cost, city.name))
     city.stats.debt = city.stats.debt + cost
 end
 

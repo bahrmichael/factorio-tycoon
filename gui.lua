@@ -89,7 +89,7 @@ local house_ratios = {
 }
 
 --- @param rootGui any
---- @param constructionNeeds string[]
+--- @param constructionNeeds any[]
 --- @param city City
 --- @param hardwareStores any[]
 local function addConstructionMaterialsGui(rootGui, constructionNeeds, city, hardwareStores, housingType)
@@ -102,7 +102,7 @@ local function addConstructionMaterialsGui(rootGui, constructionNeeds, city, har
         tbl.add{type = "label", caption = {"", "[color=red]", {"tycoon-gui-missing", {"entity-name.tycoon-hardware-store"}}, "[/color]"}}
     else
         local supply = Util.aggregateSupplyBuildingResources(hardwareStores)
-        for _, resource in ipairs(constructionNeeds) do
+        for resource, required_amount in pairs(constructionNeeds) do
 
             setConstructionMaterialsProvided(city, resource, supply[resource] or 0)
 
@@ -112,7 +112,7 @@ local function addConstructionMaterialsGui(rootGui, constructionNeeds, city, har
             local fallbackName = "entity-name." .. resource
 
             local color = "green"
-            if amounts.provided == 0 then
+            if amounts.provided < required_amount then
                 color = "red"
             end
             
@@ -351,12 +351,6 @@ local additionalNeeds = {
     highrise = {"tycoon-smartphone", "tycoon-laptop"}
 }
 
-local constructionNeeds = {
-    simple = {"stone-brick", "iron-plate"},
-    residential = {"stone-brick", "iron-plate", "steel-plate", "small-lamp"},
-    highrise = {"steel-plate", "small-lamp", "pump", "concrete", "pipe"}
-}
-
 local function getSupplyLevelsSummary(supplyLevels)
     local total = 0
     for _, value in pairs(supplyLevels) do
@@ -520,7 +514,7 @@ local function addHousingView(housingType, city, anchor, player_index)
 
     local construction_needs_container = tabbed_pane.add{type = "scroll-pane", direction = "vertical"}
     tabbed_pane.add_tab(tab_construction_material, construction_needs_container)
-    addConstructionMaterialsGui(construction_needs_container, constructionNeeds[housingType], city, hardwareStores, housingType)
+    addConstructionMaterialsGui(construction_needs_container, Constants.CONSTRUCTION_MATERIALS[housingType], city, hardwareStores, housingType)
     
     tabbed_pane.selected_tab_index = GuiState.get_state(player_index, "city_tab:" .. city.id + 1 .. ":housing_tab:" .. GuiState.housing_type_to_tab[housingType] .. ":needs_tab") or 1
 end

@@ -13,8 +13,7 @@ data:extend{
             { type = "item", name = "tycoon-currency", amount = 100 },
         },
         results = {
-            { type = "item", name = "tycoon-money-stack", amount = 1 },
-            { type = "item", name = "tycoon-money-stack", amount = 1, probability = 0.2 },
+            { type = "item", name = "tycoon-money-stack", amount = 1, probability = 0.9 },
         },
     },
 }

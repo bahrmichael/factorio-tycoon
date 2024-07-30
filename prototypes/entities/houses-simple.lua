@@ -11,7 +11,7 @@ local function createHouse(name)
       results = {}  -- Empty table means no items will be returned
     },
     inventory_size = 0,
-    corpse = "small-remnants",
+    corpse = "big-remnants",
     vehicle_impact_sound = {filename = "__base__/sound/car-metal-impact.ogg", volume = 0.65},
     repair_sound = {filename = "__base__/sound/manual-repair-simple.ogg"},
     open_sound = {filename = "__base__/sound/machine-open.ogg", volume = 0.85},

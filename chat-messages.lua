@@ -4,9 +4,6 @@ local function show_info_messages()
     local mgs = game.surfaces[Constants.STARTING_SURFACE_ID].map_gen_settings
     if not global.tycoon_intro_message_displayed then
         game.print({"", "[color=orange]Factorio Tycoon:[/color] ", {"tycooon-intro-message-welcome"}})
-        if game.surfaces[Constants.STARTING_SURFACE_ID].map_gen_settings.autoplace_controls["enemy-base"].size > 0 then
-            game.print({"", "[color=orange]Factorio Tycoon:[/color] ", {"tycooon-intro-message-peaceful-warning"}})
-        end
         global.tycoon_intro_message_displayed = true
     end
 

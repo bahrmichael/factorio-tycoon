@@ -12,10 +12,14 @@ local function invalidateSpecialBuildingsList(city, name)
     end
 end
 
-local function on_built(event)
-    assert(event.created_entity, "Called on_built without a created_entity. Wrong event?")
+local function on_built(event, use_entity)
+    if use_entity then
+        assert(event.entity, "Called on_built without a entity. Wrong event?")
+    else
+        assert(event.created_entity, "Called on_built without a created_entity. Wrong event?")
+    end
 
-    local entity = event.created_entity
+    local entity = use_entity and event.entity or event.created_entity
     -- LuaEntity inherits surface_index from LuaControl
     local surface_index = entity.surface_index
 
@@ -142,6 +146,10 @@ local function on_removed(event)
             global.tycoon_entity_meta_info = {}
         end
         global.tycoon_entity_meta_info[unit_number] = nil
+
+        if building.entity_name == "tycoon-treasury" or building.entity_name == "tycoon-bottle-return-station" then
+            table.insert(city.priority_buildings, { name = building.entity_name, priority = 10 })
+        end
     else
         assert(building.position, "building.position is nil, DO FIX migration script!")
         -- todo: mark cell as unused again, clear paving if necessary
