@@ -1,11 +1,33 @@
 ---------------------------------------------------------------------------------------------------
-Version: unreleased
-Date: 09. 03. 2023
+Version: 1.0.0
+Date: 03. 08. 2024
+  Major Features:
+    - BREAKING CHANGE: A lot has changed since the last version. Your savegames might still work, but please consider this a breaking change. I recommend starting over to experience the new balancing and city spawning.
+    - New City Placement: We dropped the Urban Planning Center, and replaced it with the New Cities technology. You can research this via citizen science, and receive one Town Hall per level researched. You can place them wherever you want, as long as they're far enough from other cities. Make sure they have sufficient space to grow.
+    - Achievements: You now get ingame achievments as you progress through Factorio Tycoon.
+    - Multiple Surfaces: In preparation for the Space Age expansion, Tycoon now supports multiple surfaces. Primary industries will only spawn on Nauvis (or whichever surface you configued as Tycoon's default surface).
+    - City Range: Previously the range of a city was a static circle. The range is now dynamic and expands with the city.
+    - Bottle Return Stations: Cities with residential housing can now build a bottle return station, where citizens will return used bottles. Recycle and repeat!
+    - If biters overrun your city or a nuke lands there for some reason, the city will now try to rebuild over the empty plots. Note that this may take a while and that special buildings like treasuries may be built in a different place than before. The town hall is not destructible.
+    - The technology Advanced Treasury Payouts allows you to select direct payout of money stacks instead of currency. This is helpful if your inserters get overwhelmed.
   Features:
     - The mod will now avoid placing industries on resource patches. If this causes performance issues for you, there's a setting to disable this behaviour.
     - You can now see each city's population on the map.
+    - Each housing tier now uses a different flooring. Upgrade your city's buildings to upgrade its prettiness!
+    - If a treasury is full, the city will remember and delay paying out currency.
+    - Cities Overview: The overview now remembers which tabs you had open. You can now close it with Esc.
+    - Cities Overview: Construction materials now show up as red if there are not enough for the selected housing tier.
     - Map tags for cities are now placed again if deleted.
     - Starting area setting is now being supported. Sets the area around map center to keep clean of additional placements.
+    - Various production buildings for Tycoon now have three module slots instead of two. They now also stack up to 10 items in your inventory.
+  Changes:
+    - Multiplayer: City ranges are now only drawn for the player that triggers them, e.g. when holding a hardware store.
+    - Reduced the size of the university and stable building to better align with other buildings and underground pipes.
+    - Updated the order of Tycoon items in the crafting menu.
+    - Rebalanced the ingredients for Tycoon buildings and technologies.
+    - The cities overview shortcut does not require the multiple cities tech anymore.
+    - The cities overview can now be closed with the Esc key.
+    - The technology multiple cities has been renamed to new cities.
   Bugfixes:
     - Fixed misaligned water inputs of apple farms.
     - Fixed a rare crash if town halls become invalid.
@@ -15,28 +37,28 @@ Date: 09. 03. 2023
     - Various performance improvements.
 ---------------------------------------------------------------------------------------------------
 Version: 0.4.5
-Date: 09. 03. 2023
+Date: 09. 03. 2024
   Bugfixes:
     - Fixed an issue where cities would not consume construction materials.
 ---------------------------------------------------------------------------------------------------
 Version: 0.4.4
-Date: 01. 03. 2023
+Date: 01. 03. 2024
   Locale:
     - Various translation updates.
 ---------------------------------------------------------------------------------------------------
 Version: 0.4.3
-Date: 29. 02. 2023
+Date: 29. 02. 2024
   Bugfixes:
     - Fixed an issue in the German translation.
 ---------------------------------------------------------------------------------------------------
 Version: 0.4.2
-Date: 27. 02. 2023
+Date: 27. 02. 2024
   Bugfixes:
     - Fix the description of the balancing change in 0.4.1. It falsely stated a double output at maximum level.
     - Fixed a bug in the fishery spawning rate, that caused it too spawn very few fisheries.
 ---------------------------------------------------------------------------------------------------
 Version: 0.4.1
-Date: 25. 02. 2023
+Date: 25. 02. 2024
   Bugfixes:
     - In some cases, the increased productivity of farms and fisheries was not applied. This is now fixed, and all existing primary industries are now using the correct level again. Thanks to winex for contributing this fix!
   Balancing:
@@ -47,7 +69,7 @@ Date: 25. 02. 2023
     - German and Russian translations have been updated for the new content from the 0.4.0 release. Thanks to winex for contributing updates for the Russian translation!
 ---------------------------------------------------------------------------------------------------
 Version: 0.4.0
-Date: 18. 02. 2023
+Date: 18. 02. 2024
   Major Features:
     - WARNING! This is a major breaking change. You may have to update your Tycoon factories or start a new game. Read more below.
     - Breaking change: I didn't test this for backwards compatibility due to time constraints and the amount of changes we made. Let me know if something breaks.
