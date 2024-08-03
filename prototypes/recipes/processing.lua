@@ -131,7 +131,7 @@ data:extend{
         name = "tycoon-apple-cake",
         category = "crafting",
         energy_required = 10,
-        enabled = true,
+        enabled = false,
         ingredients = {
             { type = "item", name = "tycoon-butter", amount = 1 },
             { type = "item", name = "tycoon-apple", amount = 5 },
@@ -158,7 +158,7 @@ data:extend{
         name = "tycoon-cheese",
         category = "crafting-with-fluid",
         energy_required = 60,
-        enabled = true,
+        enabled = false,
         ingredients = {
             { type = "fluid", name = "tycoon-milk", amount = 200 },
         },
@@ -184,7 +184,7 @@ data:extend{
         name = "tycoon-patty",
         category = "crafting",
         energy_required = 2,
-        enabled = true,
+        enabled = false,
         ingredients = {
             { type = "item", name = "tycoon-meat", amount = 1 },
         },

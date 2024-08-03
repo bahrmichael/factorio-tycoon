@@ -44,17 +44,37 @@ local function on_gui_opened(event)
         local anchor = {gui = defines.relative_gui_type.container_gui, name = "tycoon-passenger-train-station", position = defines.relative_gui_position.right}
         trainStationGui = player.gui.relative.add{type = "frame", anchor = anchor, caption = {"", {"tycoon-gui-train-station-view"}}, direction = "vertical", name = guiKey}
 
-        local cityId = ((global.tycoon_entity_meta_info or {})[unit_number] or {}).cityId
+        local cityId = Util.getGlobalBuilding(unit_number).cityId
         Gui.addTrainStationView(
             unit_number,
             trainStationGui,
+            Util.findCityById(cityId)
+        )
+    elseif (event.entity or {}).name == "tycoon-treasury" then
+        local player = game.players[event.player_index]
+        local unit_number = event.entity.unit_number
+
+        local guiKey = "treasury_view"
+        local treasuryGui = player.gui.relative[guiKey]
+        if treasuryGui ~= nil then
+            -- clear any previous gui so that we can fully reconstruct it
+            treasuryGui.destroy()
+        end
+
+        local anchor = {gui = defines.relative_gui_type.container_gui, name = "tycoon-treasury", position = defines.relative_gui_position.right}
+        treasuryGui = player.gui.relative.add{type = "frame", anchor = anchor, caption = {"", {"tycoon-gui-treasury-view"}}, direction = "vertical", name = guiKey}
+
+        local cityId = Util.getGlobalBuilding(unit_number).cityId
+        Gui.addTreasuryView(
+            unit_number,
+            treasuryGui,
             Util.findCityById(cityId)
         )
     elseif event.entity ~= nil and Util.isSupplyBuilding(event.entity.name) then
         local player = game.players[event.player_index]
         
         local unit_number = event.entity.unit_number
-        local cityName = Util.findCityByEntityUnitNumber(unit_number)
+        local cityName = Util.findCityNameByEntityUnitNumber(unit_number)
 
         local guiKey = "supply_building_view"
         local supplyBuildingView = player.gui.relative[guiKey]
@@ -129,11 +149,8 @@ local function on_gui_click(event)
     end
 end
 
-local function on_gui_checked_state_changed(event)
+local function on_gui_checked_state_changed_train_station(event)
     local element = event.element
-    if not string.find(element.name, "train_station_gui_checkbox", 1, true) then
-        return
-    end
     local tags = element.tags
     local destination_city_id = tags.destination_city_id
     local train_station_unit_number = tags.train_station_unit_number
@@ -145,6 +162,28 @@ local function on_gui_checked_state_changed(event)
             global.tycoon_train_station_passenger_filters[train_station_unit_number] = {}
         end
         global.tycoon_train_station_passenger_filters[train_station_unit_number][destination_city_id] = element.state
+    end
+end
+
+local function on_gui_checked_state_changed_treasury(event)
+    local element = event.element
+    
+    local elementNameParts = Util.splitString(element.name, ":")
+    local treasuryUnitNumber = tonumber(elementNameParts[2])
+
+    assert(treasuryUnitNumber, "Failed to resolve treasury unit number in on_gui_checked_state_changed_treasury.")
+    
+    local isChecked = element.state
+
+    global.tycoon_money_stacks_treasury_enabled[treasuryUnitNumber] = isChecked
+end
+
+local function on_gui_checked_state_changed(event)
+    local element = event.element
+    if string.find(element.name, "train_station_gui_checkbox", 1, true) then
+        on_gui_checked_state_changed_train_station(event)
+    elseif string.find(element.name, "treasury_money_stack_enabled", 1, true) then
+        on_gui_checked_state_changed_treasury(event)
     end
 end
 

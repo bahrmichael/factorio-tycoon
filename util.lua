@@ -349,7 +349,7 @@ local function isHouse(entityName)
     return string.find(entityName, "tycoon-house-", 1, true) ~= nil
 end
 
-local function findCityByEntityUnitNumber(unitNumber)
+local function findCityNameByEntityUnitNumber(unitNumber)
     local metaInfo = (global.tycoon_entity_meta_info or {})[unitNumber]
     if metaInfo == nil then
         return "Unknown"
@@ -521,7 +521,7 @@ return {
     isSupplyBuilding = isSupplyBuilding,
     isSpecialBuilding = isSpecialBuilding,
     isHouse = isHouse,
-    findCityByEntityUnitNumber = findCityByEntityUnitNumber,
+    findCityNameByEntityUnitNumber = findCityNameByEntityUnitNumber,
 
     addGlobalBuilding = addGlobalBuilding,
     removeGlobalBuilding = removeGlobalBuilding,

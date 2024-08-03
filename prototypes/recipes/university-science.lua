@@ -10,9 +10,9 @@ data:extend{
         name = "tycoon-university-science-red",
         category = "tycoon-university-science",
         energy_required = 5,
-        enabled = true,
+        enabled = false,
         ingredients = {
-            { type = "item", name = "tycoon-currency", amount = math.floor(70 / kwPerCurrency) },
+            { type = "item", name = "tycoon-currency", amount = 5 * math.floor(70 / kwPerCurrency) },
         },
         result = "automation-science-pack",
         result_count = 1,
@@ -22,9 +22,9 @@ data:extend{
         name = "tycoon-university-science-green",
         category = "tycoon-university-science",
         energy_required = 5,
-        enabled = true,
+        enabled = false,
         ingredients = {
-            { type = "item", name = "tycoon-currency", amount = math.floor(130 / kwPerCurrency) },
+            { type = "item", name = "tycoon-currency", amount = 10 * math.floor(130 / kwPerCurrency) },
         },
         result = "logistic-science-pack",
         result_count = 1,
@@ -36,7 +36,7 @@ data:extend{
         energy_required = 5,
         enabled = false,
         ingredients = {
-            { type = "item", name = "tycoon-currency", amount = math.floor(275 / kwPerCurrency) },
+            { type = "item", name = "tycoon-currency", amount = 8 * math.floor(275 / kwPerCurrency) },
         },
         result = "military-science-pack",
         result_count = 1,
@@ -48,7 +48,7 @@ data:extend{
         energy_required = 5,
         enabled = false,
         ingredients = {
-            { type = "item", name = "tycoon-currency", amount = math.floor(450 / kwPerCurrency) },
+            { type = "item", name = "tycoon-currency", amount = 10 * math.floor(450 / kwPerCurrency) },
         },
         result = "chemical-science-pack",
         result_count = 1,
@@ -60,7 +60,7 @@ data:extend{
         energy_required = 5,
         enabled = false,
         ingredients = {
-            { type = "item", name = "tycoon-currency", amount = math.floor(1200 / kwPerCurrency) },
+            { type = "item", name = "tycoon-money-stack", amount = 5 },
         },
         result = "production-science-pack",
         result_count = 1,
@@ -72,7 +72,7 @@ data:extend{
         energy_required = 5,
         enabled = false,
         ingredients = {
-            { type = "item", name = "tycoon-currency", amount = math.floor(1500 / kwPerCurrency) },
+            { type = "item", name = "tycoon-money-stack", amount = 20 },
         },
         result = "utility-science-pack",
         result_count = 1,

@@ -79,6 +79,10 @@ local CONSTANTS = {
         residential = "stone-path",
         highrise = "concrete",
     },
+    TREASURY_CONVERSION_RATE = {
+        ["tycoon-currency"] = 150,
+        ["tycoon-money-stack"] = 1
+    }
 }
 
 return CONSTANTS

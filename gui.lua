@@ -660,6 +660,36 @@ local function addTrainStationView(trainStationUnitNumber, anchor, city)
     end
 end
 
+local function addTreasuryView(treasuryUnitNumber, anchor, city)
+    if not global.tycoon_money_stacks_treasury_enabled then
+        global.tycoon_money_stacks_treasury_enabled = {}
+    end
+
+    if not global.tycoon_money_stacks_treasury_enabled[treasuryUnitNumber] then
+        global.tycoon_money_stacks_treasury_enabled[treasuryUnitNumber] = false
+    end
+
+    local flow = anchor.add{type = "flow", direction = "vertical"}
+    if city ~= nil then
+        flow.add{type = "label", caption = {"", {"tycoon-gui-train-station-for-city", city.name}}}
+        -- debt
+        local tbl = flow.add{type = "table", column_count = 2, draw_horizontal_lines = false}
+        tbl.add{type = "label", caption = {"", {"tycoon-gui-debt"}, ": "}, tooltip = {"", {"tycoon-gui-debt-tooltip"}}}
+        tbl.add{type = "label",
+            caption = {"", tostring(math.floor(city.stats.debt))},
+            tooltip = {"", string.format("%.2f", city.stats.debt)},
+        }
+        flow.add{type = "line"}
+    end
+
+    if global.tycoon_money_stacks_treasury_researched == nil then
+        flow.add{type = "checkbox", caption = {"", {"tycoon-gui-treasury-money-stack-enabled"}, ":"}, state = false, enabled = false, tooltip = {"", {"tycoon-gui-treasury-money-stack-how-to", {"technology-name.tycoon-advanced-treasury-payouts"}}}}
+    else
+        -- todo: the ui showed 150:2. why?
+        flow.add{type = "checkbox", caption = {"", {"tycoon-gui-treasury-money-stack-enabled"}}, state = global.tycoon_money_stacks_treasury_enabled[treasuryUnitNumber], tooltip = {"", {"tycoon-gui-treasury-money-stack-info", Constants.TREASURY_CONVERSION_RATE["tycoon-currency"], Constants.TREASURY_CONVERSION_RATE["tycoon-money-stack"]}}, name = "treasury_money_stack_enabled:" .. treasuryUnitNumber}
+    end
+end
+
 local function addCityView(city, anchor, player_index)
     
     local tabbed_pane = anchor.add{type="tabbed-pane"}
@@ -752,6 +782,7 @@ local GUI = {
     addTrainStationView = addTrainStationView,
     addMultipleCitiesOverview = addMultipleCitiesOverview,
     addSupplyBuildingOverview = addSupplyBuildingOverview,
+    addTreasuryView = addTreasuryView,
 }
 
 return GUI

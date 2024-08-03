@@ -102,7 +102,7 @@ data:extend({
     },
     {
         type = "tips-and-tricks-item",
-        name = "tycoon-fund-new-cities",
+        name = "tycoon-start-new-cities",
         category = "tycoon",
         order = "a[tycoon]-f-a",
         indent = 1,
@@ -140,8 +140,9 @@ data:extend({
         order = "a[tycoon]-g-b",
         indent = 1,
         trigger = {
-            type = "research",
-            technology = "tycoon-public-transportation"
+            type = "craft-item",
+            event_type = "crafting-finished",
+            item = "tycoon-passenger-train-station"
         },
     },
   })

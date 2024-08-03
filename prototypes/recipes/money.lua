@@ -8,7 +8,7 @@ data:extend{
         energy_required = 5,
         subgroup = "tycoon-additional-intermediates",
         order = "a[tycoon]-e[money-stack]",
-        enabled = true,
+        enabled = false,
         ingredients = {
             { type = "item", name = "tycoon-currency", amount = 100 },
         },

@@ -3,7 +3,7 @@ data:extend{
         type = "recipe",
         name = "tycoon-building-recipe-university",
         category = "crafting",
-        enabled = true,
+        enabled = false,
         ingredients = {
             { type = "item", name = "stone-brick", amount = 50 },
             { type = "item", name = "copper-cable", amount = 10 },
@@ -94,7 +94,8 @@ data:extend{
     {
         type = "recipe",
         name = "tycoon-citizen-science-lab",
-        energy_required = 5,
+        category = "crafting",
+        enabled = false,
         ingredients = {
           {"tycoon-laptop", 5},
           {"tycoon-money-stack", 10},

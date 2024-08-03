@@ -17,10 +17,10 @@ data:extend{
                 {
                     filename = "__tycoon__/graphics/entity/university/university.png",
                     priority = "high",
-                    width = 800,
-                    height = 800,
+                    width = 400,
+                    height = 400,
                     shift = {0, 0},
-                    scale = 1
+                    scale = 2
                 }
             },
         },

@@ -35,6 +35,8 @@ local function on_research_finished(event)
                 break
             end
         end
+    elseif name == "tycoon-advanced-treasury-payouts" then
+        global.tycoon_money_stacks_treasury_researched = true
     end
 end
 
