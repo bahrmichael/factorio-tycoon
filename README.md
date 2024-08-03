@@ -28,4 +28,4 @@ D6ovwCgCzBqEv<<<
 
 ## Libraries Used
 
-Some code and assets have been copied from [Krastorio2](https://github.com/raiguard/Krastorio2) and its assets.
+Thank you to raiguard from [Krastorio2](https://github.com/raiguard/Krastorio2) for extracting the achievment backgrounds! I'm using them here.
