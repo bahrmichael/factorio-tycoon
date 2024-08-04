@@ -2,15 +2,14 @@ local Constants = require("constants")
 local Util = require("util")
 local TagsQueue = require("tags-queue")
 
-local all_resource_names_cached = nil
 local function get_all_resource_names()
-    if all_resource_names_cached == nil then
-        all_resource_names_cached = {}
+    if global.tycoon_all_resource_names_cached == nil then
+        global.tycoon_all_resource_names_cached = {}
         for name, _cat in pairs(game.get_filtered_entity_prototypes{{filter="type", type="resource"}}) do
-            table.insert(all_resource_names_cached, name)
+            table.insert(global.tycoon_all_resource_names_cached, name)
         end
     end
-    return all_resource_names_cached
+    return global.tycoon_all_resource_names_cached
 end
 
 local function add_to_global_primary_industries(entity)
@@ -176,7 +175,7 @@ local function find_position_for_initial_apple_farm()
     local coordinate_candidates = {}
     for _ = 1, 5, 1 do
         
-        local starting_position = {math.random(-30, 30), math.random(-30, 30)}
+        local starting_position = {global.tycoon_global_generator(-30, 30), global.tycoon_global_generator(-30, 30)}
         local position = game.surfaces[surface_index].find_non_colliding_position("tycoon-apple-farm", starting_position, 200, 5, true)
         if position ~= nil then
             

@@ -16,7 +16,6 @@ local Queue = require("queue")
 local PrimaryIndustries = require("primary-industries")
 local UsedBottlesStore = require("used-bottles-store")
 local FloorUpgradesQueue = require("floor-upgrades-queue")
-local Constants = require("constants")
 local Achievements = require("achievements")
 
 --- TICK HANDLERS

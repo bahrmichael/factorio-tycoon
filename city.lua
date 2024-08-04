@@ -69,28 +69,28 @@ local FloorUpgradesQueue = require("floor-upgrades-queue")
 ---| "only-straight-rail"
 ---| "blocked"
 
---- @param coordinates Coordinates
---- @return string key
-local function buildCoordinatesKey(coordinates)
-    return coordinates.y .. "/" .. coordinates.x
-end
+-- --- @param coordinates Coordinates
+-- --- @return string key
+-- local function buildCoordinatesKey(coordinates)
+--     return coordinates.y .. "/" .. coordinates.x
+-- end
 
-local cachedDistances = {}
+-- local cachedDistances = {}
 
 --- @param coordinates Coordinates
 --- @return number distanceFromTownHall
 local function getCachedDistance(coordinates, offsetY, offsetX, cityCenter)
-    local key = buildCoordinatesKey(coordinates)
-    if cachedDistances[key] ~= nil then
-        return cachedDistances[key]
-    else
-        local distance = Util.calculateDistance({
-            y = (coordinates.y + offsetY) * Constants.CELL_SIZE,
-            x = (coordinates.x + offsetX) * Constants.CELL_SIZE,
-        }, cityCenter)
-        cachedDistances[key] = distance
-        return distance
-    end
+    -- local key = buildCoordinatesKey(coordinates)
+    -- if cachedDistances[key] ~= nil then
+    --     return cachedDistances[key]
+    -- else
+    local distance = Util.calculateDistance({
+        y = (coordinates.y + offsetY) * Constants.CELL_SIZE,
+        x = (coordinates.x + offsetX) * Constants.CELL_SIZE,
+    }, cityCenter)
+        -- cachedDistances[key] = distance
+    return distance
+    -- end
 end
 
 --- @param origin Coordinates
@@ -472,16 +472,14 @@ local function testRoadDirection(city, roadEnd, lookoutDirections)
         end
     end
 
-        return true
+    return true
 end
-
-local weightedRoadConnections
 
 --- @return RoadConnectionCount[] connectionCountOptions
 local function getRoadConnectionCountOptions()
 
-    if weightedRoadConnections ~= nil then
-        return weightedRoadConnections
+    if global.tycoon_weighted_road_connections ~= nil then
+        return global.tycoon_weighted_road_connections
     end
 
     local weightedValues = {}
@@ -499,7 +497,7 @@ local function getRoadConnectionCountOptions()
         end
     end
 
-    weightedRoadConnections = values
+    global.tycoon_weighted_road_connections = values
 
     return values
 end

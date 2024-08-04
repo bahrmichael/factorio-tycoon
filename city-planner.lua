@@ -10,7 +10,7 @@ local function findNewCityPosition(surface_index)
     local scorings = {}
     -- make up to 10 attempts
     for i = 1, 10, 1 do
-        local position = { x = math.random(-50, 50), y = math.random(-50, 50) }
+        local position = { x = global.tycoon_global_generator(-50, 50), y = global.tycoon_global_generator(-50, 50) }
         if position ~= nil then
             local newCityPosition = game.surfaces[surface_index].find_non_colliding_position("tycoon-town-center-virtual", position,
                 Constants.CITY_RADIUS, 5, true)

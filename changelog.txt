@@ -1,4 +1,9 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.0.1
+Date: 04. 08. 2024
+  Bugfixes:
+    - Removed non-global caching and non-seeded generators that potentially cause desyncs in multiplayers.
+---------------------------------------------------------------------------------------------------
 Version: 1.0.0
 Date: 03. 08. 2024
   Major Features:
