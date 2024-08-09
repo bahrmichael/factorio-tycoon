@@ -376,6 +376,10 @@ data:extend{
         effects = {
             {
                 type = "unlock-recipe",
+                recipe = "tycoon-patty",
+            },
+            {
+                type = "unlock-recipe",
                 recipe = "tycoon-burger",
             },
             {
