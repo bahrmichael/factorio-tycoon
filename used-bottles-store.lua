@@ -51,6 +51,9 @@ local function return_used_bottles(city)
     for _, entry in pairs(stations_with_space) do
         if entry.available_slots > 1 then
             local share_per_station = math.ceil(current_count / #stations)
+            if share_per_station == 0 then
+                break
+            end
             local target_quantity = city.generator(share_per_station)
             local quantity = math.min(share_per_station, target_quantity)
             local used_bottles_stack_size = 50 -- todo: can we load this from the prototype?
