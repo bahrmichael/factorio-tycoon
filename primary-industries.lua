@@ -5,7 +5,7 @@ local TagsQueue = require("tags-queue")
 local function get_all_resource_names()
     if storage.tycoon_all_resource_names_cached == nil then
         storage.tycoon_all_resource_names_cached = {}
-        for name, _cat in pairs(game.get_filtered_entity_prototypes{{filter="type", type="resource"}}) do
+        for name, _cat in pairs(prototypes.get_entity_filtered{{filter="type", type="resource"}}) do
             table.insert(storage.tycoon_all_resource_names_cached, name)
         end
     end
@@ -126,12 +126,20 @@ local function place_primary_industry_at_position(position, entity_name, surface
         -- Fisheries don't have a pipe input and therefore don't need this condition
         -- they are also placed near water, so this would lead to no fisheries being placed anywhere.
         if entity_name ~= "tycoon-fishery" then
-            local nearby_cliffs_or_water_count = game.surfaces[surface_index].count_tiles_filtered{
+            local nearby_water_count = game.surfaces[surface_index].count_tiles_filtered{
                 position = position,
                 radius = PRIMARY_INDUSTRY_NEARBY_RADIUS,
-                name = {"cliff", "water", "deepwater"},
+                name = { "water", "deepwater"}, --"cliff",
                 limit = 1
             }
+
+            local nearby_cliffs_count = game.surfaces[surface_index].count_entities_filtered{
+                position = position,
+                radius = PRIMARY_INDUSTRY_NEARBY_RADIUS,
+                name = { "cliff" },
+                limit = 1
+            }
+            local nearby_cliffs_or_water_count = nearby_water_count + nearby_cliffs_count
             if nearby_cliffs_or_water_count > 0 then
                 return nil
             end

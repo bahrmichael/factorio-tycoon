@@ -52,7 +52,7 @@ local function findNewCityPosition(surface_index)
         end
     end
 
-    local tilesFactor = 3 / game.surfaces[surface_index].map_gen_settings.water -- water is a percentage value
+    local tilesFactor = 3 / game.surfaces[surface_index].map_gen_settings.autoplace_settings.tile.settings.water.frequency -- water is a percentage value
     local autoplaceTotal = 0
     local autoplaceCounter = 0
     for _, value in pairs(game.surfaces[surface_index].map_gen_settings.autoplace_controls) do

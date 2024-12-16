@@ -200,7 +200,7 @@ local function isAreaFree(area, surface_index)
         return false
     end
 
-    local ignorables = {"rock-huge", "rock-big", "sand-rock-big", "dead-grey-trunk"}
+    local ignorables = {"huge-rock", "big-rock", "big-sand-rock", "dead-grey-trunk"}
 
     local entities = game.surfaces[surface_index].find_entities_filtered({
         area=area,
@@ -227,7 +227,8 @@ local function checkForCollidables(city, coordinates, additionalIgnorables)
         return "blocked"
     end
 
-    local ignorables = {"rock-huge", "rock-big", "sand-rock-big", "dead-grey-trunk"}
+    local ignorables = {"huge-rock", "big-rock", "big-sand-rock", "dead-grey-trunk"}
+
     if additionalIgnorables ~= nil and #additionalIgnorables >0 then
         for _, value in ipairs(additionalIgnorables) do
             table.insert(ignorables, value)
