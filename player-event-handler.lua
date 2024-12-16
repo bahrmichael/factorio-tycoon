@@ -14,8 +14,10 @@ local function on_player_cursor_stack_changed(event)
     if (player or {}).cursor_stack ~= nil then
 
         -- Clear any existing renderings for this player
-        for _, render_id in ipairs(storage.tycoon_player_renderings[event.player_index]) do
-            rendering.destroy(render_id)
+        for _, render in ipairs(storage.tycoon_player_renderings[event.player_index]) do
+            if render and render.valid then
+                render.destroy()
+            end
         end
 
         if player.cursor_stack.valid_for_read
@@ -26,18 +28,18 @@ local function on_player_cursor_stack_changed(event)
                 -- Added this condition, because there was a case where a city was gone in a multiplayer (no idea why yet),
                 -- and then the game would crash upon rendering the circle.
                 if (city.special_buildings or {}).town_hall ~= nil
-                    and (city.special_buildings or {}).town_hall.valid
-                    then
+                        and (city.special_buildings or {}).town_hall.valid
+                then
                     for _, triple in ipairs(City.findTriples(city)) do
-                        local render_id = rendering.draw_polygon{
-                            color = {0.1, 0.2, 0.1, 0.01},
+                        local obj = rendering.draw_polygon {
+                            color = { 0.1, 0.2, 0.1, 0.01 },
                             vertices = triple,
                             filled = true,
                             surface = game.surfaces[city.surface_index],
                             draw_on_ground = true,
-                            players = {event.player_index},
+                            players = { event.player_index },
                         }
-                        table.insert(storage.tycoon_player_renderings[event.player_index], render_id)
+                        table.insert(storage.tycoon_player_renderings[event.player_index], obj)
                     end
                 end
             end

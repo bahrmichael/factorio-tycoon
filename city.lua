@@ -1605,9 +1605,10 @@ local function findTriples(city)
 
     local triples = {}
     for i = 1, #cornerList do
+        -- {X, Y}
         local c1 = cornerList[i]
         local c2 = cornerList[i % #cornerList + 1]
-        table.insert(triples, {{target=c1}, {target=c2}, {target=city.center}})
+        table.insert(triples, { c1, c2, city.center })
     end
 
     return triples

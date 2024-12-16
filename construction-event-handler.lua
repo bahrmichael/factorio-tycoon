@@ -19,7 +19,7 @@ local function on_built(event, use_entity)
         return
     end
 
-    local entity = use_entity and event.entity
+    local entity = event.entity
     -- LuaEntity inherits surface_index from LuaControl
     local surface_index = entity.surface_index
 
@@ -46,7 +46,7 @@ local function on_built(event, use_entity)
 
         Util.addGlobalBuilding(entity.unit_number, city.id, entity)
         -- WARN: we must always register
-        script.register_on_entity_destroyed(entity)
+        script.register_on_object_destroyed(entity)
     elseif entity.name == "tycoon-town-hall" then
         log("on_built(): Town hall built: ".. entity.unit_number .." at position: ".. serpent.line(entity.position))
 
@@ -102,7 +102,7 @@ local function on_built(event, use_entity)
             cityId = city.cityId
         }
         Util.addGlobalBuilding(entity.unit_number, city.cityId, entity)
-        script.register_on_entity_destroyed(entity)
+        script.register_on_object_destroyed(entity)
     end
 end
 
