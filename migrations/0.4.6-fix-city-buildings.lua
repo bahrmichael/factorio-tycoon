@@ -3,11 +3,11 @@ local City = require("city")
 local Util = require("util")
 
 -- WARN: migrations are run BEFORE any init(), always need this here
-if global.tycoon_cities == nil then
-    global.tycoon_cities = {}
+if storage.tycoon_cities == nil then
+    storage.tycoon_cities = {}
 end
-if global.tycoon_city_buildings == nil then
-    global.tycoon_city_buildings = {}
+if storage.tycoon_city_buildings == nil then
+    storage.tycoon_city_buildings = {}
 end
 
 
@@ -56,9 +56,9 @@ for _, surface in pairs(game.surfaces) do
 end
 
 -- we must ensure that all entities are still valid
-log(string.format("processing tycoon_city_buildings: %d", table_size(global.tycoon_city_buildings)))
+log(string.format("processing tycoon_city_buildings: %d", table_size(storage.tycoon_city_buildings)))
 local new_dict = {}
-for k, building in pairs(global.tycoon_city_buildings) do
+for k, building in pairs(storage.tycoon_city_buildings) do
     if building.entity == nil or (not building.entity.valid) then
         goto continue
     end
@@ -81,10 +81,10 @@ for k, building in pairs(global.tycoon_city_buildings) do
     ::continue::
 end
 -- rewrite whole dict
-global.tycoon_city_buildings = new_dict
+storage.tycoon_city_buildings = new_dict
 
 -- check every city
-for _, city in pairs(global.tycoon_cities) do
+for _, city in pairs(storage.tycoon_cities) do
     log(string.format("processing city id: %d grid: %d name: %s", city.id, #city.grid, city.name))
 
     -- drop cache

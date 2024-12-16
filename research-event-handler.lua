@@ -1,16 +1,16 @@
 local function increase_productivity(new_recipe, entity_name)
-    for i, primary_industry in pairs(global.tycoon_primary_industries[entity_name] or {}) do
+    for i, primary_industry in pairs(storage.tycoon_primary_industries[entity_name] or {}) do
         if primary_industry.valid then
             primary_industry.set_recipe(new_recipe)
             primary_industry.recipe_locked = true
         else
-            table.remove(global.tycoon_primary_industries[entity_name], i)
+            table.remove(storage.tycoon_primary_industries[entity_name], i)
         end
     end
 end
 
 local function on_research_finished(event)
-    if global.tycoon_primary_industries == nil then
+    if storage.tycoon_primary_industries == nil then
         return
     end
 
@@ -24,11 +24,11 @@ local function on_research_finished(event)
     elseif name == "tycoon-fishery-productivity" then
         increase_productivity("tycoon-fishing-" .. research.level, "tycoon-fishery")
     elseif name == "tycoon-bottling" then
-        for _, city in pairs(global.tycoon_cities or {}) do
+        for _, city in pairs(storage.tycoon_cities or {}) do
             table.insert(city.priority_buildings, {name = "tycoon-bottle-return-station", priority = 5})
         end
     elseif name == "tycoon-new-cities" then
-        for _, city in pairs(global.tycoon_cities or {}) do
+        for _, city in pairs(storage.tycoon_cities or {}) do
             if city.special_buildings.town_hall ~= nil and city.special_buildings.town_hall.valid then
                 city.special_buildings.town_hall.insert({name = "tycoon-town-hall", count = 1})
                 game.print({"", {"tycoon-town-hall-added", city.name}})
@@ -36,7 +36,7 @@ local function on_research_finished(event)
             end
         end
     elseif name == "tycoon-advanced-treasury-payouts" then
-        global.tycoon_money_stacks_treasury_researched = true
+        storage.tycoon_money_stacks_treasury_researched = true
     end
 end
 

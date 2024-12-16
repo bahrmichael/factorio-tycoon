@@ -4,7 +4,7 @@ local Util = require("util")
 local TagsQueue = require("tags-queue")
 
 local function randomPrimaryIndustry()
-    return Constants.PRIMARY_INDUSTRIES[global.tycoon_global_generator(#Constants.PRIMARY_INDUSTRIES)]
+    return Constants.PRIMARY_INDUSTRIES[storage.tycoon_global_generator(#Constants.PRIMARY_INDUSTRIES)]
 end
 
 local function insideStartingArea(chunk)
@@ -49,7 +49,7 @@ local function on_chunk_charted(event)
         PrimaryIndustries.tagIndustry(pos_name[1], pos_name[2], event.surface_index)
     end
 
-    if global.tycoon_global_generator() < 0.25 then
+    if storage.tycoon_global_generator() < 0.25 then
         local entity_name = randomPrimaryIndustry()
         local position
         if entity_name == "tycoon-fishery" then

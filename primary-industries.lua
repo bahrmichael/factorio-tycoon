@@ -3,37 +3,37 @@ local Util = require("util")
 local TagsQueue = require("tags-queue")
 
 local function get_all_resource_names()
-    if global.tycoon_all_resource_names_cached == nil then
-        global.tycoon_all_resource_names_cached = {}
+    if storage.tycoon_all_resource_names_cached == nil then
+        storage.tycoon_all_resource_names_cached = {}
         for name, _cat in pairs(game.get_filtered_entity_prototypes{{filter="type", type="resource"}}) do
-            table.insert(global.tycoon_all_resource_names_cached, name)
+            table.insert(storage.tycoon_all_resource_names_cached, name)
         end
     end
-    return global.tycoon_all_resource_names_cached
+    return storage.tycoon_all_resource_names_cached
 end
 
 local function add_to_global_primary_industries(entity)
     if entity == nil then
         return
     end
-    if global.tycoon_primary_industries == nil then
-        global.tycoon_primary_industries = {}
+    if storage.tycoon_primary_industries == nil then
+        storage.tycoon_primary_industries = {}
     end
-    if global.tycoon_primary_industries[entity.name] == nil then
-        global.tycoon_primary_industries[entity.name] = {}
+    if storage.tycoon_primary_industries[entity.name] == nil then
+        storage.tycoon_primary_industries[entity.name] = {}
     end
     -- WARN: do not insert with unit_number as it converts array to a dict
-    table.insert(global.tycoon_primary_industries[entity.name], entity)
+    table.insert(storage.tycoon_primary_industries[entity.name], entity)
 end
 
 local function cleanup_global_primary_industries()
     -- TODO: when called from on_chunk_deleted() - it doesn't clean fully, adding some delay might help (but how?)...
     -- unless we have some array issue here, again. deleting 1K map keep-radius=2 count: 15 14 4 => 7 7 2 (?)
     local count = 0
-    for name, _ in pairs(global.tycoon_primary_industries or {}) do
-        for k, entity in pairs(global.tycoon_primary_industries[name] or {}) do
+    for name, _ in pairs(storage.tycoon_primary_industries or {}) do
+        for k, entity in pairs(storage.tycoon_primary_industries[name] or {}) do
             if not entity.valid then
-                table.remove(global.tycoon_primary_industries[name], k)
+                table.remove(storage.tycoon_primary_industries[name], k)
                 count = count + 1
             end
         end
@@ -112,7 +112,7 @@ local function place_primary_industry_at_position(position, entity_name, surface
     local PRIMARY_INDUSTRY_NEARBY_RADIUS = Constants.CHUNK_SIZE/2
     local nearby_count = 0
     if position ~= nil then
-        -- This is mainly here to avoid two industries being right next to each other, 
+        -- This is mainly here to avoid two industries being right next to each other,
         -- blocking each others pipes.
         local nearby_primary_industries_count = game.surfaces[surface_index].count_entities_filtered{
             position = position,
@@ -174,11 +174,11 @@ local function find_position_for_initial_apple_farm()
     local surface_index = Constants.STARTING_SURFACE_ID
     local coordinate_candidates = {}
     for _ = 1, 5, 1 do
-        
-        local starting_position = {global.tycoon_global_generator(-30, 30), global.tycoon_global_generator(-30, 30)}
+
+        local starting_position = {storage.tycoon_global_generator(-30, 30), storage.tycoon_global_generator(-30, 30)}
         local position = game.surfaces[surface_index].find_non_colliding_position("tycoon-apple-farm", starting_position, 200, 5, true)
         if position ~= nil then
-            
+
             local water_tiles = game.surfaces[surface_index].find_tiles_filtered{
                 position = position,
                 radius = 100,
@@ -228,7 +228,7 @@ end
 
 local function spawn_initial_industry()
 
-    if not global.tycoon_has_initial_apple_farm and #(global.tycoon_cities or {}) > 0 then
+    if not storage.tycoon_has_initial_apple_farm and #(storage.tycoon_cities or {}) > 0 then
         local position = find_position_for_initial_apple_farm()
         if position == nil then
             -- we don't need to do anything here, it will be reattempted next loop
@@ -237,7 +237,7 @@ local function spawn_initial_industry()
             local entity = place_primary_industry_at_position(position, "tycoon-apple-farm", Constants.STARTING_SURFACE_ID)
             if entity ~= nil then
                 add_to_global_primary_industries(entity)
-                global.tycoon_has_initial_apple_farm = true
+                storage.tycoon_has_initial_apple_farm = true
             else
                 -- we don't need to do anything here, it will be reattempted next loop
                 return

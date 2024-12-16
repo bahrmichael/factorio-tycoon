@@ -478,8 +478,8 @@ end
 --- @return RoadConnectionCount[] connectionCountOptions
 local function getRoadConnectionCountOptions()
 
-    if global.tycoon_weighted_road_connections ~= nil then
-        return global.tycoon_weighted_road_connections
+    if storage.tycoon_weighted_road_connections ~= nil then
+        return storage.tycoon_weighted_road_connections
     end
 
     local weightedValues = {}
@@ -497,14 +497,14 @@ local function getRoadConnectionCountOptions()
         end
     end
 
-    global.tycoon_weighted_road_connections = values
+    storage.tycoon_weighted_road_connections = values
 
     return values
 end
 
 local function shuffle(tbl)
     for i = #tbl, 2, -1 do
-      local j = global.tycoon_global_generator(i)
+      local j = storage.tycoon_global_generator(i)
       tbl[i], tbl[j] = tbl[j], tbl[i]
     end
     return tbl
@@ -880,7 +880,7 @@ local function growAtRandomRoadEnd(city)
     if roadEnd == nil then
         return
     end
-    
+
     if roadEnd.coordinates.x <= 1
      or roadEnd.coordinates.x >= GridUtil.getGridSize(city.grid)
      or roadEnd.coordinates.y <= 1
@@ -984,12 +984,12 @@ local function growAtRandomRoadEnd(city)
                 assert(false, "Road should not be expanding into a cell that's not a road or unused.")
             end
         end
-        
+
         city.surrounding_points_cache = nil
     else
         -- todo: in what cases can't we build here? entity collision? player collision?
         -- buildings should come later to fill empty gaps that have no collisions
-        
+
         -- Add some weight onto this roadEnd, so that it gets processed later (compared to others who are at a similar distance or don't have their weight changed as much)
         -- roadEnd.additionalWeight = (roadEnd.additionalWeight or 1) * 1.2
         Queue.pushright(city.roadEnds, roadEnd)
@@ -998,23 +998,23 @@ local function growAtRandomRoadEnd(city)
 end
 
 local function setHouseLight(houseUnitNumber, lightEntity)
-    if global.tycoon_house_lights == nil then
-        global.tycoon_house_lights = {}
+    if storage.tycoon_house_lights == nil then
+        storage.tycoon_house_lights = {}
     end
 
-    global.tycoon_house_lights[houseUnitNumber] = lightEntity
+    storage.tycoon_house_lights[houseUnitNumber] = lightEntity
 end
 
 local function removeHouseLight(houseUnitNumber)
-    if global.tycoon_house_lights == nil then
-        global.tycoon_house_lights = {}
+    if storage.tycoon_house_lights == nil then
+        storage.tycoon_house_lights = {}
     end
 
-    local entity = global.tycoon_house_lights[houseUnitNumber]
+    local entity = storage.tycoon_house_lights[houseUnitNumber]
     if entity ~= nil and entity.valid then
         entity.destroy()
     end
-    global.tycoon_house_lights[houseUnitNumber] = nil
+    storage.tycoon_house_lights[houseUnitNumber] = nil
 end
 
 --- @param excavationPits ExcavationPit[]
@@ -1076,7 +1076,7 @@ end
 
 --- @param buildingTypes BuildingType[] | nil
 --- @return string tileType
-local function get_ground_tile_type(buildingType) 
+local function get_ground_tile_type(buildingType)
     -- "simple"
     -- "residential"
     -- "highrise"
@@ -1213,13 +1213,13 @@ local function completeConstruction(city, buildingTypes)
     -- WARN: we must always register
     script.register_on_entity_destroyed(entity)
 
-    if housingTier == "tycoon-treasury" and not global.tycoon_intro_message_treasury_displayed then
+    if housingTier == "tycoon-treasury" and not storage.tycoon_intro_message_treasury_displayed then
         game.print({"", "[color=orange]Factorio Tycoon:[/color] ", {"tycooon-info-message-treasury"}})
-        global.tycoon_intro_message_treasury_displayed = true
+        storage.tycoon_intro_message_treasury_displayed = true
     end
-    if housingTier == "tycoon-bottle-return-station" and not global.tycoon_intro_message_bottle_return_station_displayed then
+    if housingTier == "tycoon-bottle-return-station" and not storage.tycoon_intro_message_bottle_return_station_displayed then
         game.print({"", "[color=orange]Factorio Tycoon:[/color] ", {"tycooon-info-message-bottle-return-station"}})
-        global.tycoon_intro_message_bottle_return_station_displayed = true
+        storage.tycoon_intro_message_bottle_return_station_displayed = true
     end
 
     return housingTier
@@ -1462,7 +1462,7 @@ local function upgradeHouse(city, newStage)
 end
 
 local function construct_priority_buildings()
-    for _, city in ipairs(global.tycoon_cities or {}) do
+    for _, city in ipairs(storage.tycoon_cities or {}) do
         local prio_building = table.remove(city.priority_buildings, 1)
         if prio_building ~= nil then
             local is_built = startConstruction(city, {
@@ -1479,7 +1479,7 @@ local function construct_priority_buildings()
 end
 
 local function construct_gardens()
-    for _, city in ipairs(global.tycoon_cities or {}) do
+    for _, city in ipairs(storage.tycoon_cities or {}) do
         if city.gardenLocationQueue ~= nil and city.generator() < 0.25 and Queue.count(city.gardenLocationQueue, true) > 0 then
             startConstruction(city, {
                 buildingType = "garden",
@@ -1509,14 +1509,14 @@ local function is_allowed_upgrade_to_tier(city, next_tier)
     if Util.countPendingLowerTierHouses(current_tier_count, next_tier_count, house_ratios[next_tier]) > 0 then
         return false
     end
-    
+
     return true
 end
 
 
 local function getBuildables(hardwareStores)
     local supply = Util.aggregateSupplyBuildingResources(hardwareStores)
-    
+
     local buildables = {}
     for key, resources in pairs(Constants.CONSTRUCTION_MATERIALS) do
         local anyResourceMissing = false
@@ -1544,7 +1544,7 @@ local function has_time_elapsed_for_construction(city, tier)
 end
 
 local function start_house_construction()
-    for _, city in ipairs(global.tycoon_cities or {}) do
+    for _, city in ipairs(storage.tycoon_cities or {}) do
         -- Check if resources are available. Without resources no growth is possible.
         local hardware_stores = Util.list_special_city_buildings(city, "tycoon-hardware-store")
         if #hardware_stores > 0 then
@@ -1555,7 +1555,7 @@ local function start_house_construction()
             for tier, _ in pairs(Constants.CITIZEN_COUNTS) do
                 if has_time_elapsed_for_construction(city, tier)
                     and buildables[tier] ~= nil then
-                        
+
                     assert((city.construction_timers or {})[tier], "Expected construction timer to be defined by them time the timer check resolves to true.")
                     city.construction_timers[tier].last_construction = game.tick
 
@@ -1575,7 +1575,7 @@ local function start_house_construction()
 end
 
 local function complete_house_construction()
-    for _, city in ipairs(global.tycoon_cities or {}) do
+    for _, city in ipairs(storage.tycoon_cities or {}) do
         completeConstruction(city, {"simple", "residential", "highrise", "tycoon-treasury", "garden"})
     end
 end
@@ -1608,7 +1608,7 @@ local function findTriples(city)
         local c2 = cornerList[i % #cornerList + 1]
         table.insert(triples, {{target=c1}, {target=c2}, {target=city.center}})
     end
-    
+
     return triples
 end
 

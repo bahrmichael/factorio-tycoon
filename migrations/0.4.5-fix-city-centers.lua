@@ -1,9 +1,9 @@
 -- WARN: migrations are run BEFORE any init(), always need this here
-if global.tycoon_cities == nil then
-    global.tycoon_cities = {}
+if storage.tycoon_cities == nil then
+    storage.tycoon_cities = {}
 end
 
-for _, city in pairs(global.tycoon_cities) do
+for _, city in pairs(storage.tycoon_cities) do
     local _, x = math.modf(city.center.x)
     local _, y = math.modf(city.center.y)
     if math.abs(x) > 0.001 or math.abs(y) > 0.001 then

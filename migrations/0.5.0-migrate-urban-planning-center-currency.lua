@@ -14,7 +14,7 @@ end
 
 if totalAvailableFunds > 0 then
     -- Remember how much currency should be returned, and let another control mechanism return all the currency as there is space.
-    local cities = (global.tycoon_cities or {})
+    local cities = (storage.tycoon_cities or {})
     if #cities > 0 then
         local city = cities[1]
         city.stats.debt = (city.stats.debt or 0) + totalAvailableFunds

@@ -31,14 +31,14 @@ script.on_nth_tick(ONE_SECOND, function()
 end)
 
 local function handle_passengers()
-    for _, city in ipairs(global.tycoon_cities or {}) do
+    for _, city in ipairs(storage.tycoon_cities or {}) do
         Passengers.clearPassengers(city)
         Passengers.spawnPassengers(city)
     end
 end
 
 local function expand_roads()
-    for _, city in ipairs(global.tycoon_cities or {}) do
+    for _, city in ipairs(storage.tycoon_cities or {}) do
         if Queue.count(city.buildingLocationQueue) < #city.grid then
             local coordinates = City.growAtRandomRoadEnd(city)
             if coordinates ~= nil then
@@ -62,7 +62,7 @@ script.on_nth_tick(THIRTY_SECONDS, function()
     City.construct_priority_buildings()
     CityPlanning.tag_cities()
 
-    global.tycoon_passenger_transported_count = (global.tycoon_passenger_transported_count or 10) * 10
+    storage.tycoon_passenger_transported_count = (storage.tycoon_passenger_transported_count or 10) * 10
     Achievements.check_population_achievements()
     Achievements.check_passenger_transport_achievements()
 end)
@@ -72,7 +72,7 @@ local function display_intro_messages()
 end
 
 local function consume_resources()
-    for _, city in ipairs(global.tycoon_cities or {}) do
+    for _, city in ipairs(storage.tycoon_cities or {}) do
         Consumption.consumeBasicNeeds(city)
         Consumption.consumeAdditionalNeeds(city)
         Consumption.update_construction_timers_all(city)
@@ -80,7 +80,7 @@ local function consume_resources()
 end
 
 script.on_nth_tick(ONE_MINUTE, function()
-    for _, city in pairs(global.tycoon_cities or {}) do
+    for _, city in pairs(storage.tycoon_cities or {}) do
         UsedBottlesStore.return_used_bottles(city)
     end
     consume_resources()
@@ -132,8 +132,8 @@ script.on_event({defines.events.on_lua_shortcut, "tycoon-cities-overview"}, func
 end)
 
 script.on_init(function()
-    global.tycoon_global_generator = game.create_random_generator()
-    global.tycoon_city_buildings = {}
+    storage.tycoon_global_generator = game.create_random_generator()
+    storage.tycoon_city_buildings = {}
 end)
 
 script.on_event(defines.events.on_gui_opened, GuiEventHandler.on_gui_opened)

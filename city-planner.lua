@@ -10,7 +10,7 @@ local function findNewCityPosition(surface_index)
     local scorings = {}
     -- make up to 10 attempts
     for i = 1, 10, 1 do
-        local position = { x = global.tycoon_global_generator(-50, 50), y = global.tycoon_global_generator(-50, 50) }
+        local position = { x = storage.tycoon_global_generator(-50, 50), y = storage.tycoon_global_generator(-50, 50) }
         if position ~= nil then
             local newCityPosition = game.surfaces[surface_index].find_non_colliding_position("tycoon-town-center-virtual", position,
                 Constants.CITY_RADIUS, 5, true)
@@ -21,7 +21,7 @@ local function findNewCityPosition(surface_index)
                         y = math.floor(newCityPosition.y),
                     },
                 }
-                
+
                 local radius = 50 / i + 18
                 local tiles = game.surfaces[surface_index].find_tiles_filtered {
                     position = newCityPosition,
@@ -274,13 +274,13 @@ local function initializeCity(city, existing_town_hall)
 end
 
 local function addCity(position, surface_index, predefinedCityName, existing_town_hall)
-    if global.tycoon_cities == nil then
-        global.tycoon_cities = {}
+    if storage.tycoon_cities == nil then
+        storage.tycoon_cities = {}
     end
-    local cityId = #global.tycoon_cities + 1
+    local cityId = #storage.tycoon_cities + 1
     local cityName = predefinedCityName or DataConstants.CityNames[(cityId % #DataConstants.CityNames) + 1]
     local generatorSalt = cityId * 1337
-    table.insert(global.tycoon_cities, {
+    table.insert(storage.tycoon_cities, {
         id = cityId,
         surface_index = surface_index,
         generator = game.create_random_generator(game.surfaces[surface_index].map_gen_settings.seed + generatorSalt),
@@ -305,7 +305,7 @@ local function addCity(position, surface_index, predefinedCityName, existing_tow
             highrise = 0,
         },
     })
-    initializeCity(global.tycoon_cities[cityId], existing_town_hall)
+    initializeCity(storage.tycoon_cities[cityId], existing_town_hall)
 
     local gps = (math.floor(position.x) + 1.5 * Constants.CELL_SIZE) ..",".. (math.floor(position.y) + 1.5 * Constants.CELL_SIZE)
     if surface_index ~= Constants.STARTING_SURFACE_ID then
@@ -322,14 +322,14 @@ end
 
 local function addMoreCities(isInitialCity)
     local surface_index = Constants.STARTING_SURFACE_ID
-    if global.tycoon_cities == nil then
-        global.tycoon_cities = {}
+    if storage.tycoon_cities == nil then
+        storage.tycoon_cities = {}
     end
-    if #global.tycoon_cities >= #DataConstants.CityNames then
-        if not global.tycoon_city_limit_warning_6 then
+    if #storage.tycoon_cities >= #DataConstants.CityNames then
+        if not storage.tycoon_city_limit_warning_6 then
             game.print({ "", "[color=orange]Factorio Tycoon:[/color] ", "Currently you can only build up to " ..
             #DataConstants.CityNames .. " cities. Feel free to use the currency for research going forward." })
-            global.tycoon_city_limit_warning_6 = true
+            storage.tycoon_city_limit_warning_6 = true
         end
         return false
     end
@@ -344,7 +344,7 @@ local function addMoreCities(isInitialCity)
 end
 
 local function tag_cities()
-    for _, city in ipairs(global.tycoon_cities or {}) do
+    for _, city in ipairs(storage.tycoon_cities or {}) do
         -- We need to initialize the tag here, because tags can only be placed on charted chunks.
         -- And the game needs a moment to start and chart the initial chunks, even if it can already place entities.
         if city.tag == nil or not (city.tag or {}).valid then
@@ -373,7 +373,7 @@ local function tag_cities()
 end
 
 local function build_initial_city()
-    if (settings.startup["tycoon-spawn-initial-city"] or {}).value and #(global.tycoon_cities or {}) == 0 then
+    if (settings.startup["tycoon-spawn-initial-city"] or {}).value and #(storage.tycoon_cities or {}) == 0 then
         addMoreCities(true)
     end
 end

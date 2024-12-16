@@ -1,10 +1,10 @@
 local Util = require("util")
 
 local function get_queue()
-    if global.tycoon_tags_queue == nil then
-        global.tycoon_tags_queue = {}
+    if storage.tycoon_tags_queue == nil then
+        storage.tycoon_tags_queue = {}
     end
-    return global.tycoon_tags_queue
+    return storage.tycoon_tags_queue
 end
 
 local function key(chunk_position, surface_index)

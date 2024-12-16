@@ -1,13 +1,13 @@
 local Constants = require("constants")
 
 -- WARN: migrations are run BEFORE any init(), always need this here
-if global.tycoon_tags_queue == nil then
-    global.tycoon_tags_queue = {}
+if storage.tycoon_tags_queue == nil then
+    storage.tycoon_tags_queue = {}
 end
 
 -- we can't remove while iterating, need to rebuild
 local new_queue = {}
-for _, tag in pairs(global.tycoon_tags_queue) do
+for _, tag in pairs(storage.tycoon_tags_queue) do
     local k = _
     local t = tag
 
@@ -22,4 +22,4 @@ for _, tag in pairs(global.tycoon_tags_queue) do
     new_queue[k] = t
 end
 -- replace old array with new one
-global.tycoon_tags_queue = new_queue
+storage.tycoon_tags_queue = new_queue

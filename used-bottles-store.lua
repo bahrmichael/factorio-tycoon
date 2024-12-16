@@ -3,26 +3,26 @@ local Util = require("util")
 local GLOBAL_FIELD_NAME = "tycoon-used-bottles"
 local EMPTY_VALUE = 0
 
-local function assert_init(city_id) 
-    if global[GLOBAL_FIELD_NAME] == nil then
-        global[GLOBAL_FIELD_NAME] = {
+local function assert_init(city_id)
+    if storage[GLOBAL_FIELD_NAME] == nil then
+        storage[GLOBAL_FIELD_NAME] = {
             [city_id] = EMPTY_VALUE
         }
-    elseif global[GLOBAL_FIELD_NAME][city_id] == nil then
-        global[GLOBAL_FIELD_NAME][city_id] = EMPTY_VALUE
+    elseif storage[GLOBAL_FIELD_NAME][city_id] == nil then
+        storage[GLOBAL_FIELD_NAME][city_id] = EMPTY_VALUE
     end
 end
 
 local function change_used_bottles(city_id, bottle_count)
     assert_init(city_id)
 
-    global[GLOBAL_FIELD_NAME][city_id] = global[GLOBAL_FIELD_NAME][city_id] + bottle_count
+    storage[GLOBAL_FIELD_NAME][city_id] = storage[GLOBAL_FIELD_NAME][city_id] + bottle_count
 end
 
 local function count_used_bottles(city_id)
     assert_init(city_id)
 
-    return global[GLOBAL_FIELD_NAME][city_id]
+    return storage[GLOBAL_FIELD_NAME][city_id]
 end
 
 local function return_used_bottles(city)
