@@ -31,7 +31,7 @@ data:extend{
         energy_source = {
             type = "electric",
             usage_priority = "secondary-input",
-            emissions_per_minute = 20,
+            emissions_per_minute = { pollution = 20 },
         },
         allowed_effects = {"speed", "productivity", "consumption", "pollution"},
         module_specification = {
