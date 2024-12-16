@@ -14,7 +14,7 @@ data:extend{
         production_type = "input",
         volume = 20000, -- 100 * 2 * 1000
         pipe_connections = {
-          { direction = defines.direction.east, flow_direction = "input", position = { 1.8, -0.5 } },
+          { direction = defines.direction.east, position = { 1.8, -0.5 } },
         },
         --pipe_picture = pipe_pic,
         --pipe_covers = pipecoverpic,
