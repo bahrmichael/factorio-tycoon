@@ -14,15 +14,16 @@ data:extend{
         fluid_boxes = {
             {
                 production_type = "input",
-                base_area = 10,
-                height = 2,
-                base_level = -1,
+                volume = 2000, --  ：base_area * height * 1000 (10 * 2 * 100)
                 pipe_connections = {
-                    { type = "input", position = { 7.3, 0.0 } },
+                    { direction = defines.direction.east, flow_direction = "input", position = { 6.8, 0.0 } }, -- 根据位置调整方向
                 },
+                -- 添加 pipe_picture 和 pipe_covers，你需要定义这些变量
+                --pipe_picture = pipe_pic,
+                --pipe_covers = pipecoverpic,
             },
-            off_when_no_fluid_recipe = false,
         },
+        fluid_boxes_off_when_no_fluid_recipe = false,
         collision_box = { { -6.9, -5.4}, {6.9, 7.4} },
         --collision_mask = { "player-layer", "water-tile", "resource-layer", "item-layer", "ghost-layer", "object-layer", "train-layer", "rail-layer", "transport-belt-layer" },
         selection_box = { { -6.9, -5.4}, {6.9, 7.4} },

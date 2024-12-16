@@ -14,15 +14,15 @@ data:extend{
         fluid_boxes = {
             {
                 production_type = "input",
-                base_area = 10,
-                height = 2,
-                base_level = -1,
+                volume = 20000, -- 10 * 2 * 1000
                 pipe_connections = {
-                    { type = "input", position = { 7.2, 0.5 } },
+                    { direction = defines.direction.east, flow_direction = "input", position = { 6.8, 0.5 } }, -- 注意 direction 仍然是 east
                 },
+                --pipe_picture = pipe_pic,
+                --pipe_covers = pipecoverpic,
             },
-            off_when_no_fluid_recipe = false,
         },
+        fluid_boxes_off_when_no_fluid_recipe = false,
         collision_box = { { -6.9, -6.9}, {6.9, 6.9} },
         selection_box = { { -6.9, -6.9}, {6.9, 6.9} },
         --collision_mask = { "player-layer", "water-tile", "resource-layer", "item-layer", "ghost-layer", "object-layer", "train-layer", "rail-layer", "transport-belt-layer" },

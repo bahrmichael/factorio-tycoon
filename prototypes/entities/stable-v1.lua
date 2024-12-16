@@ -10,25 +10,23 @@ data:extend{
         flags = { "placeable-player", "player-creation" },
         minable = {mining_time = 1, result = "tycoon-stable"},
         fluid_boxes = {
-            {
+            { -- 输入流体箱
                 production_type = "input",
-                base_area = 10,
-                height = 2,
-                base_level = -1,
+                volume = 2000, -- 10 * 2 * 100
                 pipe_connections = {
-                    { type = "input", position = { 7.4, 0.5 } },
+                    { direction = defines.direction.east, flow_direction = "input", position = { 6.8, 0.5 } },
                 },
+                --pipe_picture = pipe_pic,
+                --pipe_covers = pipecoverpic,
             },
-            {
+            { -- 输出流体箱
                 production_type = "output",
-                base_level = 1,
-                pipe_connections =
-                {
-                  {
-                    type = "output",
-                    position = { 7.4, -3.5 }
-                  }
-                }
+                volume = 2000,
+                pipe_connections = {
+                    { direction = defines.direction.east, flow_direction = "output", position = { 6.8, -3.5 } },
+                },
+                --pipe_picture = pipe_pic,
+                --pipe_covers = pipecoverpic,
             },
         },
         collision_box = { { -6.9, -6.9}, {6.9, 6.9} },
