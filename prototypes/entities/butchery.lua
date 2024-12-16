@@ -34,8 +34,7 @@ data:extend {
             emissions_per_minute = { pollution = 50 },
         },
         allowed_effects = { "speed", "productivity", "consumption", "pollution" },
-        module_specification = {
-            module_slots = 3,
-        }
+        module_slots = 3,
+
     }
 }
