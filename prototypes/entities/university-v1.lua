@@ -27,7 +27,7 @@ data:extend{
         crafting_categories = { "tycoon-university-science" },
         crafting_speed = 1,
         return_ingredients_on_change = false,
-        energy_usage = "500KW",
+        energy_usage = "500kW",
         energy_source = {
             type = "electric",
             usage_priority = "secondary-input",

@@ -42,8 +42,8 @@ data:extend{
         crafting_categories = { "tycoon-growing-apples" },
         crafting_speed = 1,
         return_ingredients_on_change = true,
-        -- 60KW is one solar panel, makes sense to go with "solar energy" as the crops grow
-        energy_usage = "300KW",
+        -- 60kW is one solar panel, makes sense to go with "solar energy" as the crops grow
+        energy_usage = "300kW",
         energy_source = {
             type = "electric",
             usage_priority = "secondary-input",

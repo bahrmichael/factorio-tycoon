@@ -29,7 +29,7 @@ data:extend{
         crafting_categories = { "tycoon-fishing" },
         crafting_speed = 1,
         return_ingredients_on_change = true,
-        energy_usage = "30KW",
+        energy_usage = "30kW",
         energy_source = {
             type = "electric",
             usage_priority = "secondary-input",

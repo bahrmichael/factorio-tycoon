@@ -25,7 +25,7 @@ data:extend{
         crafting_categories = { "tycoon-butchery" },
         crafting_speed = 1,
         return_ingredients_on_change = false,
-        energy_usage = "300KW",
+        energy_usage = "300kW",
         energy_source = {
             type = "electric",
             usage_priority = "secondary-input",
