@@ -15,8 +15,7 @@ data:extend{
             { type = "fluid", name = "water", amount = 200 },
             { type = "item", name = "tycoon-grain", amount = 50 },
         },
-        result = "tycoon-cow",
-        result_count = 1,
+        results = {{type="item", name="tycoon-cow", amount=1}},
     },
     {
         type = "recipe",
@@ -30,8 +29,7 @@ data:extend{
             { type = "fluid", name = "water", amount = 200 },
             { type = "item", name = "tycoon-grain", amount = 50 },
         },
-        result = "tycoon-chicken",
-        result_count = 10,
+        results = {{type="item", name="tycoon-chicken", amount=10}},
     },
     {
         type = "recipe",

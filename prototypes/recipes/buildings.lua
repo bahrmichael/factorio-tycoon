@@ -10,8 +10,7 @@ data:extend{
             { type = "item", name = "transport-belt", amount = 5 },
             { type = "item", name = "inserter", amount = 5 },
         },
-        result = "tycoon-university",
-        result_count = 1,
+        results = {{type="item", name="tycoon-university", amount=1}},
     },
     {
         type = "recipe",
@@ -23,8 +22,7 @@ data:extend{
             { type = "item", name = "iron-plate", amount = 10 },
             { type = "item", name = "pipe", amount = 5 },
         },
-        result = "tycoon-water-tower",
-        result_count = 1,
+        results = {{type="item", name="tycoon-water-tower", amount=1}},
     },
     {
         type = "recipe",
@@ -35,8 +33,7 @@ data:extend{
             { type = "item", name = "stone-brick", amount = 10 },
             { type = "item", name = "wood", amount = 10 },
         },
-        result = "tycoon-market",
-        result_count = 1,
+        results = {{type="item", name="tycoon-market", amount=1}},
     },
     {
         type = "recipe",
@@ -47,8 +44,7 @@ data:extend{
             { type = "item", name = "stone-brick", amount = 10 },
             { type = "item", name = "iron-plate", amount = 10 },
         },
-        result = "tycoon-hardware-store",
-        result_count = 1,
+        results = {{type="item", name="tycoon-hardware-store", amount=1}},
     },
     {
         type = "recipe",
@@ -60,8 +56,7 @@ data:extend{
             { type = "item", name = "pipe", amount = 5 },
             { type = "item", name = "inserter", amount = 2 },
         },
-        result = "tycoon-stable",
-        result_count = 1,
+        results = {{type="item", name="tycoon-stable", amount=1}},
     },
     {
         type = "recipe",
@@ -73,8 +68,7 @@ data:extend{
             { type = "item", name = "steel-plate", amount = 5 },
             { type = "item", name = "inserter", amount = 5 },
         },
-        result = "tycoon-butchery",
-        result_count = 1,
+        results = {{type="item", name="tycoon-butchery", amount=1}},
     },
     {
         type = "recipe",
@@ -88,8 +82,7 @@ data:extend{
             { type = "item", name = "rail", amount = 20 },
             { type = "item", name = "advanced-circuit", amount = 10 },
         },
-        result = "tycoon-passenger-train-station",
-        result_count = 1,
+        results = {{type="item", name="tycoon-passenger-train-station", amount=1}},
     },
     {
         type = "recipe",
@@ -97,10 +90,10 @@ data:extend{
         category = "crafting",
         enabled = false,
         ingredients = {
-          {"tycoon-laptop", 5},
-          {"tycoon-money-stack", 10},
-          {"tycoon-soap", 10},
-          {"tycoon-gloves", 50}
+          {type="item", name="tycoon-laptop", amount=5},
+          {type="item", name="tycoon-money-stack", amount=10},
+          {type="item", name="tycoon-soap", amount=10},
+          {type="item", name="tycoon-gloves", amount=50}
         },
         result = "tycoon-citizen-science-lab"
       }

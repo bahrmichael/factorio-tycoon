@@ -14,8 +14,7 @@ data:extend{
         ingredients = {
             { type = "item", name = "tycoon-currency", amount = 5 * math.floor(70 / kwPerCurrency) },
         },
-        result = "automation-science-pack",
-        result_count = 1,
+        results = {{type="item", name="automation-science-pack", amount=1}},
     },
     {
         type = "recipe",
@@ -26,8 +25,7 @@ data:extend{
         ingredients = {
             { type = "item", name = "tycoon-currency", amount = 10 * math.floor(130 / kwPerCurrency) },
         },
-        result = "logistic-science-pack",
-        result_count = 1,
+        results = {{type="item", name="logistic-science-pack", amount=1}},
     },
     {
         type = "recipe",
@@ -38,8 +36,7 @@ data:extend{
         ingredients = {
             { type = "item", name = "tycoon-currency", amount = 8 * math.floor(275 / kwPerCurrency) },
         },
-        result = "military-science-pack",
-        result_count = 1,
+        results = {{type="item", name="military-science-pack", amount=1}},
     },
     {
         type = "recipe",
@@ -50,8 +47,7 @@ data:extend{
         ingredients = {
             { type = "item", name = "tycoon-currency", amount = 10 * math.floor(450 / kwPerCurrency) },
         },
-        result = "chemical-science-pack",
-        result_count = 1,
+        results = {{type="item", name="chemical-science-pack", amount=1}},
     },
     {
         type = "recipe",
@@ -62,8 +58,7 @@ data:extend{
         ingredients = {
             { type = "item", name = "tycoon-money-stack", amount = 5 },
         },
-        result = "production-science-pack",
-        result_count = 1,
+        results = {{type="item", name="production-science-pack", amount=1}},
     },
     {
         type = "recipe",
@@ -74,8 +69,7 @@ data:extend{
         ingredients = {
             { type = "item", name = "tycoon-money-stack", amount = 20 },
         },
-        result = "utility-science-pack",
-        result_count = 1,
+        results = {{type="item", name="utility-science-pack", amount=1}},
     },
     {
         type = "recipe",

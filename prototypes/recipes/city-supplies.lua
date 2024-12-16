@@ -10,8 +10,7 @@ data:extend{
             { type = "item", name = "tycoon-iron-chain", amount = 1 },
             { type = "item", name = "tycoon-tire", amount = 2 },
         },
-        result = "tycoon-bicycle",
-        result_count = 1,
+        results = {{type="item", name="tycoon-bicycle", amount=1}},
     },
     {
         type = "recipe",
@@ -22,8 +21,7 @@ data:extend{
         ingredients = {
             { type = "item", name = "iron-plate", amount = 5 },
         },
-        result = "tycoon-iron-chain",
-        result_count = 2,
+        results = {{type="item", name="tycoon-iron-chain", amount=2}},
     },
     {
         type = "recipe",
@@ -34,8 +32,7 @@ data:extend{
         ingredients = {
             { type = "fluid", name = "petroleum-gas", amount = 40 },
         },
-        result = "tycoon-candle",
-        result_count = 2,
+        results = {{type="item", name="tycoon-candle", amount=2}},
     },
     {
         type = "recipe",
@@ -46,8 +43,7 @@ data:extend{
         ingredients = {
             { type = "fluid", name = "petroleum-gas", amount = 10 },
         },
-        result = "tycoon-gloves",
-        result_count = 2,
+        results = {{type="item", name="tycoon-gloves", amount=2}},
     },
     {
         type = "recipe",
@@ -59,8 +55,7 @@ data:extend{
             { type = "item", name = "steel-plate", amount = 3 },
             { type = "item", name = "copper-plate", amount = 1 },
         },
-        result = "tycoon-cutlery",
-        result_count = 10,
+        results = {{type="item", name="tycoon-cutlery", amount=10}},
     },
     {
         type = "recipe",
@@ -76,8 +71,7 @@ data:extend{
             { type = "item", name = "tycoon-keyboard", amount = 1 },
             { type = "item", name = "copper-cable", amount = 10 },
         },
-        result = "tycoon-laptop",
-        result_count = 1,
+        results = {{type="item", name="tycoon-laptop", amount=1}},
     },
     {
         type = "recipe",
@@ -89,8 +83,7 @@ data:extend{
             { type = "item", name = "plastic-bar", amount = 1 },
             { type = "item", name = "electronic-circuit", amount = 1 },
         },
-        result = "tycoon-keyboard",
-        result_count = 1,
+        results = {{type="item", name="tycoon-keyboard", amount=1}},
     },
     {
         type = "recipe",
@@ -105,8 +98,7 @@ data:extend{
             { type = "item", name = "processing-unit", amount = 1 },
             { type = "item", name = "copper-cable", amount = 10 },
         },
-        result = "tycoon-smartphone",
-        result_count = 1,
+        results = {{type="item", name="tycoon-smartphone", amount=1}},
     },
     {
         type = "recipe",
@@ -119,8 +111,7 @@ data:extend{
             { type = "item", name = "advanced-circuit", amount = 2 },
             { type = "item", name = "copper-cable", amount = 10 },
         },
-        result = "tycoon-television",
-        result_count = 1,
+        results = {{type="item", name="tycoon-television", amount=1}},
     },
     {
         type = "recipe",
@@ -133,8 +124,7 @@ data:extend{
             { type = "item", name = "iron-stick", amount = 1 },
             { type = "item", name = "copper-plate", amount = 1 },
         },
-        result = "tycoon-cooking-pan",
-        result_count = 1,
+        results = {{type="item", name="tycoon-cooking-pan", amount=1}},
     },
     {
         type = "recipe",
@@ -146,8 +136,7 @@ data:extend{
             { type = "item", name = "steel-plate", amount = 1 },
             { type = "item", name = "iron-stick", amount = 1 },
         },
-        result = "tycoon-cooking-pot",
-        result_count = 1,
+        results = {{type="item", name="tycoon-cooking-pot", amount=1}},
     },
     {
         type = "recipe",
@@ -159,8 +148,7 @@ data:extend{
             { type = "fluid", name = "light-oil", amount = 20 },
             { type = "item", name = "coal", amount = 5 },
         },
-        result = "tycoon-soap",
-        result_count = 5,
+        results = {{type="item", name="tycoon-soap", amount=5}},
     },
     {
         type = "recipe",
@@ -171,7 +159,6 @@ data:extend{
         ingredients = {
             { type = "item", name = "plastic-bar", amount = 2 },
         },
-        result = "tycoon-tire",
-        result_count = 5,
+        results = {{type="item", name="tycoon-tire", amount=5}},
     },
 }

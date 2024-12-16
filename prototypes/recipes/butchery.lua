@@ -12,8 +12,7 @@ data:extend{
         ingredients = {
             { type = "item", name = "tycoon-cow", amount = 1 },
         },
-        result = "tycoon-meat",
-        result_count = 50,
+        results = {{type="item", name="tycoon-meat", amount=50}},
     },
     {
         type = "recipe",
@@ -24,8 +23,7 @@ data:extend{
         ingredients = {
             { type = "item", name = "tycoon-chicken", amount = 1 },
         },
-        result = "tycoon-meat",
-        result_count = 10,
+        results = {{type="item", name="tycoon-meat", amount=10}},
     },
     {
         type = "recipe",
@@ -36,7 +34,6 @@ data:extend{
         ingredients = {
             { type = "item", name = "raw-fish", amount = 1 },
         },
-        result = "tycoon-fish-filet",
-        result_count = 10,
+        results = {{type="item", name="tycoon-fish-filet", amount=10}},
     },
 }
