@@ -217,7 +217,7 @@ data:extend{
         mod = "Tycoon",
         icon = "__tycoon__/graphics/technology/residential-housing.png",
         icon_size = 256,
-        prerequisites = { "steel-processing", "optics", "tycoon-meat-processing", "tycoon-baking", "tycoon-milking", "tycoon-bottling" },
+        prerequisites = { "steel-processing", "tycoon-meat-processing", "tycoon-baking", "tycoon-milking", "tycoon-bottling" },
         unit = {
           count = 500,
           ingredients = {
