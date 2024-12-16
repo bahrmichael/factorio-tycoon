@@ -13,7 +13,7 @@ data:extend{
         },
         collision_box = { { -3.9, -3.4}, {3.9, 3.9} },
         selection_box = { { -3.9, -3.9}, {3.9, 3.9} },
-        collision_mask = { "player-layer", "water-tile", "resource-layer", "item-layer", "ghost-layer", "object-layer", "train-layer", "rail-layer", "transport-belt-layer" },
+        --collision_mask = { "player-layer", "water-tile", "resource-layer", "item-layer", "ghost-layer", "object-layer", "train-layer", "rail-layer", "transport-belt-layer" },
         animation = {
             layers = {
                 {

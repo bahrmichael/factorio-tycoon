@@ -32,7 +32,7 @@ data:extend{
             },
         },
         collision_box = { { -4.9, -4.9}, {4.9, 4.9} },
-        collision_mask = { "player-layer", "water-tile", "item-layer", "object-layer", "train-layer", "rail-layer", "transport-belt-layer" },
+        --collision_mask = { "player-layer", "water-tile", "item-layer", "object-layer", "train-layer", "rail-layer", "transport-belt-layer" },
         selection_box = { { -4.9, -4.9}, {4.9, 4.9} },
         window_bounding_box = { { -0.125, 0.6875 }, { 0.1875, 1.1875 } },
         animation = {

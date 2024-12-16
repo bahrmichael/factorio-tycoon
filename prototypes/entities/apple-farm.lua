@@ -24,7 +24,7 @@ data:extend{
             off_when_no_fluid_recipe = false,
         },
         collision_box = { { -6.9, -5.4}, {6.9, 7.4} },
-        collision_mask = { "player-layer", "water-tile", "resource-layer", "item-layer", "ghost-layer", "object-layer", "train-layer", "rail-layer", "transport-belt-layer" },
+        --collision_mask = { "player-layer", "water-tile", "resource-layer", "item-layer", "ghost-layer", "object-layer", "train-layer", "rail-layer", "transport-belt-layer" },
         selection_box = { { -6.9, -5.4}, {6.9, 7.4} },
         window_bounding_box = { { -0.125, 0.6875 }, { 0.1875, 1.1875 } },
         animation = {
