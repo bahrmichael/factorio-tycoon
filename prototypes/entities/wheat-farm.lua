@@ -1,4 +1,4 @@
-data:extend{
+data:extend {
     {
         type = "assembling-machine",
         name = "tycoon-wheat-farm",
@@ -23,20 +23,22 @@ data:extend{
             },
         },
         fluid_boxes_off_when_no_fluid_recipe = false,
-        collision_box = { { -6.9, -6.9}, {6.9, 6.9} },
-        selection_box = { { -6.9, -6.9}, {6.9, 6.9} },
+        collision_box = { { -6.9, -6.9 }, { 6.9, 6.9 } },
+        selection_box = { { -6.9, -6.9 }, { 6.9, 6.9 } },
         --collision_mask = { "player-layer", "water-tile", "resource-layer", "item-layer", "ghost-layer", "object-layer", "train-layer", "rail-layer", "transport-belt-layer" },
         window_bounding_box = { { -0.125, 0.6875 }, { 0.1875, 1.1875 } },
-        animation = {
-            layers = {
-                {
-                    filename = "__tycoon__/graphics/entity/wheat-farm/wheat-farm.png",
-                    priority = "high",
-                    width = 500,
-                    height = 500,
-                    shift = {0, 0},
-                    scale = 0.95
-                }
+        graphics_set = {
+            animation = {
+                layers = {
+                    {
+                        filename = "__tycoon__/graphics/entity/wheat-farm/wheat-farm.png",
+                        priority = "high",
+                        width = 500,
+                        height = 500,
+                        shift = { 0, 0 },
+                        scale = 0.95
+                    }
+                },
             },
         },
         crafting_categories = { "tycoon-growing-wheat" },

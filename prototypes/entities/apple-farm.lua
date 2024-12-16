@@ -28,16 +28,18 @@ data:extend {
         --collision_mask = { "player-layer", "water-tile", "resource-layer", "item-layer", "ghost-layer", "object-layer", "train-layer", "rail-layer", "transport-belt-layer" },
         selection_box = { { -6.9, -5.4 }, { 6.9, 7.4 } },
         window_bounding_box = { { -0.125, 0.6875 }, { 0.1875, 1.1875 } },
-        animation = {
-            layers = {
-                {
-                    filename = "__tycoon__/graphics/entity/apple-farm/apple-farm.png",
-                    priority = "high",
-                    width = 500,
-                    height = 500,
-                    shift = { 0, 0.5 },
-                    scale = 1
-                }
+        graphics_set = {
+            animation = {
+                layers = {
+                    {
+                        filename = "__tycoon__/graphics/entity/apple-farm/apple-farm.png",
+                        priority = "high",
+                        width = 500,
+                        height = 500,
+                        shift = { 0, 0.5 },
+                        scale = 1
+                    }
+                },
             },
         },
         crafting_categories = { "tycoon-growing-apples" },

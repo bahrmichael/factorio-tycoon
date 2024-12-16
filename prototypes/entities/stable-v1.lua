@@ -1,14 +1,14 @@
-data:extend{
+data:extend {
     {
         type = "assembling-machine",
         name = "tycoon-stable-v1",
-        localised_name = {"entity-name.tycoon-stable"},
-        localised_description = {"entity-description.tycoon-stable"},
+        localised_name = { "entity-name.tycoon-stable" },
+        localised_description = { "entity-description.tycoon-stable" },
         icon = "__tycoon__/graphics/icons/stable.png",
         icon_size = 64,
         max_health = 200,
         flags = { "placeable-player", "player-creation" },
-        minable = {mining_time = 1, result = "tycoon-stable"},
+        minable = { mining_time = 1, result = "tycoon-stable" },
         fluid_boxes = {
             { -- 输入流体箱
                 production_type = "input",
@@ -29,20 +29,22 @@ data:extend{
                 --pipe_covers = pipecoverpic,
             },
         },
-        collision_box = { { -6.9, -6.9}, {6.9, 6.9} },
+        collision_box = { { -6.9, -6.9 }, { 6.9, 6.9 } },
         --collision_mask = { "player-layer", "water-tile", "item-layer", "object-layer", "train-layer", "rail-layer", "transport-belt-layer" },
-        selection_box = { { -6.9, -6.9}, {6.9, 6.9} },
+        selection_box = { { -6.9, -6.9 }, { 6.9, 6.9 } },
         window_bounding_box = { { -0.125, 0.6875 }, { 0.1875, 1.1875 } },
-        animation = {
-            layers = {
-                {
-                filename = "__tycoon__/graphics/entity/stable/stable.png",
-                priority = "high",
-                width = 500,
-                height = 500,
-                shift = {0, -0.2},
-                scale = 1
-                }
+        graphics_set = {
+            animation = {
+                layers = {
+                    {
+                        filename = "__tycoon__/graphics/entity/stable/stable.png",
+                        priority = "high",
+                        width = 500,
+                        height = 500,
+                        shift = { 0, -0.2 },
+                        scale = 1
+                    }
+                },
             },
         },
         crafting_categories = { "tycoon-husbandry" },
@@ -54,7 +56,7 @@ data:extend{
             usage_priority = "secondary-input",
             emissions_per_minute = { pollution = 10 },
         },
-        allowed_effects = {"speed", "productivity", "consumption", "pollution"},
+        allowed_effects = { "speed", "productivity", "consumption", "pollution" },
         module_specification = {
             module_slots = 3,
         }

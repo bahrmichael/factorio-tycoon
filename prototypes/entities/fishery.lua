@@ -1,4 +1,4 @@
-data:extend{
+data:extend {
     {
         type = "assembling-machine",
         name = "tycoon-fishery",
@@ -11,19 +11,21 @@ data:extend{
             mining_time = 3,
             results = {}
         },
-        collision_box = { { -3.9, -3.4}, {3.9, 3.9} },
-        selection_box = { { -3.9, -3.9}, {3.9, 3.9} },
+        collision_box = { { -3.9, -3.4 }, { 3.9, 3.9 } },
+        selection_box = { { -3.9, -3.9 }, { 3.9, 3.9 } },
         --collision_mask = { "player-layer", "water-tile", "resource-layer", "item-layer", "ghost-layer", "object-layer", "train-layer", "rail-layer", "transport-belt-layer" },
-        animation = {
-            layers = {
-                {
-                    filename = "__tycoon__/graphics/entity/fishery/fishery.png",
-                    priority = "high",
-                    width = 325,
-                    height = 325,
-                    shift = {0, 0.3},
-                    scale = 1.1
-                }
+        graphics_set = {
+            animation = {
+                layers = {
+                    {
+                        filename = "__tycoon__/graphics/entity/fishery/fishery.png",
+                        priority = "high",
+                        width = 325,
+                        height = 325,
+                        shift = { 0, 0.3 },
+                        scale = 1.1
+                    }
+                },
             },
         },
         crafting_categories = { "tycoon-fishing" },
