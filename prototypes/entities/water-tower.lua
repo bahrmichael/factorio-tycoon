@@ -12,12 +12,12 @@ data:extend{
       },
       fluid_box = {
         production_type = "input",
-        base_area = 100,
-        height = 2,
-        base_level = -1,
+        volume = 20000, -- 100 * 2 * 1000
         pipe_connections = {
-          { position = { 2.2, -0.5 }, type = "input" },
+          { direction = defines.direction.east, flow_direction = "input", position = { 1.8, -0.5 } },
         },
+        --pipe_picture = pipe_pic,
+        --pipe_covers = pipecoverpic,
       },
       flow_length_in_ticks = 360,
       rotatable = false,
