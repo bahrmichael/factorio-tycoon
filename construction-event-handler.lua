@@ -13,13 +13,13 @@ local function invalidateSpecialBuildingsList(city, name)
 end
 
 local function on_built(event, use_entity)
-    if use_entity then
-        assert(event.entity, "Called on_built without a entity. Wrong event?")
-    else
-        assert(event.created_entity, "Called on_built without a created_entity. Wrong event?")
+    -- now all created_entity are remove to event.entity
+    if not event.entity then
+        log("Called on_built without a created entity. Wrong event?")
+        return
     end
 
-    local entity = use_entity and event.entity or event.created_entity
+    local entity = use_entity and event.entity
     -- LuaEntity inherits surface_index from LuaControl
     local surface_index = entity.surface_index
 
