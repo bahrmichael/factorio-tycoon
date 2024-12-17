@@ -508,7 +508,7 @@ local function aggregateSupplyBuildingResources(supplyBuildings)
 
     for _, entity in ipairs(supplyBuildings) do
         local contents = entity.get_inventory(defines.inventory.chest).get_contents()
-        if contents and table.size(contents) > 0 then
+        if contents and table_size(contents) > 0 then
 
             --fixme now contents have a quality. see https://lua-api.factorio.com/latest/concepts/ItemWithQualityCounts.html
             -- just merge quality items by name
