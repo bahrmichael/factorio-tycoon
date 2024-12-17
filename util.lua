@@ -474,13 +474,47 @@ local function printTiles(start, map, tileName, surface_index, dont_override_til
     end
 end
 
+local function merge_items_by_name(items)
+    -- Creates a result table to store item counts by name.
+    local name_count_map = {}
+
+    -- Iterates through the input array of items.
+    for _, item in pairs(items) do
+        -- If the item name already exists in the result table, increment the count;
+        -- otherwise, initialize the count to the current item's count.
+        if name_count_map[item.name] then
+            name_count_map[item.name] = name_count_map[item.name] + item.count
+        else
+            name_count_map[item.name] = item.count
+        end
+    end
+
+    -- Converts the result table into an array format.
+    local sorted_array = {}
+    for name, count in pairs(name_count_map) do
+        table.insert(sorted_array, { name = name, count = count })
+    end
+
+    -- Sorts the array in descending order by count.
+    table.sort(sorted_array, function(a, b)
+        return a.count > b.count
+    end)
+
+    return sorted_array
+end
+
 local function aggregateSupplyBuildingResources(supplyBuildings)
     local resources = {}
 
     for _, entity in ipairs(supplyBuildings) do
         local contents = entity.get_inventory(defines.inventory.chest).get_contents()
-        for item, count in pairs(contents) do
-            resources[item] = (resources[item] or 0) + count
+        if contents and table.size(contents) > 0 then
+
+            --fixme now contents have a quality. see https://lua-api.factorio.com/latest/concepts/ItemWithQualityCounts.html
+            -- just merge quality items by name
+            for _, item in pairs(merge_items_by_name(contents)) do
+                resources[item.name] = (resources[item.name] or 0) + item.count
+            end
         end
     end
 

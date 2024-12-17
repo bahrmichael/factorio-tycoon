@@ -83,7 +83,10 @@ local function spawnPassengers(city)
 
                 local passengerLimit = (storage.tycoon_train_station_limits or {})[selectedTrainStation.unit_number] or 80
                 local departingPassengers = 0
-                for name, count in pairs(selectedTrainStation.get_inventory(1).get_contents()) do
+                for name, item in pairs(selectedTrainStation.get_inventory(1).get_contents()) do
+
+                    local name = item.name
+                    local count = item.count
                     if name ~= "tycoon-passenger-" .. string.lower(city.name) and string.find(name, "tycoon-passenger-", 1, true) then
                         departingPassengers = departingPassengers + count
                     end
@@ -109,7 +112,11 @@ local function spawnPassengers(city)
                 end
 
                 local currentPassengersForDestination = 0
-                for name, count in pairs(selectedTrainStation.get_inventory(1).get_contents()) do
+                for name, item in pairs(selectedTrainStation.get_inventory(1).get_contents()) do
+
+                    local name = item.name
+                    local count = item.count
+
                     if name == "tycoon-passenger-" .. string.lower(destination) then
                         currentPassengersForDestination = currentPassengersForDestination + count
                     end
