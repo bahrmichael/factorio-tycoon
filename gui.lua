@@ -741,7 +741,7 @@ local function addMultipleCitiesOverview(anchor, player_index)
     flow_title_bar.add{type = "label", caption = {"", "[font=default-bold]", {"tycoon-gui-cities-overview"}, "[/font]"}}
     flow_title_bar.add{
         type="sprite-button",
-        sprite="utility/close_white",
+        sprite="utility/close",
         hovered_sprite="utility/close_black",
         clicked_sprite="utility/close_black",
         style="frame_action_button", -- needed to keep the icon small
