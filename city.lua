@@ -1212,7 +1212,7 @@ local function completeConstruction(city, buildingTypes)
     }
     Util.addGlobalBuilding(entity.unit_number, city.id, entity)
     -- WARN: we must always register
-    script.register_on_entity_destroyed(entity)
+    script.register_on_object_destroyed(entity)
 
     if housingTier == "tycoon-treasury" and not storage.tycoon_intro_message_treasury_displayed then
         game.print({"", "[color=orange]Factorio Tycoon:[/color] ", {"tycooon-info-message-treasury"}})

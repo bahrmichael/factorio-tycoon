@@ -100,7 +100,7 @@ end)
 script.on_event({
     defines.events.on_player_mined_entity,
     defines.events.on_robot_mined_entity,
-    -- Register entities with script.register_on_entity_destroyed(entity) so that this event fires.
+    -- Register entities with script.register_on_object_destroyed(entity) so that this event fires.
     defines.events.on_entity_destroyed,
     defines.events.script_raised_destroy
 }, function(event)
