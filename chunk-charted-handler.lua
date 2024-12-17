@@ -77,7 +77,9 @@ local function on_chunk_charted(event)
                 -- The game slider allows between 17% and 600%.
                 -- 17% * 200 = 34
                 -- 600% * 200 = 1200
-                min_distance = math.max(200 * game.surfaces[event.surface_index].map_gen_settings.water, 50)
+                local factor = game.surfaces[event.surface_index].map_gen_settings.autoplace_settings.tile.settings.water.frequency
+
+                min_distance = math.max(200 * factor, 50)
             end
             local nearby_same_primary_industries_count = game.surfaces[event.surface_index].count_entities_filtered{
                 position=position,
