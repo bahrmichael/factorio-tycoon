@@ -4,7 +4,7 @@ local Util = require("util")
 local TagsQueue = require("tags-queue")
 
 local function randomPrimaryIndustry()
-    return Constants.PRIMARY_INDUSTRIES[global.tycoon_global_generator(#Constants.PRIMARY_INDUSTRIES)]
+    return Constants.PRIMARY_INDUSTRIES[storage.tycoon_global_generator(#Constants.PRIMARY_INDUSTRIES)]
 end
 
 local function insideStartingArea(chunk)
@@ -49,7 +49,7 @@ local function on_chunk_charted(event)
         PrimaryIndustries.tagIndustry(pos_name[1], pos_name[2], event.surface_index)
     end
 
-    if global.tycoon_global_generator() < 0.25 then
+    if storage.tycoon_global_generator() < 0.25 then
         local entity_name = randomPrimaryIndustry()
         local position
         if entity_name == "tycoon-fishery" then
@@ -77,7 +77,9 @@ local function on_chunk_charted(event)
                 -- The game slider allows between 17% and 600%.
                 -- 17% * 200 = 34
                 -- 600% * 200 = 1200
-                min_distance = math.max(200 * game.surfaces[event.surface_index].map_gen_settings.water, 50)
+                local factor = game.surfaces[event.surface_index].map_gen_settings.autoplace_settings.tile.settings.water.frequency
+
+                min_distance = math.max(200 * factor, 50)
             end
             local nearby_same_primary_industries_count = game.surfaces[event.surface_index].count_entities_filtered{
                 position=position,

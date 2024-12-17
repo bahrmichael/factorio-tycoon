@@ -93,11 +93,11 @@ local house_ratios = {
 --- @param city City
 --- @param hardwareStores any[]
 local function addConstructionMaterialsGui(rootGui, constructionNeeds, city, hardwareStores, housingType)
-   
+
     local constructionGui = rootGui.add{type = "frame", direction = "vertical", caption = {"", {"tycoon-gui-construction"}}}
 
     local tbl = constructionGui.add{type = "table", column_count = 4, draw_horizontal_lines = true}
-    
+
     if #hardwareStores == 0 then
         tbl.add{type = "label", caption = {"", "[color=red]", {"tycoon-gui-missing", {"entity-name.tycoon-hardware-store"}}, "[/color]"}}
     else
@@ -115,7 +115,7 @@ local function addConstructionMaterialsGui(rootGui, constructionNeeds, city, har
             if amounts.provided < required_amount then
                 color = "red"
             end
-            
+
             local c1 = tbl.add{type = "label", caption = "[item=" .. resource .. "]"}
             c1.style.padding = 5
             c1.style.minimal_width = 100
@@ -217,7 +217,7 @@ local function addBasicNeedsView(rootGui, basicNeeds, city, waterTowers, markets
                 -- Vanilla items like water are not in our localization config, and therefore have to be accessed differently
                 imgName = "item=" .. resource
             end
-            
+
             local c1 = tbl.add{type = "label", caption = "[" .. imgName .. "]"}
             c1.style.padding = 5
             c1.style.minimal_width = 100
@@ -297,7 +297,7 @@ local function addAdditionalNeedsView(rootGui, additionalNeeds, city, markets, h
             end
 
             local imgName = "item=" .. resource
-            
+
             local c1 = tbl.add{type = "label", caption = "[" .. imgName .. "]"}
             c1.style.padding = 5
             c1.style.minimal_width = 100
@@ -376,7 +376,7 @@ local function mapSupplyLevelToLocalised(supplyLevel)
     end
 end
 
-local function areConstructionNeedsMet(city, housingTier, stores) 
+local function areConstructionNeedsMet(city, housingTier, stores)
     local hardwareStores = stores or Util.list_special_city_buildings(city, "tycoon-hardware-store")
     local supply = Util.aggregateSupplyBuildingResources(hardwareStores)
     local needs = Constants.CONSTRUCTION_MATERIALS[housingTier]
@@ -408,14 +408,14 @@ local lowerTierMap = {
     highrise = "residential"
 }
 
-local function get_colouring(isTrue) 
+local function get_colouring(isTrue)
     return isTrue and "[color=green]" or "[color=red]"
 end
 
 --- @param city City
 --- @param housingType string
 local function addHousingView(housingType, city, anchor, player_index)
-    
+
     anchor.style.natural_height = 600
     if housingType ~= "simple" and not game.forces.player.technologies["tycoon-" .. housingType .. "-housing"].researched then
         anchor.add{type = "label", caption = {"", "[color=red]", {"tycoon-gui-not-researched"}, "[/color]"}}
@@ -440,7 +440,7 @@ local function addHousingView(housingType, city, anchor, player_index)
 
     local basicNeedsSupplyLevelsSummary = getSupplyLevelsSummary(Consumption.getSupplyLevels(city, getBasicNeeds(city, housingType)));
     local additionalNeedsSupplyLevelsSummary = getSupplyLevelsSummary(Consumption.getSupplyLevels(city, getAdditionalNeeds(city, housingType)));
-    
+
     local tbl = stats.add{type = "table", column_count = 2, draw_horizontal_lines = true}
     -- overall basic needs status
     tbl.add{type = "label", caption = {"", {"tycoon-gui-basic-needs"}, ": "}}
@@ -503,7 +503,7 @@ local function addHousingView(housingType, city, anchor, player_index)
     end
 
     construction_info.add{type = "label", caption = {"", {"tycoon-gui-boost-construction-speed"}}}
-    
+
     local basic_needs_container = tabbed_pane.add{type = "scroll-pane", direction = "vertical"}
     tabbed_pane.add_tab(tab_basic_needs, basic_needs_container)
     addBasicNeedsView(basic_needs_container, basicNeeds[housingType], city, waterTowers, markets, housingType)
@@ -515,7 +515,7 @@ local function addHousingView(housingType, city, anchor, player_index)
     local construction_needs_container = tabbed_pane.add{type = "scroll-pane", direction = "vertical"}
     tabbed_pane.add_tab(tab_construction_material, construction_needs_container)
     addConstructionMaterialsGui(construction_needs_container, Constants.CONSTRUCTION_MATERIALS[housingType], city, hardwareStores, housingType)
-    
+
     tabbed_pane.selected_tab_index = GuiState.get_state(player_index, "city_tab:" .. city.id + 1 .. ":housing_tab:" .. GuiState.housing_type_to_tab[housingType] .. ":needs_tab") or 1
 end
 
@@ -590,9 +590,9 @@ local function canCreatePassengerForCity(train_station_number, destination_city_
     -- If any city has been disabled, then we won't allow new cities to automatically show up and produce passengers
 
     local areAllFiltersPositive = true
-    if global.tycoon_train_station_passenger_filters ~= nil and global.tycoon_train_station_passenger_filters[train_station_number] ~= nil then
-        for _, c in ipairs(global.tycoon_cities) do
-            if global.tycoon_train_station_passenger_filters[train_station_number][c.id] == false then
+    if storage.tycoon_train_station_passenger_filters ~= nil and storage.tycoon_train_station_passenger_filters[train_station_number] ~= nil then
+        for _, c in ipairs(storage.tycoon_cities) do
+            if storage.tycoon_train_station_passenger_filters[train_station_number][c.id] == false then
                 areAllFiltersPositive = false
                 break
             end
@@ -604,11 +604,11 @@ local function canCreatePassengerForCity(train_station_number, destination_city_
     end
 
     -- If the station does not know how to filter a station yet and not all filters are positive, then set the new one to negative
-    if global.tycoon_train_station_passenger_filters[train_station_number][destination_city_id] == nil then
-        global.tycoon_train_station_passenger_filters[train_station_number][destination_city_id] = areAllFiltersPositive
+    if storage.tycoon_train_station_passenger_filters[train_station_number][destination_city_id] == nil then
+        storage.tycoon_train_station_passenger_filters[train_station_number][destination_city_id] = areAllFiltersPositive
     end
 
-    return global.tycoon_train_station_passenger_filters[train_station_number][destination_city_id]
+    return storage.tycoon_train_station_passenger_filters[train_station_number][destination_city_id]
 end
 
 local function addTrainStationView(trainStationUnitNumber, anchor, city)
@@ -617,13 +617,13 @@ local function addTrainStationView(trainStationUnitNumber, anchor, city)
         return
     end
 
-    if not global.tycoon_train_station_limits then
-        global.tycoon_train_station_limits = {}
+    if not storage.tycoon_train_station_limits then
+        storage.tycoon_train_station_limits = {}
     end
 
-    if not global.tycoon_train_station_limits[trainStationUnitNumber] then
+    if not storage.tycoon_train_station_limits[trainStationUnitNumber] then
         -- 100 is the inventory_size of the passenger-train-station entity, filling up 80% is a good default to not immediately get stuck
-        global.tycoon_train_station_limits[trainStationUnitNumber] = 80
+        storage.tycoon_train_station_limits[trainStationUnitNumber] = 80
     end
 
     local flow = anchor.add{type = "flow", direction = "vertical"}
@@ -633,22 +633,22 @@ local function addTrainStationView(trainStationUnitNumber, anchor, city)
     end
     flow.add{type = "label", caption = {"", {"tycoon-gui-train-station-limit", 0, 100}, ":"}}
     flow.add{
-        type = "textfield", 
+        type = "textfield",
         numeric = true,
         allow_decimal = false,
         allow_negative = false,
-        text = "" .. global.tycoon_train_station_limits[trainStationUnitNumber],
+        text = "" .. storage.tycoon_train_station_limits[trainStationUnitNumber],
         name = "train_station_limit:" .. trainStationUnitNumber
     }
 
     flow.add{type = "line", direction = "horizontal"}
     flow.add{type = "label", caption = {"", {"tycoon-gui-select-departures"}}}
 
-    for _, c in ipairs(global.tycoon_cities or {}) do
+    for _, c in ipairs(storage.tycoon_cities or {}) do
         if city.name == c.name then
             flow.add{type = "checkbox", caption = c.name, state = false, enabled = false}
         else
-            flow.add{type = "checkbox", caption = c.name, 
+            flow.add{type = "checkbox", caption = c.name,
                 state = canCreatePassengerForCity(trainStationUnitNumber, c.id),
                 name = "train_station_gui_checkbox:" .. string.lower(c.name),
                 tags = {
@@ -661,12 +661,12 @@ local function addTrainStationView(trainStationUnitNumber, anchor, city)
 end
 
 local function addTreasuryView(treasuryUnitNumber, anchor, city)
-    if not global.tycoon_money_stacks_treasury_enabled then
-        global.tycoon_money_stacks_treasury_enabled = {}
+    if not storage.tycoon_money_stacks_treasury_enabled then
+        storage.tycoon_money_stacks_treasury_enabled = {}
     end
 
-    if not global.tycoon_money_stacks_treasury_enabled[treasuryUnitNumber] then
-        global.tycoon_money_stacks_treasury_enabled[treasuryUnitNumber] = false
+    if not storage.tycoon_money_stacks_treasury_enabled[treasuryUnitNumber] then
+        storage.tycoon_money_stacks_treasury_enabled[treasuryUnitNumber] = false
     end
 
     local flow = anchor.add{type = "flow", direction = "vertical"}
@@ -682,16 +682,16 @@ local function addTreasuryView(treasuryUnitNumber, anchor, city)
         flow.add{type = "line"}
     end
 
-    if global.tycoon_money_stacks_treasury_researched == nil then
+    if storage.tycoon_money_stacks_treasury_researched == nil then
         flow.add{type = "checkbox", caption = {"", {"tycoon-gui-treasury-money-stack-enabled"}, ":"}, state = false, enabled = false, tooltip = {"", {"tycoon-gui-treasury-money-stack-how-to", {"technology-name.tycoon-advanced-treasury-payouts"}}}}
     else
         -- todo: the ui showed 150:2. why?
-        flow.add{type = "checkbox", caption = {"", {"tycoon-gui-treasury-money-stack-enabled"}}, state = global.tycoon_money_stacks_treasury_enabled[treasuryUnitNumber], tooltip = {"", {"tycoon-gui-treasury-money-stack-info", Constants.TREASURY_CONVERSION_RATE["tycoon-currency"], Constants.TREASURY_CONVERSION_RATE["tycoon-money-stack"]}}, name = "treasury_money_stack_enabled:" .. treasuryUnitNumber}
+        flow.add{type = "checkbox", caption = {"", {"tycoon-gui-treasury-money-stack-enabled"}}, state = storage.tycoon_money_stacks_treasury_enabled[treasuryUnitNumber], tooltip = {"", {"tycoon-gui-treasury-money-stack-info", Constants.TREASURY_CONVERSION_RATE["tycoon-currency"], Constants.TREASURY_CONVERSION_RATE["tycoon-money-stack"]}}, name = "treasury_money_stack_enabled:" .. treasuryUnitNumber}
     end
 end
 
 local function addCityView(city, anchor, player_index)
-    
+
     local tabbed_pane = anchor.add{type="tabbed-pane"}
     local tab_overview = tabbed_pane.add{type="tab", caption={"", {"tycoon-gui-city-overview"}}, name = "city_tab:" .. city.id + 1 .. ":housing_tab:1"}
     local tab_simple = tabbed_pane.add{type="tab", caption={"", {"technology-name.tycoon-simple-housing"}}, name = "city_tab:" .. city.id + 1 .. ":housing_tab:2"}
@@ -701,15 +701,15 @@ local function addCityView(city, anchor, player_index)
     local overviewContainer = tabbed_pane.add{type = "flow", direction = "vertical"}
     tabbed_pane.add_tab(tab_overview, overviewContainer)
     addCityOverview(city, overviewContainer)
-    
+
     local simpleContainer = tabbed_pane.add{type = "scroll-pane", direction = "vertical"}
     tabbed_pane.add_tab(tab_simple, simpleContainer)
     addHousingView("simple", city, simpleContainer, player_index)
-    
+
     local residentialContainer = tabbed_pane.add{type = "scroll-pane", direction = "vertical"}
     tabbed_pane.add_tab(tab_residential, residentialContainer)
     addHousingView("residential", city, residentialContainer, player_index)
-    
+
     local highriseContainer = tabbed_pane.add{type = "scroll-pane", direction = "vertical"}
     tabbed_pane.add_tab(tab_highrise, highriseContainer)
     addHousingView("highrise", city, highriseContainer, player_index)
@@ -728,7 +728,7 @@ local function addCitiesOverview(anchor)
     c3.style.width = columnWidth + 50
     local c4 = tbl.add{type = "label", caption = ""}
     c4.style.width = columnWidth
-    for i, city in ipairs(global.tycoon_cities or {}) do
+    for i, city in ipairs(storage.tycoon_cities or {}) do
         tbl.add{type = "label", caption = {"", "[font=default-bold]", city.name, "[/font]"}}
         tbl.add{type = "label", caption = countCitizens(city)}
         tbl.add{type = "label", caption = getOverallBasicNeedsCaption(city)}
@@ -741,9 +741,9 @@ local function addMultipleCitiesOverview(anchor, player_index)
     flow_title_bar.add{type = "label", caption = {"", "[font=default-bold]", {"tycoon-gui-cities-overview"}, "[/font]"}}
     flow_title_bar.add{
         type="sprite-button",
-        sprite="utility/close_white",
-        hovered_sprite="utility/close_black", 
-        clicked_sprite="utility/close_black", 
+        sprite="utility/close",
+        hovered_sprite="utility/close_black",
+        clicked_sprite="utility/close_black",
         style="frame_action_button", -- needed to keep the icon small
         name="close_multiple_cities_overview"
     }
@@ -755,7 +755,7 @@ local function addMultipleCitiesOverview(anchor, player_index)
     tabbed_pane.add_tab(tab_all_cities, overviewContainer)
     addCitiesOverview(overviewContainer)
 
-    for i, city in ipairs(global.tycoon_cities or {}) do
+    for i, city in ipairs(storage.tycoon_cities or {}) do
         local tab_city = tabbed_pane.add{type="tab", caption=city.name, name = "city_tab:" .. i + 1}
 
         local cityContainer = tabbed_pane.add{type = "flow", direction = "vertical"}

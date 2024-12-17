@@ -3,19 +3,19 @@ local Util = require("util")
 local GridUtil = require("grid-util")
 
 local function assert_init()
-    if global.tycoon_floor_upgrade_queue == nil then
-        global.tycoon_floor_upgrade_queue = Queue.new()
+    if storage.tycoon_floor_upgrade_queue == nil then
+        storage.tycoon_floor_upgrade_queue = Queue.new()
     end
 end
 
 local function push(city, coordinates, newTileType)
     assert_init()
-    Queue.pushright(global.tycoon_floor_upgrade_queue, {city = city, coordinates = coordinates, newTileType = newTileType})
+    Queue.pushright(storage.tycoon_floor_upgrade_queue, {city = city, coordinates = coordinates, newTileType = newTileType})
 end
 
 local function pop()
     assert_init()
-    return Queue.popleft(global.tycoon_floor_upgrade_queue)
+    return Queue.popleft(storage.tycoon_floor_upgrade_queue)
 end
 
 -- todo: consolidate with where this was copied from
@@ -69,7 +69,7 @@ local function process()
     if current == nil then
         return
     end
-    
+
     local city, coordinates, newTileType = current.city, current.coordinates, current.newTileType
     assert(current.city ~= nil and current.coordinates ~= nil and current.newTileType ~= nil, "Record in tycoon_floor_upgrade_queue doesn't have all required fields.")
 

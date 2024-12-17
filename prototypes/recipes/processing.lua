@@ -1,4 +1,4 @@
-data:extend{
+data:extend {
     {
         type = "recipe",
         name = "tycoon-wheat-to-grain",
@@ -8,8 +8,7 @@ data:extend{
         ingredients = {
             { type = "item", name = "tycoon-wheat", amount = 25 },
         },
-        result = "tycoon-grain",
-        result_count = 50,
+        results = { { type = "item", name = "tycoon-grain", amount = 50 } },
     },
     {
         type = "recipe",
@@ -21,8 +20,7 @@ data:extend{
             { type = "item", name = "tycoon-flour", amount = 30 },
             { type = "fluid", name = "tycoon-milk", amount = 20 },
         },
-        result = "tycoon-dough",
-        result_count = 20,
+        results = { { type = "item", name = "tycoon-dough", amount = 20 } },
     },
     {
         type = "recipe",
@@ -33,8 +31,7 @@ data:extend{
         ingredients = {
             { type = "item", name = "tycoon-dough", amount = 1 },
         },
-        result = "tycoon-bread",
-        result_count = 1,
+        results = { { type = "item", name = "tycoon-bread", amount = 1 } },
     },
     {
         type = "recipe",
@@ -45,8 +42,7 @@ data:extend{
         ingredients = {
             { type = "item", name = "tycoon-grain", amount = 5 },
         },
-        result = "tycoon-flour",
-        result_count = 50,
+        results = { { type = "item", name = "tycoon-flour", amount = 50 } },
     },
     {
         type = "recipe",
@@ -57,8 +53,7 @@ data:extend{
         ingredients = {
             { type = "item", name = "iron-plate", amount = 5 },
         },
-        result = "tycoon-bottle",
-        result_count = 50,
+        results = { { type = "item", name = "tycoon-bottle", amount = 50 } },
     },
     {
         type = "recipe",
@@ -70,8 +65,7 @@ data:extend{
             { type = "item", name = "tycoon-bottle", amount = 25 },
             { type = "fluid", name = "tycoon-milk", amount = 25 },
         },
-        result = "tycoon-milk-bottle",
-        result_count = 25,
+        results = { { type = "item", name = "tycoon-milk-bottle", amount = 25 } },
     },
     {
         type = "recipe",
@@ -88,8 +82,8 @@ data:extend{
             { type = "fluid", name = "water", amount = 100 },
         },
         results = {
-            {name = "tycoon-bottle", amount = 20},
-            {name = "tycoon-bottle", amount = 5, probability = 0.2}
+            { type = "item", name = "tycoon-bottle", amount = 20 },
+            { type = "item", name = "tycoon-bottle", amount = 5, probability = 0.2 }
         },
     },
     {
@@ -108,8 +102,8 @@ data:extend{
             { type = "fluid", name = "water", amount = 50 },
         },
         results = {
-            {name = "tycoon-bottle", amount = 20},
-            {name = "tycoon-bottle", amount = 5, probability = 0.75}
+            { type = "item", name = "tycoon-bottle", amount = 20 },
+            { type = "item", name = "tycoon-bottle", amount = 5, probability = 0.75 }
         },
     },
     {
@@ -123,8 +117,7 @@ data:extend{
             { type = "item", name = "tycoon-apple", amount = 50 },
             { type = "fluid", name = "tycoon-milk", amount = 25 },
         },
-        result = "tycoon-smoothie",
-        result_count = 25,
+        results = { { type = "item", name = "tycoon-smoothie", amount = 25 } },
     },
     {
         type = "recipe",
@@ -138,8 +131,7 @@ data:extend{
             { type = "item", name = "tycoon-egg", amount = 2 },
             { type = "item", name = "tycoon-dough", amount = 1 },
         },
-        result = "tycoon-apple-cake",
-        result_count = 1,
+        results = { { type = "item", name = "tycoon-apple-cake", amount = 1 } },
     },
     {
         type = "recipe",
@@ -150,8 +142,7 @@ data:extend{
         ingredients = {
             { type = "fluid", name = "tycoon-milk", amount = 50 },
         },
-        result = "tycoon-butter",
-        result_count = 25,
+        results = { { type = "item", name = "tycoon-butter", amount = 25 } },
     },
     {
         type = "recipe",
@@ -162,8 +153,7 @@ data:extend{
         ingredients = {
             { type = "fluid", name = "tycoon-milk", amount = 200 },
         },
-        result = "tycoon-cheese",
-        result_count = 50,
+        results = { { type = "item", name = "tycoon-cheese", amount = 50 } },
     },
     {
         type = "recipe",
@@ -176,8 +166,7 @@ data:extend{
             { type = "item", name = "tycoon-patty", amount = 1 },
             { type = "item", name = "tycoon-bread", amount = 1 },
         },
-        result = "tycoon-burger",
-        result_count = 1,
+        results = { { type = "item", name = "tycoon-burger", amount = 1 } },
     },
     {
         type = "recipe",
@@ -188,8 +177,7 @@ data:extend{
         ingredients = {
             { type = "item", name = "tycoon-meat", amount = 1 },
         },
-        result = "tycoon-patty",
-        result_count = 1,
+        results = { { type = "item", name = "tycoon-patty", amount = 1 } },
     },
     {
         type = "recipe",
@@ -201,7 +189,6 @@ data:extend{
             { type = "item", name = "tycoon-dough", amount = 1 },
             { type = "item", name = "tycoon-fish-filet", amount = 1 },
         },
-        result = "tycoon-dumpling",
-        result_count = 1,
+        results = { { type = "item", name = "tycoon-dumpling", amount = 1 } },
     },
 }

@@ -246,7 +246,7 @@ local function updateProvidedAmounts(city)
     for resource, _ in pairs(city.stats.additional_needs or {}) do
         setAdditionalNeedsProvided(city, resource, supply[resource] or 0)
     end
-    
+
     local waterTowers = Util.list_special_city_buildings(city, "tycoon-water-tower")
     if #waterTowers >= 1 then
         local totalAvailable = 0
@@ -370,7 +370,7 @@ local function payToTreasury(city)
     local treasuries = Util.list_special_city_buildings(city, "tycoon-treasury")
     local leftover = city.stats.debt
     for _, entity in ipairs(treasuries) do
-        local payOutMoneyStacks = (global.tycoon_money_stacks_treasury_enabled or {})[entity.unit_number] or false
+        local payOutMoneyStacks = (storage.tycoon_money_stacks_treasury_enabled or {})[entity.unit_number] or false
 
         if payOutMoneyStacks then
             local units = math.floor(city.stats.debt / Constants.TREASURY_CONVERSION_RATE["tycoon-currency"]) * Constants.TREASURY_CONVERSION_RATE["tycoon-money-stack"]
@@ -387,7 +387,7 @@ local function payToTreasury(city)
             if leftover <= 1.0 then
                 break
             end
-        
+
         end
     end
     local paid = city.stats.debt - leftover
@@ -423,7 +423,7 @@ local function consumeItem(item, suppliers, city)
             table.insert(entitiesWithSupply, entity)
         end
     end
-    
+
     local requiredAmount = item.required
     local consumedAmount = 0
     for _, entity in ipairs(entitiesWithSupply) do
@@ -572,7 +572,7 @@ end
 
 --- @param city City
 local function consumeAdditionalNeeds(city)
-    
+
     local markets = Util.list_special_city_buildings(city, "tycoon-market")
 
     if #markets >= 1 then
@@ -707,7 +707,7 @@ local function update_construction_timers_all(city)
 end
 
 local function pay_to_treasury_all()
-    for _, city in ipairs(global.tycoon_cities or {}) do
+    for _, city in ipairs(storage.tycoon_cities or {}) do
         payToTreasury(city)
     end
 end

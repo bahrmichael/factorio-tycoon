@@ -64,8 +64,8 @@ local function translateCityGridToTileCoordinates(city, coordinates)
     local y = distance.y + getOffsetY(city)
     local x = distance.x + getOffsetX(city)
     return {
-        y = y,
         x = x,
+        y = y,
     }
 end
 

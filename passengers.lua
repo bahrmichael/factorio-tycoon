@@ -20,12 +20,12 @@ end
 --- @param excludedNames string[] | nil
 --- @return string | nil name
 local function getRandomCityName(city, excludedNames)
-    if #(global.tycoon_cities or {}) == 0 then
+    if #(storage.tycoon_cities or {}) == 0 then
         return nil
     end
     -- up to 10 attempts at getting a random entry that's different to the current name
     for i = 1, 10, 1 do
-        local r = global.tycoon_cities[city.generator(#global.tycoon_cities)].name
+        local r = storage.tycoon_cities[city.generator(#storage.tycoon_cities)].name
         if r ~= city.name then
             if excludedNames ~= nil and #excludedNames > 0 then
                 if not Util.indexOf(excludedNames, r) then
@@ -43,7 +43,7 @@ end
 --- @return number | nil
 local function get_max_departing_passengers_for_destination(cityName)
     local destinationCity = nil
-    for id, city in ipairs(global.tycoon_cities or {}) do
+    for id, city in ipairs(storage.tycoon_cities or {}) do
         if city.name == cityName then
             destinationCity = city
             break
@@ -81,9 +81,12 @@ local function spawnPassengers(city)
             local selectedTrainStation = trainStations[city.generator(#trainStations)]
             if selectedTrainStation ~= nil and selectedTrainStation.valid then
 
-                local passengerLimit = (global.tycoon_train_station_limits or {})[selectedTrainStation.unit_number] or 80
+                local passengerLimit = (storage.tycoon_train_station_limits or {})[selectedTrainStation.unit_number] or 80
                 local departingPassengers = 0
-                for name, count in pairs(selectedTrainStation.get_inventory(1).get_contents()) do
+                for name, item in pairs(selectedTrainStation.get_inventory(1).get_contents()) do
+
+                    local name = item.name
+                    local count = item.count
                     if name ~= "tycoon-passenger-" .. string.lower(city.name) and string.find(name, "tycoon-passenger-", 1, true) then
                         departingPassengers = departingPassengers + count
                     end
@@ -95,10 +98,10 @@ local function spawnPassengers(city)
                 -- todo: check if train station has enough space, otherwise distribute passengers
 
                 local excludedCityNames = {}
-                if global.tycoon_train_station_passenger_filters ~= nil and global.tycoon_train_station_passenger_filters[selectedTrainStation.unit_number] ~= nil then
-                    for cityId, state in pairs(global.tycoon_train_station_passenger_filters[selectedTrainStation.unit_number]) do
+                if storage.tycoon_train_station_passenger_filters ~= nil and storage.tycoon_train_station_passenger_filters[selectedTrainStation.unit_number] ~= nil then
+                    for cityId, state in pairs(storage.tycoon_train_station_passenger_filters[selectedTrainStation.unit_number]) do
                         if state == false then
-                            table.insert(excludedCityNames, global.tycoon_cities[cityId].name)
+                            table.insert(excludedCityNames, storage.tycoon_cities[cityId].name)
                         end
                     end
                 end
@@ -109,7 +112,11 @@ local function spawnPassengers(city)
                 end
 
                 local currentPassengersForDestination = 0
-                for name, count in pairs(selectedTrainStation.get_inventory(1).get_contents()) do
+                for name, item in pairs(selectedTrainStation.get_inventory(1).get_contents()) do
+
+                    local name = item.name
+                    local count = item.count
+
                     if name == "tycoon-passenger-" .. string.lower(destination) then
                         currentPassengersForDestination = currentPassengersForDestination + count
                     end
@@ -143,7 +150,7 @@ local function spawnPassengers(city)
 end
 
 local function findCityByName(name)
-    for _, city in ipairs((global.tycoon_cities or {})) do
+    for _, city in ipairs((storage.tycoon_cities or {})) do
         if string.lower(city.name) == name then
             return city
         end
@@ -152,14 +159,14 @@ local function findCityByName(name)
 end
 
 local function getCredits(passenger)
-    
+
     local originCity = findCityByName(passenger.origin)
     local destinationCity = findCityByName(passenger.destination)
     if originCity == nil or destinationCity == nil then
         game.print({"", "[color=orange]Factorio Tycoon:[/color] ", "The tycoon mod has encountered a problem: Credits for a passenger couldn't be awarded because the origin or destination city could not be found."})
         return 0
     end
-    
+
     local isSameSurface = originCity.surface_index == destinationCity.surface_index
     local distance = isSameSurface and Util.calculateDistance(originCity.center, destinationCity.center) or 10000
     local ticksNeeded = game.tick - passenger.created
@@ -207,7 +214,7 @@ local function clearPassengers(city)
                 Consumption.payCurrency(city, reward)
             end
 
-            global.tycoon_passenger_transported_count = (global.tycoon_passenger_transported_count or 0) + #cleared
+            storage.tycoon_passenger_transported_count = (storage.tycoon_passenger_transported_count or 0) + #cleared
         end
     end
 end

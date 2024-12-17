@@ -72,7 +72,7 @@ local function on_gui_opened(event)
         )
     elseif event.entity ~= nil and Util.isSupplyBuilding(event.entity.name) then
         local player = game.players[event.player_index]
-        
+
         local unit_number = event.entity.unit_number
         local cityName = Util.findCityNameByEntityUnitNumber(unit_number)
 
@@ -89,7 +89,7 @@ local function on_gui_opened(event)
         end
         local anchor = {
             gui = gui_type,
-            name = event.entity.name, 
+            name = event.entity.name,
             position = defines.relative_gui_position.right
         }
         supplyBuildingView = player.gui.relative.add{
@@ -108,7 +108,7 @@ local function on_gui_text_changed(event)
     if string.find(event.element.name, "train_station_limit", 1, true) then
         local trainStationUnitNumber = tonumber(Util.splitString(event.element.name, ":")[2])
         assert(trainStationUnitNumber, "Failed to resolve train station unit number in on_gui_text_changed.")
-        global.tycoon_train_station_limits[trainStationUnitNumber] = math.min(tonumber(event.text) or 0, 100)
+        storage.tycoon_train_station_limits[trainStationUnitNumber] = math.min(tonumber(event.text) or 0, 100)
     end
 end
 
@@ -140,7 +140,7 @@ local function on_gui_click(event)
         local city_tab = tonumber(elementNameParts[2])
         GuiState.set_state(event.player_index, "city_tab", city_tab)
         if elementNameParts[3] == "housing_tab" then
-            GuiState.set_state(event.player_index, "city_tab:" .. city_tab .. ":housing_tab", tonumber(elementNameParts[4])) 
+            GuiState.set_state(event.player_index, "city_tab:" .. city_tab .. ":housing_tab", tonumber(elementNameParts[4]))
             if elementNameParts[5] == "needs_tab" then
                 GuiState.set_state(event.player_index, "city_tab:" .. city_tab .. ":housing_tab:" .. elementNameParts[4] .. ":needs_tab", tonumber(elementNameParts[6]))
             end
@@ -155,27 +155,27 @@ local function on_gui_checked_state_changed_train_station(event)
     local destination_city_id = tags.destination_city_id
     local train_station_unit_number = tags.train_station_unit_number
     if destination_city_id and train_station_unit_number then
-        if global.tycoon_train_station_passenger_filters == nil then
-            global.tycoon_train_station_passenger_filters = {}
+        if storage.tycoon_train_station_passenger_filters == nil then
+            storage.tycoon_train_station_passenger_filters = {}
         end
-        if global.tycoon_train_station_passenger_filters[train_station_unit_number] == nil then
-            global.tycoon_train_station_passenger_filters[train_station_unit_number] = {}
+        if storage.tycoon_train_station_passenger_filters[train_station_unit_number] == nil then
+            storage.tycoon_train_station_passenger_filters[train_station_unit_number] = {}
         end
-        global.tycoon_train_station_passenger_filters[train_station_unit_number][destination_city_id] = element.state
+        storage.tycoon_train_station_passenger_filters[train_station_unit_number][destination_city_id] = element.state
     end
 end
 
 local function on_gui_checked_state_changed_treasury(event)
     local element = event.element
-    
+
     local elementNameParts = Util.splitString(element.name, ":")
     local treasuryUnitNumber = tonumber(elementNameParts[2])
 
     assert(treasuryUnitNumber, "Failed to resolve treasury unit number in on_gui_checked_state_changed_treasury.")
-    
+
     local isChecked = element.state
 
-    global.tycoon_money_stacks_treasury_enabled[treasuryUnitNumber] = isChecked
+    storage.tycoon_money_stacks_treasury_enabled[treasuryUnitNumber] = isChecked
 end
 
 local function on_gui_checked_state_changed(event)
@@ -189,12 +189,12 @@ end
 
 local function on_gui_closed(event)
     local player = game.players[event.player_index]
-    
+
     -- Close city overview
     if player.gui.relative["city_overview"] then
         player.gui.relative["city_overview"].destroy()
     end
-    
+
     -- -- Close multiple cities overview
     if player.gui.center["multiple_cities_overview"] then
         player.gui.center["multiple_cities_overview"].destroy()

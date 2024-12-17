@@ -11,7 +11,7 @@ local function findHighestProductivityLevel(prefix)
     return 1
 end
 
-for key, entity_group in pairs(global.tycoon_primary_industries or {}) do
+for key, entity_group in pairs(storage.tycoon_primary_industries or {}) do
     for _, entity in pairs(entity_group or {}) do
         if entity ~= nil and entity.valid then
             local new_recipe

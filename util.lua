@@ -10,7 +10,7 @@ local function calculateMaxRadius(centerPoint, circlePoints)
         local dx = point.x - centerPoint.x
         local dy = point.y - centerPoint.y
         local distanceSquared = dx * dx + dy * dy
-        
+
         if distanceSquared > maxRadiusSquared then
             maxRadiusSquared = distanceSquared
         end
@@ -251,7 +251,7 @@ local function hasReachedLowerTierThreshold(city, currentHousingTier)
 end
 
 local function findCityById(cityId)
-    for _, city in ipairs(global.tycoon_cities) do
+    for _, city in ipairs(storage.tycoon_cities) do
         if city.id == cityId then
             return city
         end
@@ -260,7 +260,7 @@ local function findCityById(cityId)
 end
 
 local function findCityByTownHallUnitNumber(townHallUnitNumber)
-    for _, city in ipairs(global.tycoon_cities) do
+    for _, city in ipairs(storage.tycoon_cities) do
         if (city.special_buildings.town_hall or {}).valid
             and (city.special_buildings.town_hall or {}).unit_number == townHallUnitNumber then
             return city
@@ -299,7 +299,7 @@ local function findCityAtPosition(surface, position, radius, limit)
     end
 
     -- can't use getGlobalBuilding(), it is declared below
-    local building = global.tycoon_city_buildings[town_halls[1].unit_number]
+    local building = storage.tycoon_city_buildings[town_halls[1].unit_number]
     if building == nil then
         log("ERROR: Found a town hall, but it has no city mapping.")
         return
@@ -350,12 +350,12 @@ local function isHouse(entityName)
 end
 
 local function findCityNameByEntityUnitNumber(unitNumber)
-    local metaInfo = (global.tycoon_entity_meta_info or {})[unitNumber]
+    local metaInfo = (storage.tycoon_entity_meta_info or {})[unitNumber]
     if metaInfo == nil then
         return "Unknown"
     end
     local cityId = metaInfo.cityId
-    local cityName = ((global.tycoon_cities or {})[cityId] or {}).name
+    local cityName = ((storage.tycoon_cities or {})[cityId] or {}).name
     return cityName or "Unknown"
 end
 
@@ -396,8 +396,8 @@ end
 --- @param entity LuaEntity | nil
 --- @return Building | nil
 local function addGlobalBuilding(unit_number, cityId, entity)
-    if global.tycoon_city_buildings == nil then
-        global.tycoon_city_buildings = {}
+    if storage.tycoon_city_buildings == nil then
+        storage.tycoon_city_buildings = {}
     end
 
     if unit_number == nil then
@@ -420,27 +420,27 @@ local function addGlobalBuilding(unit_number, cityId, entity)
         end
     end
 
-    global.tycoon_city_buildings[unit_number] = building
+    storage.tycoon_city_buildings[unit_number] = building
     return building
 end
 
 --- @param unit_number number
 local function removeGlobalBuilding(unit_number)
-    if global.tycoon_city_buildings == nil or unit_number == nil then
+    if storage.tycoon_city_buildings == nil or unit_number == nil then
         return
     end
 
-    global.tycoon_city_buildings[unit_number] = nil
+    storage.tycoon_city_buildings[unit_number] = nil
 end
 
 --- @param unit_number number
 --- @return Building | nil
 local function getGlobalBuilding(unit_number)
-    if global.tycoon_city_buildings == nil or unit_number == nil then
+    if storage.tycoon_city_buildings == nil or unit_number == nil then
         return
     end
 
-    return global.tycoon_city_buildings[unit_number]
+    return storage.tycoon_city_buildings[unit_number]
 end
 
 
@@ -474,13 +474,47 @@ local function printTiles(start, map, tileName, surface_index, dont_override_til
     end
 end
 
+local function merge_items_by_name(items)
+    -- Creates a result table to store item counts by name.
+    local name_count_map = {}
+
+    -- Iterates through the input array of items.
+    for _, item in pairs(items) do
+        -- If the item name already exists in the result table, increment the count;
+        -- otherwise, initialize the count to the current item's count.
+        if name_count_map[item.name] then
+            name_count_map[item.name] = name_count_map[item.name] + item.count
+        else
+            name_count_map[item.name] = item.count
+        end
+    end
+
+    -- Converts the result table into an array format.
+    local sorted_array = {}
+    for name, count in pairs(name_count_map) do
+        table.insert(sorted_array, { name = name, count = count })
+    end
+
+    -- Sorts the array in descending order by count.
+    table.sort(sorted_array, function(a, b)
+        return a.count > b.count
+    end)
+
+    return sorted_array
+end
+
 local function aggregateSupplyBuildingResources(supplyBuildings)
     local resources = {}
 
     for _, entity in ipairs(supplyBuildings) do
         local contents = entity.get_inventory(defines.inventory.chest).get_contents()
-        for item, count in pairs(contents) do
-            resources[item] = (resources[item] or 0) + count
+        if contents and table_size(contents) > 0 then
+
+            --fixme now contents have a quality. see https://lua-api.factorio.com/latest/concepts/ItemWithQualityCounts.html
+            -- just merge quality items by name
+            for _, item in pairs(merge_items_by_name(contents)) do
+                resources[item.name] = (resources[item.name] or 0) + item.count
+            end
         end
     end
 

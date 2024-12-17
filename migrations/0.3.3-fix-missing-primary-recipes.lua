@@ -27,8 +27,8 @@ local function getFixedRecipeForIndustry(industryName)
     end
 end
 
-if global.tycoon_primary_industries ~= nil then
-    for _, entity in ipairs(global.tycoon_primary_industries["tycoon-wheat-farm"] or {}) do
+if storage.tycoon_primary_industries ~= nil then
+    for _, entity in ipairs(storage.tycoon_primary_industries["tycoon-wheat-farm"] or {}) do
         if entity.valid then
             local currentRecipe = entity.get_recipe()
             if currentRecipe == nil then
@@ -38,7 +38,7 @@ if global.tycoon_primary_industries ~= nil then
         end
     end
 
-    for _, entity in ipairs(global.tycoon_primary_industries["tycoon-fishery"] or {}) do
+    for _, entity in ipairs(storage.tycoon_primary_industries["tycoon-fishery"] or {}) do
         if entity.valid then
             local currentRecipe = entity.get_recipe()
             if currentRecipe == nil then

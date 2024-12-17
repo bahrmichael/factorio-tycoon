@@ -13,13 +13,13 @@ local function invalidateSpecialBuildingsList(city, name)
 end
 
 local function on_built(event, use_entity)
-    if use_entity then
-        assert(event.entity, "Called on_built without a entity. Wrong event?")
-    else
-        assert(event.created_entity, "Called on_built without a created_entity. Wrong event?")
+    -- now all created_entity are remove to event.entity
+    if not event.entity then
+        log("Called on_built without a created entity. Wrong event?")
+        return
     end
 
-    local entity = use_entity and event.entity or event.created_entity
+    local entity = event.entity
     -- LuaEntity inherits surface_index from LuaControl
     local surface_index = entity.surface_index
 
@@ -37,16 +37,16 @@ local function on_built(event, use_entity)
         invalidateSpecialBuildingsList(city, entity.name)
 
         -- TODO: this could be dropped in favor of Util.getGlobalBuilding()
-        if global.tycoon_entity_meta_info == nil then
-            global.tycoon_entity_meta_info = {}
+        if storage.tycoon_entity_meta_info == nil then
+            storage.tycoon_entity_meta_info = {}
         end
-        global.tycoon_entity_meta_info[entity.unit_number] = {
+        storage.tycoon_entity_meta_info[entity.unit_number] = {
             cityId = city.id
         }
 
         Util.addGlobalBuilding(entity.unit_number, city.id, entity)
         -- WARN: we must always register
-        script.register_on_entity_destroyed(entity)
+        script.register_on_object_destroyed(entity)
     elseif entity.name == "tycoon-town-hall" then
         log("on_built(): Town hall built: ".. entity.unit_number .." at position: ".. serpent.line(entity.position))
 
@@ -61,7 +61,7 @@ local function on_built(event, use_entity)
             name = "tycoon-town-hall",
             area = {{position.x - nearest_distance, position.y - nearest_distance}, {position.x + nearest_distance, position.y + nearest_distance}}
         }
-        
+
         for _, nearby_entity in pairs(nearby_town_halls) do
             if nearby_entity.unit_number ~= entity.unit_number then
                 local distance = Util.calculateDistance(position, nearby_entity.position)
@@ -90,19 +90,19 @@ local function on_built(event, use_entity)
                 player.insert{name = "tycoon-town-hall", count = 1}
                 game.players[event.player_index].print({"", {"tycoon-town-hall-city-failed-player"}})
             else
-                entity.surface.spill_item_stack(entity.position, {name = "tycoon-town-hall", count = 1})          
+                entity.surface.spill_item_stack(entity.position, {name = "tycoon-town-hall", count = 1})
                 game.print({"", {"tycoon-town-hall-city-failed-general"}})
             end
             return
         end
-        if global.tycoon_entity_meta_info == nil then
-            global.tycoon_entity_meta_info = {}
+        if storage.tycoon_entity_meta_info == nil then
+            storage.tycoon_entity_meta_info = {}
         end
-        global.tycoon_entity_meta_info[entity.unit_number] = {
+        storage.tycoon_entity_meta_info[entity.unit_number] = {
             cityId = city.cityId
         }
         Util.addGlobalBuilding(entity.unit_number, city.cityId, entity)
-        script.register_on_entity_destroyed(entity)
+        script.register_on_object_destroyed(entity)
     end
 end
 
@@ -142,10 +142,10 @@ local function on_removed(event)
         invalidateSpecialBuildingsList(city, building.entity_name)
 
         -- TODO: this could be dropped in favor of Util.removeGlobalBuilding()
-        if global.tycoon_entity_meta_info == nil then
-            global.tycoon_entity_meta_info = {}
+        if storage.tycoon_entity_meta_info == nil then
+            storage.tycoon_entity_meta_info = {}
         end
-        global.tycoon_entity_meta_info[unit_number] = nil
+        storage.tycoon_entity_meta_info[unit_number] = nil
 
         if building.entity_name == "tycoon-treasury" or building.entity_name == "tycoon-bottle-return-station" then
             table.insert(city.priority_buildings, { name = building.entity_name, priority = 10 })

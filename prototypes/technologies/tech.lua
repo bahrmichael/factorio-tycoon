@@ -217,7 +217,7 @@ data:extend{
         mod = "Tycoon",
         icon = "__tycoon__/graphics/technology/residential-housing.png",
         icon_size = 256,
-        prerequisites = { "steel-processing", "optics", "tycoon-meat-processing", "tycoon-baking", "tycoon-milking", "tycoon-bottling" },
+        prerequisites = { "steel-processing", "tycoon-meat-processing", "tycoon-baking", "tycoon-milking", "tycoon-bottling" },
         unit = {
           count = 500,
           ingredients = {
@@ -653,7 +653,7 @@ data:extend{
                 recipe = "tycoon-television",
             },
         },
-        prerequisites = { "advanced-electronics" },
+        prerequisites = { "advanced-circuit" },
         unit = {
           count = 400,
           ingredients = {
@@ -683,7 +683,7 @@ data:extend{
                 recipe = "tycoon-keyboard",
             },
         },
-        prerequisites = { "tycoon-electronic-devices", "tycoon-residential-housing", "advanced-electronics-2" },
+        prerequisites = { "tycoon-electronic-devices", "tycoon-residential-housing", "processing-unit" },
         unit = {
           count = 600,
           ingredients = {
