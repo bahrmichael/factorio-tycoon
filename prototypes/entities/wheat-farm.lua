@@ -44,6 +44,7 @@ data:extend {
         crafting_categories = { "tycoon-growing-wheat" },
         crafting_speed = 1,
         return_ingredients_on_change = true,
+        disabled_when_recipe_not_researched = false,
         -- 60kW is one solar panel, makes sense to go with "solar energy" as the crops grow
         energy_usage = "60kW",
         energy_source = {
