@@ -42,6 +42,7 @@ data:extend {
                 },
             },
         },
+        disabled_when_recipe_not_researched = false,
         crafting_categories = { "tycoon-growing-apples" },
         crafting_speed = 1,
         return_ingredients_on_change = true,
