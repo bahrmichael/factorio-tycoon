@@ -26,6 +26,7 @@ data:extend {
         },
         crafting_categories = { "tycoon-butchery" },
         crafting_speed = 1,
+        disabled_when_recipe_not_researched = false,
         return_ingredients_on_change = false,
         energy_usage = "300kW",
         energy_source = {

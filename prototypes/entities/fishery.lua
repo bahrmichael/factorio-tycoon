@@ -30,6 +30,7 @@ data:extend {
         },
         crafting_categories = { "tycoon-fishing" },
         crafting_speed = 1,
+        disabled_when_recipe_not_researched = false,
         return_ingredients_on_change = true,
         energy_usage = "30kW",
         energy_source = {
