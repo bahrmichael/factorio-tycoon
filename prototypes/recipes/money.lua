@@ -15,5 +15,7 @@ data:extend{
         results = {
             { type = "item", name = "tycoon-money-stack", amount = 1, probability = 0.9 },
         },
+        localised_name = { "item-name.tycoon-money-stack" },
+
     },
 }

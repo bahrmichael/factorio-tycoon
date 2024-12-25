@@ -1,4 +1,4 @@
-data:extend{
+data:extend {
     {
         type = "recipe-category",
         name = "tycoon-fishing"
@@ -7,7 +7,7 @@ data:extend{
 
 local function add_incresing_tech(recipe_name_base, recipe_category, result_name, order_suffix)
     for i = 1, 11, 1 do
-        data:extend{
+        data:extend {
             {
                 type = "recipe",
                 name = recipe_name_base .. "-" .. i,
@@ -17,7 +17,8 @@ local function add_incresing_tech(recipe_name_base, recipe_category, result_name
                 energy_required = 30,
                 enabled = i == 1,
                 ingredients = {},
-                results = {{type="item", name=result_name, amount=i == 1 and 15 or (12+math.pow(i*3, 2))}},
+                results = { { type = "item", name = result_name, amount = i == 1 and 15 or (12 + math.pow(i * 3, 2)) } },
+                localised_name = { "item-name." .. result_name },
                 hidden = true,
                 hidden_from_player_crafting = true,
             },
