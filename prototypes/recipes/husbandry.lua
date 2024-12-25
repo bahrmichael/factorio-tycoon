@@ -15,7 +15,8 @@ data:extend{
             { type = "fluid", name = "water", amount = 200 },
             { type = "item", name = "tycoon-grain", amount = 50 },
         },
-        results = {{type="item", name="tycoon-cow", amount=1}},
+        results = { { type = "item", name = "tycoon-cow", amount = 1 } },
+        localised_name = { "item-name.tycoon-cow" },
     },
     {
         type = "recipe",
@@ -29,7 +30,8 @@ data:extend{
             { type = "fluid", name = "water", amount = 200 },
             { type = "item", name = "tycoon-grain", amount = 50 },
         },
-        results = {{type="item", name="tycoon-chicken", amount=10}},
+        results = { { type = "item", name = "tycoon-chicken", amount = 10 } },
+        localised_name = { "item-name.tycoon-chicken" },
     },
     {
         type = "recipe",
@@ -50,6 +52,7 @@ data:extend{
             { type = "item", name = "tycoon-cow", amount = 1, probability = 0.98 },
             { type = "fluid", name = "tycoon-milk", amount = 50 },
         },
+
     },
     {
         type = "recipe",

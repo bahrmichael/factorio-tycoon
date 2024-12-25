@@ -12,7 +12,8 @@ data:extend{
         ingredients = {
             { type = "item", name = "tycoon-cow", amount = 1 },
         },
-        results = {{type="item", name="tycoon-meat", amount=50}},
+        results = { { type = "item", name = "tycoon-meat", amount = 50 } },
+        localised_name = { "item-name.tycoon-meat" },
     },
     {
         type = "recipe",
@@ -23,7 +24,8 @@ data:extend{
         ingredients = {
             { type = "item", name = "tycoon-chicken", amount = 1 },
         },
-        results = {{type="item", name="tycoon-meat", amount=10}},
+        results = { { type = "item", name = "tycoon-meat", amount = 10 } },
+        localised_name = { "item-name.tycoon-meat" },
     },
     {
         type = "recipe",
@@ -34,6 +36,7 @@ data:extend{
         ingredients = {
             { type = "item", name = "raw-fish", amount = 1 },
         },
-        results = {{type="item", name="tycoon-fish-filet", amount=10}},
+        results = { { type = "item", name = "tycoon-fish-filet", amount = 10 } },
+        localised_name = { "item-name.tycoon-fish-filet" },
     },
 }

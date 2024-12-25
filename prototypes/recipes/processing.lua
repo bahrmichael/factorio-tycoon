@@ -9,6 +9,7 @@ data:extend {
             { type = "item", name = "tycoon-wheat", amount = 25 },
         },
         results = { { type = "item", name = "tycoon-grain", amount = 50 } },
+        localised_name = { "item-name.tycoon-grain" },
     },
     {
         type = "recipe",
@@ -21,6 +22,7 @@ data:extend {
             { type = "fluid", name = "tycoon-milk", amount = 20 },
         },
         results = { { type = "item", name = "tycoon-dough", amount = 20 } },
+        localised_name = { "item-name.tycoon-dough" },
     },
     {
         type = "recipe",
@@ -32,6 +34,7 @@ data:extend {
             { type = "item", name = "tycoon-dough", amount = 1 },
         },
         results = { { type = "item", name = "tycoon-bread", amount = 1 } },
+        localised_name = { "item-name.tycoon-bread" },
     },
     {
         type = "recipe",
@@ -43,6 +46,7 @@ data:extend {
             { type = "item", name = "tycoon-grain", amount = 5 },
         },
         results = { { type = "item", name = "tycoon-flour", amount = 50 } },
+        localised_name = { "item-name.tycoon-flour" },
     },
     {
         type = "recipe",
@@ -54,6 +58,7 @@ data:extend {
             { type = "item", name = "iron-plate", amount = 5 },
         },
         results = { { type = "item", name = "tycoon-bottle", amount = 50 } },
+        localised_name = { "item-name.tycoon-bottle" },
     },
     {
         type = "recipe",
@@ -66,6 +71,7 @@ data:extend {
             { type = "fluid", name = "tycoon-milk", amount = 25 },
         },
         results = { { type = "item", name = "tycoon-milk-bottle", amount = 25 } },
+        localised_name = { "item-name.tycoon-milk-bottle" },
     },
     {
         type = "recipe",
@@ -118,6 +124,7 @@ data:extend {
             { type = "fluid", name = "tycoon-milk", amount = 25 },
         },
         results = { { type = "item", name = "tycoon-smoothie", amount = 25 } },
+        localised_name = { "item-name.tycoon-smoothie" },
     },
     {
         type = "recipe",
@@ -132,6 +139,7 @@ data:extend {
             { type = "item", name = "tycoon-dough", amount = 1 },
         },
         results = { { type = "item", name = "tycoon-apple-cake", amount = 1 } },
+        localised_name = { "item-name.tycoon-apple-cake" },
     },
     {
         type = "recipe",
@@ -143,6 +151,7 @@ data:extend {
             { type = "fluid", name = "tycoon-milk", amount = 50 },
         },
         results = { { type = "item", name = "tycoon-butter", amount = 25 } },
+        localised_name = { "item-name.tycoon-butter" },
     },
     {
         type = "recipe",
@@ -154,6 +163,7 @@ data:extend {
             { type = "fluid", name = "tycoon-milk", amount = 200 },
         },
         results = { { type = "item", name = "tycoon-cheese", amount = 50 } },
+        localised_name = { "item-name.tycoon-cheese" },
     },
     {
         type = "recipe",
@@ -167,6 +177,7 @@ data:extend {
             { type = "item", name = "tycoon-bread", amount = 1 },
         },
         results = { { type = "item", name = "tycoon-burger", amount = 1 } },
+        localised_name = { "item-name.tycoon-burger" },
     },
     {
         type = "recipe",
@@ -178,6 +189,7 @@ data:extend {
             { type = "item", name = "tycoon-meat", amount = 1 },
         },
         results = { { type = "item", name = "tycoon-patty", amount = 1 } },
+        localised_name = { "item-name.tycoon-patty" },
     },
     {
         type = "recipe",
@@ -190,5 +202,6 @@ data:extend {
             { type = "item", name = "tycoon-fish-filet", amount = 1 },
         },
         results = { { type = "item", name = "tycoon-dumpling", amount = 1 } },
+        localised_name = { "item-name.tycoon-dumpling" },
     },
 }

@@ -11,6 +11,7 @@ data:extend {
             { type = "item", name = "inserter", amount = 5 },
         },
         results = { { type = "item", name = "tycoon-university", amount = 1 } },
+        localised_name = { "item-name.tycoon-university" },
     },
     {
         type = "recipe",
@@ -23,6 +24,7 @@ data:extend {
             { type = "item", name = "pipe", amount = 5 },
         },
         results = { { type = "item", name = "tycoon-water-tower", amount = 1 } },
+        localised_name = { "item-name.tycoon-water-tower" },
     },
     {
         type = "recipe",
@@ -34,6 +36,7 @@ data:extend {
             { type = "item", name = "wood", amount = 10 },
         },
         results = { { type = "item", name = "tycoon-market", amount = 1 } },
+        localised_name = { "item-name.tycoon-market" },
     },
     {
         type = "recipe",
@@ -45,6 +48,7 @@ data:extend {
             { type = "item", name = "iron-plate", amount = 10 },
         },
         results = { { type = "item", name = "tycoon-hardware-store", amount = 1 } },
+        localised_name = { "item-name.tycoon-hardware-store" },
     },
     {
         type = "recipe",
@@ -57,6 +61,7 @@ data:extend {
             { type = "item", name = "inserter", amount = 2 },
         },
         results = { { type = "item", name = "tycoon-stable", amount = 1 } },
+        localised_name = { "item-name.tycoon-stable" },
     },
     {
         type = "recipe",
@@ -69,6 +74,7 @@ data:extend {
             { type = "item", name = "inserter", amount = 5 },
         },
         results = { { type = "item", name = "tycoon-butchery", amount = 1 } },
+        localised_name = { "item-name.tycoon-butchery" },
     },
     {
         type = "recipe",
@@ -83,6 +89,7 @@ data:extend {
             { type = "item", name = "advanced-circuit", amount = 10 },
         },
         results = { { type = "item", name = "tycoon-passenger-train-station", amount = 1 } },
+        localised_name = { "item-name.tycoon-passenger-train-station" },
     },
     {
         type = "recipe",
@@ -96,5 +103,6 @@ data:extend {
             { type = "item", name = "tycoon-gloves", amount = 50 }
         },
         results = { { type = "item", name = "tycoon-citizen-science-lab", amount = 1 } },
+        localised_name = { "item-name.tycoon-citizen-science-lab" },
     }
 }
