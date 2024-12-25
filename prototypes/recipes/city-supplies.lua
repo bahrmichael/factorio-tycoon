@@ -10,7 +10,8 @@ data:extend{
             { type = "item", name = "tycoon-iron-chain", amount = 1 },
             { type = "item", name = "tycoon-tire", amount = 2 },
         },
-        results = {{type="item", name="tycoon-bicycle", amount=1}},
+        results = { { type = "item", name = "tycoon-bicycle", amount = 1 } },
+        localised_name = { "item-name.tycoon-bicycle" },
     },
     {
         type = "recipe",
@@ -21,7 +22,8 @@ data:extend{
         ingredients = {
             { type = "item", name = "iron-plate", amount = 5 },
         },
-        results = {{type="item", name="tycoon-iron-chain", amount=2}},
+        results = { { type = "item", name = "tycoon-iron-chain", amount = 2 } },
+        localised_name = { "item-name.tycoon-iron-chain" },
     },
     {
         type = "recipe",
@@ -32,7 +34,8 @@ data:extend{
         ingredients = {
             { type = "fluid", name = "petroleum-gas", amount = 40 },
         },
-        results = {{type="item", name="tycoon-candle", amount=2}},
+        results = { { type = "item", name = "tycoon-candle", amount = 2 } },
+        localised_name = { "item-name.tycoon-candle" },
     },
     {
         type = "recipe",
@@ -43,7 +46,8 @@ data:extend{
         ingredients = {
             { type = "fluid", name = "petroleum-gas", amount = 10 },
         },
-        results = {{type="item", name="tycoon-gloves", amount=2}},
+        results = { { type = "item", name = "tycoon-gloves", amount = 2 } },
+        localised_name = { "item-name.tycoon-gloves" },
     },
     {
         type = "recipe",
@@ -55,7 +59,8 @@ data:extend{
             { type = "item", name = "steel-plate", amount = 3 },
             { type = "item", name = "copper-plate", amount = 1 },
         },
-        results = {{type="item", name="tycoon-cutlery", amount=10}},
+        results = { { type = "item", name = "tycoon-cutlery", amount = 10 } },
+        localised_name = { "item-name.tycoon-cutlery" },
     },
     {
         type = "recipe",
@@ -71,7 +76,8 @@ data:extend{
             { type = "item", name = "tycoon-keyboard", amount = 1 },
             { type = "item", name = "copper-cable", amount = 10 },
         },
-        results = {{type="item", name="tycoon-laptop", amount=1}},
+        results = { { type = "item", name = "tycoon-laptop", amount = 1 } },
+        localised_name = { "item-name.tycoon-laptop" },
     },
     {
         type = "recipe",
@@ -83,7 +89,8 @@ data:extend{
             { type = "item", name = "plastic-bar", amount = 1 },
             { type = "item", name = "electronic-circuit", amount = 1 },
         },
-        results = {{type="item", name="tycoon-keyboard", amount=1}},
+        results = { { type = "item", name = "tycoon-keyboard", amount = 1 } },
+        localised_name = { "item-name.tycoon-keyboard" },
     },
     {
         type = "recipe",
@@ -98,7 +105,8 @@ data:extend{
             { type = "item", name = "processing-unit", amount = 1 },
             { type = "item", name = "copper-cable", amount = 10 },
         },
-        results = {{type="item", name="tycoon-smartphone", amount=1}},
+        results = { { type = "item", name = "tycoon-smartphone", amount = 1 } },
+        localised_name = { "item-name.tycoon-smartphone" },
     },
     {
         type = "recipe",
@@ -111,7 +119,8 @@ data:extend{
             { type = "item", name = "advanced-circuit", amount = 2 },
             { type = "item", name = "copper-cable", amount = 10 },
         },
-        results = {{type="item", name="tycoon-television", amount=1}},
+        results = { { type = "item", name = "tycoon-television", amount = 1 } },
+        localised_name = { "item-name.tycoon-television" },
     },
     {
         type = "recipe",
@@ -124,7 +133,8 @@ data:extend{
             { type = "item", name = "iron-stick", amount = 1 },
             { type = "item", name = "copper-plate", amount = 1 },
         },
-        results = {{type="item", name="tycoon-cooking-pan", amount=1}},
+        results = { { type = "item", name = "tycoon-cooking-pan", amount = 1 } },
+        localised_name = { "item-name.tycoon-cooking-pan" },
     },
     {
         type = "recipe",
@@ -136,7 +146,8 @@ data:extend{
             { type = "item", name = "steel-plate", amount = 1 },
             { type = "item", name = "iron-stick", amount = 1 },
         },
-        results = {{type="item", name="tycoon-cooking-pot", amount=1}},
+        results = { { type = "item", name = "tycoon-cooking-pot", amount = 1 } },
+        localised_name = { "item-name.tycoon-cooking-pot" },
     },
     {
         type = "recipe",
@@ -148,7 +159,8 @@ data:extend{
             { type = "fluid", name = "light-oil", amount = 20 },
             { type = "item", name = "coal", amount = 5 },
         },
-        results = {{type="item", name="tycoon-soap", amount=5}},
+        results = { { type = "item", name = "tycoon-soap", amount = 5 } },
+        localised_name = { "item-name.tycoon-soap" },
     },
     {
         type = "recipe",
@@ -159,6 +171,7 @@ data:extend{
         ingredients = {
             { type = "item", name = "plastic-bar", amount = 2 },
         },
-        results = {{type="item", name="tycoon-tire", amount=5}},
+        results = { { type = "item", name = "tycoon-tire", amount = 5 } },
+        localised_name = { "item-name.tycoon-tire" },
     },
 }
