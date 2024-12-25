@@ -22,9 +22,9 @@ data:extend{
                 {
                     filename = "__tycoon__/graphics/entity/town-hall/town-hall.png",
                     priority = "high",
-                    width = 250,
-                    height = 250,
-                    scale = 0.8,
+                    width = 500,
+                    height = 500,
+                    scale = 0.4,
                     shift = {0.55, 0.2}
                 },
             }
