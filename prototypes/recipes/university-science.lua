@@ -1,6 +1,6 @@
 local kwPerCurrency = 20
 
-data:extend{
+data:extend {
     {
         type = "recipe-category",
         name = "tycoon-university-science"
@@ -87,8 +87,8 @@ data:extend{
             { type = "item", name = "tycoon-money-stack", amount = 100 },
             { type = "item", name = "tycoon-laptop", amount = 1 },
         },
-        results = {
-            { type = "item", name = "tycoon-citizen-science-pack", amount = 1, probability = 0.75 },
-        },
+        results = { { type = "item", name = "tycoon-citizen-science-pack", amount = 1, probability = 0.75 }, },
+        localised_name = { "item-name.tycoon-citizen-science-pack" },
+
     },
 }

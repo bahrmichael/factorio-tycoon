@@ -1,4 +1,4 @@
-data:extend{
+data:extend {
     {
         type = "recipe-category",
         name = "tycoon-growing-apples"
@@ -11,7 +11,7 @@ data:extend{
 
 local function add_incresing_tech(recipe_name_base, recipe_category, result_name, order_suffix)
     for i = 1, 11, 1 do
-        data:extend{
+        data:extend {
             {
                 type = "recipe",
                 name = recipe_name_base .. "-" .. i,
@@ -25,7 +25,8 @@ local function add_incresing_tech(recipe_name_base, recipe_category, result_name
                 -- power fit from ~100/min to ~1800/min, (energy_required=30 needs half of that)
                 -- lvl  1: ( 1+f) / (11+f) = sqrt( 100/min) => f = ~2.084
                 -- lvl 11: (11+f) / (11+f) = sqrt(1800/min)
-                results = {{type="item", name=result_name, amount=(30/60) * 1800 * math.pow((i+2.084) / (11+2.084), 2)}},
+                results = { { type = "item", name = result_name, amount = (30 / 60) * 1800 * math.pow((i + 2.084) / (11 + 2.084), 2) } },
+                localised_name = { "item-name." .. result_name },
                 hidden = true,
                 hidden_from_player_crafting = true,
             },
