@@ -22,11 +22,11 @@ jobs:
       run: |
         find locale -type f -name "*.cfg" -exec sed -i 's/]=/]/' {} +
 
-    - name: Get changed files
-      id: changed-files
-      with:
-        files: "locale/**/*.cfg"
-      uses: tj-actions/verify-changed-files@v20
+    # - name: Get changed files
+    #   id: changed-files
+    #   with:
+    #     files: "locale/**/*.cfg"
+    #   uses: tj-actions/verify-changed-files@v20
 
     - name: Push changes
       if: ${{ steps.changed-files.outputs.files_changed == 'true' }}
