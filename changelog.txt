@@ -2,7 +2,7 @@
 Version: 2.0.11
 Date: 2025-04-19
   Locale:
-    - Added English locale for primary industry recipes. Required for Factorio 2.0.
+    - Added English locale for primary industry recipes.
   Bugfixes:
     - Fixed an issue where the mod would crash when you open a train station or treasury that was built outside the city's range.
 ---------------------------------------------------------------------------------------------------

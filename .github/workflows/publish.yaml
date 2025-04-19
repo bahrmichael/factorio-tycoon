@@ -22,8 +22,12 @@ jobs:
     - name: Check if changelog.txt changed
       id: changed-files
       run: |
-        git fetch origin
-        if git diff --name-only origin/main...HEAD | grep -q "^changelog\.txt$"; then
+        # Get the commit SHA that triggered the workflow
+        COMMIT_SHA="$GITHUB_SHA"
+        # Get the parent commit SHA
+        PARENT_SHA=$(git rev-parse "$COMMIT_SHA^")
+        # Check if changelog.txt was modified in this commit
+        if git diff --name-only "$PARENT_SHA" "$COMMIT_SHA" | grep -q "^changelog\.txt$"; then
           echo "any_modified=true" >> "$GITHUB_OUTPUT"
         else
           echo "any_modified=false" >> "$GITHUB_OUTPUT"
