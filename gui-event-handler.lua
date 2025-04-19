@@ -44,12 +44,17 @@ local function on_gui_opened(event)
         local anchor = {gui = defines.relative_gui_type.container_gui, name = "tycoon-passenger-train-station", position = defines.relative_gui_position.right}
         trainStationGui = player.gui.relative.add{type = "frame", anchor = anchor, caption = {"", {"tycoon-gui-train-station-view"}}, direction = "vertical", name = guiKey}
 
-        local cityId = Util.getGlobalBuilding(unit_number).cityId
-        Gui.addTrainStationView(
-            unit_number,
-            trainStationGui,
-            Util.findCityById(cityId)
-        )
+        local building = Util.getGlobalBuilding(unit_number)
+        if building and building.cityId then
+            Gui.addTrainStationView(
+                unit_number,
+                trainStationGui,
+                Util.findCityById(building.cityId)
+            )
+        else
+            trainStationGui.add{type = "label", caption = ""}
+            trainStationGui.add{type = "label", caption = "Passenger train station must be placed within city range"}
+        end
     elseif (event.entity or {}).name == "tycoon-treasury" then
         local player = game.players[event.player_index]
         local unit_number = event.entity.unit_number
@@ -64,12 +69,17 @@ local function on_gui_opened(event)
         local anchor = {gui = defines.relative_gui_type.container_gui, name = "tycoon-treasury", position = defines.relative_gui_position.right}
         treasuryGui = player.gui.relative.add{type = "frame", anchor = anchor, caption = {"", {"tycoon-gui-treasury-view"}}, direction = "vertical", name = guiKey}
 
-        local cityId = Util.getGlobalBuilding(unit_number).cityId
-        Gui.addTreasuryView(
-            unit_number,
-            treasuryGui,
-            Util.findCityById(cityId)
-        )
+        local building = Util.getGlobalBuilding(unit_number)
+        if building and building.cityId then
+            Gui.addTreasuryView(
+                unit_number,
+                treasuryGui,
+                Util.findCityById(building.cityId)
+            )
+        else
+            treasuryGui.add{type = "label", caption = ""}
+            treasuryGui.add{type = "label", caption = "Treasury must be placed within city range"}
+        end
     elseif event.entity ~= nil and Util.isSupplyBuilding(event.entity.name) then
         local player = game.players[event.player_index]
 
