@@ -136,6 +136,10 @@ script.on_init(function()
     storage.tycoon_city_buildings = {}
 end)
 
+script.on_configuration_changed(function()
+    storage.tycoon_all_resource_names_cached = nil
+end)
+
 script.on_event(defines.events.on_gui_opened, GuiEventHandler.on_gui_opened)
 
 script.on_event(defines.events.on_gui_text_changed, GuiEventHandler.on_gui_text_changed)
