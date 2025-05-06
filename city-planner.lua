@@ -283,7 +283,7 @@ local function addCity(position, surface_index, predefinedCityName, existing_tow
     table.insert(storage.tycoon_cities, {
         id = cityId,
         surface_index = surface_index,
-        generator = game.create_random_generator(game.surfaces[surface_index].map_gen_settings.seed + generatorSalt),
+        generator = game.create_random_generator((game.surfaces[surface_index].map_gen_settings.seed + generatorSalt) % 4294967296),
         grid = {},
         pending_cells = {},
         priority_buildings = {},
