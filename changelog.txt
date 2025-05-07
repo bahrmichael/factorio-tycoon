@@ -2,7 +2,7 @@
 Version: 2.0.13
 Date: 2025-05-07
   Bugfixes:
-    - Fixed crash when using mods that introduce new resources.
+    - Fixed crash when using additional mods that introduce new resources.
 ---------------------------------------------------------------------------------------------------
 Version: 2.0.12
 Date: 2025-04-19
