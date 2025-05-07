@@ -2,15 +2,14 @@ local Constants = require("constants")
 local Util = require("util")
 local TagsQueue = require("tags-queue")
 
-local function get_all_resource_names()
-    if storage.tycoon_all_resource_names_cached == nil then
-        storage.tycoon_all_resource_names_cached = {}
-        for name, _cat in pairs(prototypes.get_entity_filtered{{filter="type", type="resource"}}) do
-            table.insert(storage.tycoon_all_resource_names_cached, name)
-        end
-    end
-    return storage.tycoon_all_resource_names_cached
-end
+local resource_names = {
+    'coal',
+    'copper-ore',
+    'iron-ore',
+    'stone',
+    'uranium-ore',
+    'crude-oil'
+}
 
 local function add_to_global_primary_industries(entity)
     if entity == nil then
@@ -150,7 +149,7 @@ local function place_primary_industry_at_position(position, entity_name, surface
             nearby_count = game.surfaces[surface_index].count_entities_filtered{
                 position = position,
                 radius = PRIMARY_INDUSTRY_NEARBY_RADIUS,
-                name = get_all_resource_names(),
+                name = resource_names,
                 limit = 1
             }
         end
