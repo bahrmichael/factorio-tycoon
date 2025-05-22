@@ -1,4 +1,10 @@
 ---------------------------------------------------------------------------------------------------
+Version: 2.0.14
+Date: 2025-05-22
+  Bugfixes:
+    - Fixed crash that was caused by a bug in the code that adds stone and concrete below houses.
+    - Fixed an issue where primary industries would spawn and destroy player built entities.
+---------------------------------------------------------------------------------------------------
 Version: 2.0.13
 Date: 2025-05-07
   Bugfixes:
