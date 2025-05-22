@@ -159,6 +159,16 @@ local function place_primary_industry_at_position(position, entity_name, surface
 
         tagIndustry(position, entity_name, surface_index)
 
+        -- Check for player-built entities before placing primary industry
+        local player_built_entities = game.surfaces[surface_index].find_entities_filtered{
+            position = {x = position.x, y = position.y},
+            radius = 10,
+            force = "player"
+        }
+        if #player_built_entities > 0 then
+            return nil
+        end
+
         local entity = game.surfaces[surface_index].create_entity{
             name = entity_name,
             position = {x = position.x, y = position.y},
